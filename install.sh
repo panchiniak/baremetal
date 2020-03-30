@@ -1,7 +1,7 @@
 #!/bin/bash
 USERNAME=$1
 
-Install Ansible:
+# Install Ansible:
 if [ ! -f /usr/bin/ansible ]; then
   apt-add-repository ppa:ansible/ansible
   apt update
