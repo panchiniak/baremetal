@@ -3,8 +3,8 @@
 #################################################
 ---
 - hosts: host
-  vars:
-    emnies_host_username: rodrigo
+  vars_files:
+    - group_vars/emnies_hosts
   tasks:
     - name: Pwd
       shell: pwd

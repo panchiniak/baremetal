@@ -41,5 +41,5 @@ fi
 if [ ! -f ./ansible/group_vars/emnies_hosts ]; then
   # Concatenate pubkey in the end of file:
   cp ./ansible/group_vars/emnies_hosts.default ./ansible/group_vars/emnies_hosts
-  printf "\nemnies_host_username=$USERNAME" >> ./ansible/group_vars/emnies_hosts
+  printf "\nemnies_host_username: $USERNAME" >> ./ansible/group_vars/emnies_hosts
 fi
