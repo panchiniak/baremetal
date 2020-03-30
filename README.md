@@ -1,4 +1,4 @@
-# EMNIES Ansible Project Handler: 
+# EMNIES Ansible Project Handler
 
 This document will guide you through the installation of EMNIES Ansible Project Handler. 
 
