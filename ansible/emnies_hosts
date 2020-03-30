@@ -9,6 +9,6 @@
 emnies ansible_port=2222 ansible_host=127.0.0.1
 host ansible_port=22 ansible_host=127.0.0.1
 
+# Default settings:
 [servers:vars]
 ansible_python_interpreter=/usr/bin/python3
-emnies_host_username_test=foo

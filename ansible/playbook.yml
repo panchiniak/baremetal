@@ -19,7 +19,7 @@
     - debug: var=out.stdout_lines
 
     - name: Echo
-      shell: echo "{{ emnies_host_username_test }}"
+      shell: echo "{{ emnies_host_username }}"
       register: out
 
     - debug: var=out.stdout_lines
