@@ -1,7 +1,7 @@
 #!/bin/bash
 USERNAME=$1
 
-# Install Ansible:
+Install Ansible:
 if [ ! -f /usr/bin/ansible ]; then
   apt-add-repository ppa:ansible/ansible
   apt update
@@ -30,4 +30,11 @@ fi
 if [ ! -f /home/$USERNAME/.ssh/authorized_keys ]; then
   # Concatenate pubkey in the end of file:
   cat /home/$USERNAME/.ssh/id_rsa.pub >> /home/$USERNAME/.ssh/authorized_keys
+fi
+
+# If there is no emnies_hosts variables custom file:
+if [ ! -f ./ansible/group_vars/emnies_hosts ]; then
+  # Concatenate pubkey in the end of file:
+  cp ./ansible/group_vars/emnies_hosts.default ./ansible/group_vars/emnies_hosts
+  printf "\nemnies_host_username=$USERNAME" >> ./ansible/group_vars/emnies_hosts
 fi
