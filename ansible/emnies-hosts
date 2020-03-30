@@ -1,12 +1,10 @@
+# @TODO: abstract username
 # Test this file syntax:
 # - ansible-inventory --list -y -i emnies-hosts --list -y
 # Test ansible connection:
-# - ansible emnies -m ping -u rodrigo -i emnies-hosts
+# - ansible all -m ping -u rodrigo -i emnies-hosts
 # Command example:
 # - ansible emnies -a "df -h" -u rodrigo -i emnies-hosts
-
-# [ansible-hosts]
-# 127.0.0.1 ansible_ssh_private_key_file=key_pair.pem ansible_ssh_user=ubuntu  # Ubuntu target
 
 [servers]
 emnies ansible_port=2222 ansible_host=127.0.0.1

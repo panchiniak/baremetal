@@ -1,8 +1,7 @@
 #!/bin/bash
 MACHINENAME=$1
 
-# @TODO: abstract username 
-
+# @TODO: abstract username
 # Install Ansible:
 # sudo apt-add-repository ppa:ansible/ansible; sudo apt update; sudo apt install ansible
 # Check Ansible is installed:
