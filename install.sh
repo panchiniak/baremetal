@@ -1,6 +1,11 @@
 #!/bin/bash
 USERNAME=$1
 
+if [ -z "$USERNAME" ]; then
+  echo "Username is required. See README.md for further instructions."
+  exit 1
+fi
+
 # Install Ansible:
 if [ ! -f /usr/bin/ansible ]; then
   apt-add-repository ppa:ansible/ansible
