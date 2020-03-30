@@ -2,7 +2,7 @@
 MACHINENAME=$1
 
 # Run playbook:
-# ansible-playbook -l host -i emnies-hosts -u <user-name> playbook.yml
+# ansible-playbook -l host -i emnies_hosts -u <user-name> playbook.yml
 
 # Download http://nl.releases.ubuntu.com/releases/18.04/ubuntu-18.04.4-live-server-amd64.iso
 if [ ! -f ./home/rodrigo/Downloads/ubuntu-18.04.4-live-server-amd64.iso ]; then

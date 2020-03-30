@@ -1,0 +1,14 @@
+# Test this file syntax:
+# - ansible-inventory --list -y -i emnies_hosts
+# Test Ansible connection:
+# - ansible all -m ping -u <user-name> -i emnies_hosts
+# Command example:
+# - ansible emnies -a "df -h" -u <user-name> -i emnies_hosts
+
+[servers]
+emnies ansible_port=2222 ansible_host=127.0.0.1
+host ansible_port=22 ansible_host=127.0.0.1
+
+[servers:vars]
+ansible_python_interpreter=/usr/bin/python3
+emnies_host_username_test=foo

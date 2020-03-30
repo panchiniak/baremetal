@@ -3,6 +3,8 @@
 #################################################
 ---
 - hosts: host
+  vars:
+    emnies_host_username: rodrigo
   tasks:
     - name: Pwd
       shell: pwd
@@ -15,3 +17,10 @@
       register: out
 
     - debug: var=out.stdout_lines
+
+    - name: Echo
+      shell: echo "{{ emnies_host_username_test }}"
+      register: out
+
+    - debug: var=out.stdout_lines
+    
