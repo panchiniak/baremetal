@@ -18,3 +18,10 @@ Make `install.sh` file executable, replace `<username>` by your user name and ru
 
 This will be used to allow Ansible to access the host machine with no need of typing your password. 
 
+## Usage: change and/or run your playbook
+
+`cd ansible`
+
+`ansible-playbook -l <host> -i emnies-hosts -u <user-name> playbook.yml`
+
+Warning: read and understand `playbook.yml` file before running it. For safety concerns you should understand what you are doing.

@@ -1,22 +1,8 @@
 #!/bin/bash
 MACHINENAME=$1
 
-# @TODO: abstract username
-# Install Ansible:
-# sudo apt-add-repository ppa:ansible/ansible; sudo apt update; sudo apt install ansible
-# Check Ansible is installed:
-# ansible --version
-# Enable incomming SSH connection in the host machine:
-# sudo apt install openssh-server
-# And check SSH status:
-# sudo systemctl status ssh
-# Enable access without password:
-# cd ~; cp id_rsa.pub authorized_keys
 # Run playbook:
-# Ping host for testing ssh/ansible self connection:
-# cd <project-root>/ansible; ansible host -m ping -u rodrigo -i emnies-hosts
-# Now run the test by the playbook:
-# ansible-playbook -l host -i emnies-hosts -u rodrigo playbook.yml
+# ansible-playbook -l host -i emnies-hosts -u <user-name> playbook.yml
 
 # Download http://nl.releases.ubuntu.com/releases/18.04/ubuntu-18.04.4-live-server-amd64.iso
 if [ ! -f ./home/rodrigo/Downloads/ubuntu-18.04.4-live-server-amd64.iso ]; then
