@@ -20,10 +20,14 @@ This will be used to allow Ansible to access the host machine with no need of ty
 
 ## Usage
 
-Replace `<host>` and `<user-name>` by the host you want to run the playbook against and your user name at the guest machine, and run:
+Replace `<host>` and `<user-name>` by the host you want to run the playbook and the user name at the guest machine, and run:
 
 `cd ansible`
 
 `ansible-playbook -l <host> -i emnies_hosts -u <user-name> playbook.yml`
 
 Warning: read and understand `playbook.yml` file before running it. For safety concerns you should always understand what you are doing.
+
+## Custom variables
+
+After installation you can add your custom variables at `ansible/group_vars/emnies_hosts`
