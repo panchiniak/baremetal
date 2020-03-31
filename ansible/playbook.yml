@@ -6,13 +6,7 @@
   vars_files:
     - group_vars/emnies_hosts
   tasks:
-    - name: Self ping
-      shell: ping 127.0.0.1 -c 1
-      register: out
-
-    - debug: var=out.stdout_lines
-
-    - name: Install virtualbox
+    - name: Install virtualbox if needed
       become: true
       apt:
         name: virtualbox
@@ -21,26 +15,52 @@
 
     # @TODO: install guest additions
 
-    - name: Get vagrant zip and checksum
+    - local_action: stat path=/{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
+      register: zipped_vagrant_exists
+      tags: vagrant
+
+    - name: If vagrant is not available get vagrant zip source and checksum it
       get_url:
         url: "{{ vagrant_zip_base_path }}{{ vagrant_zip_file }}"
         dest: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
         checksum: "{{ vagrant_zip_file_checksum }}"
         force: no
+      register: get_vagrant
+      when: zipped_vagrant_exists.stat.exists == False
+      tags: vagrant
 
-    - name: Unzip vagrant (original is kept)
+    - name: Unzip vagrant zip if available and keep it
       unarchive:
         src: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
-        dest: /{{ playbook_dir }}/vagrant
+        dest: /{{ playbook_dir }}/vagrant/
         remote_src: yes
+        creates: /{{ playbook_dir }}/vagrant/vagrant
+      tags: [vagrant, unzip]
 
-    - name: Remove vagrant source
+    - name: Remove vagrant zip source
       file:
         path: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
         state: absent
+      tags: vagrant
 
     - name: ls
       shell: ls {{ playbook_dir }}/vagrant
       register: out
+
+    - debug: var=out.stdout_lines
+
+    - name: vagrant force destroy if present
+      command: ./vagrant -f destroy
+      register: out
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
+
+    - debug: var=out.stdout_lines
+
+    - name: vagrant up with provision
+      command: ./vagrant up --provision
+      register: out
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
 
     - debug: var=out.stdout_lines
