@@ -6,21 +6,45 @@
   vars_files:
     - group_vars/emnies_hosts
   tasks:
-    - name: Pwd
-      shell: pwd
-      register: out
-
-    - debug: var=out.stdout_lines
-      
     - name: Self ping
       shell: ping 127.0.0.1 -c 1
       register: out
 
     - debug: var=out.stdout_lines
 
-    - name: Echo
-      shell: echo "{{ emnies_host_username }}"
+    # - name: Get ubuntu iso
+    #   get_url:
+    #     url: "{{ ubuntu_iso_base_path }}{{ ubuntu_iso_file }}"
+    #     dest: /home/{{ emnies_host_username }}/Downloads/{{ ubuntu_iso_file }}
+    #     checksum: "{{ ubuntu_iso_file_checksum }}"
+    #     force: no
+
+    - name: Get vagrant zip and checksum
+      get_url:
+        url: "{{ vagrant_zip_base_path }}{{ vagrant_zip_file }}"
+        dest: /{{ playbook_dir }}/vm/vagrant/{{ vagrant_zip_file }}
+        checksum: "{{ vagrant_zip_file_checksum }}"
+        force: no
+
+    # - name: Download, unzip and remove orginal (no checksum)
+    #   unarchive:
+    #     src: "{{ vagrant_zip_base_path }}{{ vagrant_zip_file }}"
+    #     dest: /{{ playbook_dir }}/vm/vagrant
+    #     remote_src: yes
+
+    - name: Unzip vagrant (original is kept)
+      unarchive:
+        src: /{{ playbook_dir }}/vm/vagrant/{{ vagrant_zip_file }}
+        dest: /{{ playbook_dir }}/vm/vagrant
+        remote_src: yes
+
+    - name: Remove vagrant source
+      file:
+        path: /{{ playbook_dir }}/vm/vagrant/{{ vagrant_zip_file }}
+        state: absent
+
+    - name: ls
+      shell: ls {{ playbook_dir }}/vm/vagrant
       register: out
 
     - debug: var=out.stdout_lines
-    
