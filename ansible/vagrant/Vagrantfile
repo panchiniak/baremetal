@@ -1,0 +1,19 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "hashicorp/bionic64"
+  config.vm.network "forwarded_port", guest: 22, host: 2222
+  config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
+  # @TODO: do not use network name or get it automatically of from a configuration file
+  config.vm.network "public_network", bridge: "enp4s0"
+  config.vm.synced_folder "data", "/vagrant_data"
+  config.vm.provider "virtualbox" do |vb|
+    # Dont display the VirtualBox GUI when booting the machine
+    vb.gui = false  
+    # Customize the amount of memory on the VM:
+    vb.memory = "6000"
+  end
+  ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
+  config.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys", privileged: false
+end

@@ -24,7 +24,7 @@ Replace `<host>` and `<user-name>` by the host you want to run the playbook and 
 
 `cd ansible`
 
-`ansible-playbook -l <host> -i emnies_hosts -u <user-name> playbook.yml`
+`ansible-playbook -l <host> -i emnies_hosts -u <user-name> playbook.yml --extra-vars "ansible_sudo_pass=yourPassword"`
 
 Warning: read and understand `playbook.yml` file before running it. For safety concerns you should always understand what you are doing.
 

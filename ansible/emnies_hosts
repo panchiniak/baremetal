@@ -12,9 +12,6 @@ host ansible_port=22 ansible_host=127.0.0.1
 # Default settings:
 [servers:vars]
 ansible_python_interpreter=/usr/bin/python3
-ubuntu_iso_base_path=http://nl.releases.ubuntu.com/releases/18.04/
-ubuntu_iso_file=ubuntu-18.04.4-live-server-amd64.iso
-ubuntu_iso_file_checksum=sha256:73b8d860e421000a6e35fdefbb0ec859b9385b0974cf8089f5d70a87de72f6b9
 vagrant_zip_base_path=https://releases.hashicorp.com/vagrant/2.2.7/
 vagrant_zip_file=vagrant_2.2.7_linux_amd64.zip
 vagrant_zip_file_checksum=sha256:55435d8b146e6df5dcda71c0df50ddd7530aeb34b26b016fb433b8332e4a69c5
