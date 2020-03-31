@@ -12,9 +12,9 @@ If this is not your OS and you still want to use EMNIES Ansible Project Handler,
 
 ## Install Software Requirements
 
-Make `install.sh` file executable, replace `<username>` by your user name and run:
+Make `install.sh` file executable and run:
 
-`sudo ./install.sh <username>`
+`whoami | sudo xargs ./install.sh`
 
 This will be used to allow Ansible to access the host machine with no need of typing your password. 
 
