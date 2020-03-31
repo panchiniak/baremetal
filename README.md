@@ -12,7 +12,7 @@ If this is not your OS and you still want to use EMNIES Ansible Project Handler,
 
 ## Install Software Requirements
 
-Make `install.sh` file executable and run:
+Make `install.sh` file executable:
 
 `whoami | sudo xargs ./install.sh`
 
@@ -20,11 +20,11 @@ This will be used to allow Ansible to access the host machine with no need of ty
 
 ## Usage
 
-Replace `<host>` and `<user-name>` by the host you want to run the playbook and the user name at the guest machine, and run:
+Replace `<host>` by the host you want to run the playbook against:
 
 `cd ansible`
 
-`ansible-playbook -l <host> -i emnies_hosts -u <user-name> playbook.yml --extra-vars "ansible_sudo_pass=yourPassword"`
+`ansible-playbook -l <host> -i emnies_hosts -u $(whoami) playbook.yml --extra-vars "ansible_sudo_pass=yourPassword"`
 
 Warning: read and understand `playbook.yml` file before running it. For safety concerns you should always understand what you are doing.
 
