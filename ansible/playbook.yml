@@ -22,30 +22,29 @@
     # - name: Download, unzip and remove orginal (no checksum)
     #   unarchive:
     #     src: "{{ vagrant_zip_base_path }}{{ vagrant_zip_file }}"
-    #     dest: /{{ playbook_dir }}/vm/vagrant
+    #     dest: /{{ playbook_dir }}/vagrant
     #     remote_src: yes
-
 
     - name: Get vagrant zip and checksum
       get_url:
         url: "{{ vagrant_zip_base_path }}{{ vagrant_zip_file }}"
-        dest: /{{ playbook_dir }}/vm/vagrant/{{ vagrant_zip_file }}
+        dest: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
         checksum: "{{ vagrant_zip_file_checksum }}"
         force: no
 
     - name: Unzip vagrant (original is kept)
       unarchive:
-        src: /{{ playbook_dir }}/vm/vagrant/{{ vagrant_zip_file }}
-        dest: /{{ playbook_dir }}/vm/vagrant
+        src: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
+        dest: /{{ playbook_dir }}/vagrant
         remote_src: yes
 
     - name: Remove vagrant source
       file:
-        path: /{{ playbook_dir }}/vm/vagrant/{{ vagrant_zip_file }}
+        path: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
         state: absent
 
     - name: ls
-      shell: ls {{ playbook_dir }}/vm/vagrant
+      shell: ls {{ playbook_dir }}/vagrant
       register: out
 
     - debug: var=out.stdout_lines
