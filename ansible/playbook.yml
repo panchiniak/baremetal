@@ -12,12 +12,19 @@
 
     - debug: var=out.stdout_lines
 
-    # - name: Get ubuntu iso
+    # - name: Get ubuntu iso # deprecated: using vagrant ubuntu/bionic instead
     #   get_url:
     #     url: "{{ ubuntu_iso_base_path }}{{ ubuntu_iso_file }}"
     #     dest: /home/{{ emnies_host_username }}/Downloads/{{ ubuntu_iso_file }}
     #     checksum: "{{ ubuntu_iso_file_checksum }}"
     #     force: no
+    #
+    # - name: Download, unzip and remove orginal (no checksum)
+    #   unarchive:
+    #     src: "{{ vagrant_zip_base_path }}{{ vagrant_zip_file }}"
+    #     dest: /{{ playbook_dir }}/vm/vagrant
+    #     remote_src: yes
+
 
     - name: Get vagrant zip and checksum
       get_url:
@@ -25,12 +32,6 @@
         dest: /{{ playbook_dir }}/vm/vagrant/{{ vagrant_zip_file }}
         checksum: "{{ vagrant_zip_file_checksum }}"
         force: no
-
-    # - name: Download, unzip and remove orginal (no checksum)
-    #   unarchive:
-    #     src: "{{ vagrant_zip_base_path }}{{ vagrant_zip_file }}"
-    #     dest: /{{ playbook_dir }}/vm/vagrant
-    #     remote_src: yes
 
     - name: Unzip vagrant (original is kept)
       unarchive:
