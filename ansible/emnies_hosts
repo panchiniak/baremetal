@@ -15,3 +15,4 @@ ansible_python_interpreter=/usr/bin/python3
 vagrant_zip_base_path=https://releases.hashicorp.com/vagrant/2.2.7/
 vagrant_zip_file=vagrant_2.2.7_linux_amd64.zip
 vagrant_zip_file_checksum=sha256:55435d8b146e6df5dcda71c0df50ddd7530aeb34b26b016fb433b8332e4a69c5
+emnies_guest_username: vagrant
