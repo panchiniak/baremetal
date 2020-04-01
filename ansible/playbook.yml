@@ -64,3 +64,32 @@
         chdir: /{{ playbook_dir }}/vagrant/
 
     - debug: var=out.stdout_lines
+
+    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.apache
+      register: geerlingguy_apache_exists
+      tags: ansible
+
+    - name: install geerlingguy apache from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.apache
+      register: out
+      tags: ansible
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_apache_exists.stat.exists == False
+
+    - debug: var=out.stdout_lines
+      tags: ansible
+
+
+#################################################
+# Gest configurations
+#################################################
+- hosts: emnies
+  vars_files:
+    - group_vars/emnies_hosts
+  tasks:
+    - name: pwd
+      shell: whoami
+      register: out
+
+    - debug: var=out.stdout_lines

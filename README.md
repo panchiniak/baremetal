@@ -1,6 +1,6 @@
 # EMNIES Ansible Project Handler
 
-This document will guide you through the installation of EMNIES Ansible Project Handler. 
+This document will guide you through the installation and usage of EMNIES Ansible Project Handler. 
 
 
 ## OS Requirement
@@ -26,7 +26,7 @@ Replace `<host>` by the host you want to run the playbook against:
 
 `ansible-playbook -l <host> -i emnies_hosts -u $(whoami) playbook.yml --extra-vars "ansible_sudo_pass=yourPassword"`
 
-Warning: read and understand `playbook.yml` file before running it. For safety concerns you should always understand what you are doing.
+Warning: for safety constrains please read and understand `playbook.yml` file before running it.
 
 ## Custom variables
 
