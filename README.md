@@ -12,7 +12,7 @@ If this is not your OS and you still want to use EMNIES Ansible Project Handler,
 
 ## Install Software Requirements
 
-Make `install.sh` file executable:
+Make `install.sh` file executable and run it passing your user name as argument:
 
 `whoami | sudo xargs ./install.sh`
 
