@@ -18,6 +18,10 @@ Make `install.sh` file executable and run it passing your user name as argument:
 
 This will be used to allow Ansible to access the host machine with no need of typing your password. 
 
+## Custom variables
+
+After installation you can add your custom variables at `ansible/group_vars/emnies_hosts`
+
 ## Usage
 
 Replace `<host>` by the host you want to run the playbook against:
@@ -28,6 +32,3 @@ Replace `<host>` by the host you want to run the playbook against:
 
 Warning: for safety constrains please read and understand `playbook.yml` file before running it.
 
-## Custom variables
-
-After installation you can add your custom variables at `ansible/group_vars/emnies_hosts`
