@@ -1,3 +1,4 @@
 ansible/group_vars/emnies_hosts
 ansible/vagrant/vagrant
 ansible/vagrant/.vagrant
+ansible/roles/
