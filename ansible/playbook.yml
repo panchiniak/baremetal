@@ -178,9 +178,6 @@
     - debug: var=out.stdout_lines
       tags: host_authoized_key_purge
 
-# @TODO: remove guest key in case it has been changed:
-# ssh-keygen -f /home/rodrigo/.ssh/known_hosts -R [127.0.0.1]:2222
-
 #################################################
 # Gest configurations
 #################################################
