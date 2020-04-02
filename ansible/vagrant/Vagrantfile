@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "hashicorp/bionic64"
+  config.vm.box = "ubuntu/bionic64"
   config.vm.network "forwarded_port", guest: 22, host: 2222
   config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
   # @TODO: do not use network name or get it automatically of from a configuration file
