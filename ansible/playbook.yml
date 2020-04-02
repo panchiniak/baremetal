@@ -189,7 +189,7 @@
   vars_files:
     - group_vars/emnies_hosts
 
-  tasks:
+  pre_tasks:
     - name: Update apt cache.
       apt: update_cache=yes cache_valid_time=86400
 
@@ -201,3 +201,19 @@
     - { role: geerlingguy.adminer, tags: [ 'adminer' ] }
     - { role: geerlingguy.java }
     - { role: geerlingguy.solr }
+
+  post_tasks:
+    - name: Download Solr with extended timeout.
+      get_url:
+        url: "{{ solr_mirror }}/lucene/solr/{{ solr_version }}/{{ solr_filename }}.tgz"
+        dest: "{{ solr_workspace }}/{{ solr_filename }}.tgz"
+        force: false
+        timeout: 60
+      when: solr_install_path_status.stat.isdir is not defined
+      register: solr_download_status
+
+    - name: Restart apache for enabling MySQL
+      command: apache2ctl restart
+      register: out
+
+    - debug: var=out.stdout_lines
