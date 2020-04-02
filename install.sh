@@ -18,6 +18,11 @@ if [ ! -d /home/$USERNAME/.ssh ]; then
   apt install openssh-server
 fi
 
+# Created shared data directory:
+if [ ! -d ansible/vagrant/data ]; then
+  mkdir ansible/vagrant/data
+fi
+
 # Create ssh keys if needed:
 if [ ! -f /home/$USERNAME/.ssh/id_rsa.pub ]; then
   su $USERNAME
