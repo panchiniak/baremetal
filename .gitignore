@@ -3,3 +3,4 @@ ansible/vagrant/vagrant
 ansible/vagrant/.vagrant
 ansible/roles/
 ansible/vagrant/*.log
+ansible/vagrant/data/*
