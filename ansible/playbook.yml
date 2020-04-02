@@ -170,6 +170,13 @@
     - debug: var=out.stdout_lines
       tags: [ansible, ansible_mysql]
 
+    - name: ssh-keygen
+      shell: ssh-keygen -f /home/{{ emnies_host_username }}/.ssh/known_hosts -R [127.0.0.1]:2222
+      register: out
+      tags: host_authoized_key_purge
+
+    - debug: var=out.stdout_lines
+      tags: host_authoized_key_purge
 
 # @TODO: remove guest key in case it has been changed:
 # ssh-keygen -f /home/rodrigo/.ssh/known_hosts -R [127.0.0.1]:2222
@@ -188,9 +195,9 @@
 
   roles:
     - { role: geerlingguy.apache }
-    - { role: geerlingguy.php }
-    - { role: geerlingguy.mysql }
-    - { role: geerlingguy.php-mysql }
-    - { role: geerlingguy.adminer }
+    - { role: geerlingguy.php, tags: [ 'php' ] }
+    - { role: geerlingguy.mysql, tags: [ 'mysql' ] }
+    - { role: geerlingguy.php-mysql, tags: [ 'php-mysql' ] }
+    - { role: geerlingguy.adminer, tags: [ 'adminer' ] }
     - { role: geerlingguy.java }
     - { role: geerlingguy.solr }
