@@ -1,0 +1,35 @@
+#################################################
+# Project emnies
+#################################################
+---
+- hosts: emnies
+  become: yes
+  vars_files:
+    - group_vars/emnies_hosts
+
+  tasks:
+    - name: Delete database with name 'ami'
+      mysql_db:
+        name: ami
+        state: absent
+      register: out
+
+    - debug: var=out.stdout_lines
+
+    - name: Create database with name 'ami'
+      mysql_db:
+        name: ami
+        state: present
+      register: out
+
+    - debug: var=out.stdout_lines
+
+    - name: Import sanitized_daily_ami_production_db.sql similar to mysql -u <username> -p <password> < sanitized_daily_ami_production_db.sql
+      mysql_db:
+        state: import
+        name: ami
+        target: /vagrant_data/sanitized_daily_ami_production_db.sql
+      register: out
+
+    - debug: var=out.stdout_lines
+

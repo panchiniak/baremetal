@@ -1,0 +1,37 @@
+#################################################
+# Gest configurations
+#################################################
+---
+- hosts: emnies
+  become: yes
+  vars_files:
+    - group_vars/emnies_hosts
+
+  pre_tasks:
+    - name: Update apt cache.
+      apt: update_cache=yes cache_valid_time=86400
+
+    # @TODO: provide a local copy of solr instead for always preventing timeout
+    - name: Download Solr with extended timeout.
+      get_url:
+        url: "https://archive.apache.org/dist/lucene/solr/8.2.0/solr-8.2.0.tgz"
+        dest: "/root/solr-8.2.0.tgz"
+        force: no
+        timeout: 240
+
+  roles:
+    - { role: geerlingguy.apache }
+    - { role: geerlingguy.php, tags: [ 'php' ] }
+    - { role: geerlingguy.mysql, tags: [ 'mysql' ] }
+    - { role: geerlingguy.php-mysql, tags: [ 'php-mysql' ] }
+    - { role: geerlingguy.adminer, tags: [ 'adminer' ] }
+    - { role: geerlingguy.java }
+    - { role: geerlingguy.solr }
+
+  post_tasks:
+
+    - name: Restart apache for enabling MySQL
+      command: apache2ctl restart
+      register: out
+
+    - debug: var=out.stdout_lines

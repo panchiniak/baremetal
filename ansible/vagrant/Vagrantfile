@@ -1,9 +1,13 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-Vagrant.configure("2") do |config|
+Vagrant.configure("2") do |config| 
   config.vm.box = "ubuntu/bionic64"
+  # @TODO: make the disk size configurable:
+  config.disksize.size = '100GB'
   config.vm.network "forwarded_port", guest: 22, host: 2222
+  # @TODO: provide a mapping from http at host to http at guest for allowing
+  # provision of locally available files, eg. solr.
   config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
   # @TODO: do not use network name or get it automatically of from a configuration file
   config.vm.network "public_network", bridge: "enp4s0"
