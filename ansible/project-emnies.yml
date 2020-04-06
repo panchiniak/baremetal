@@ -33,3 +33,33 @@
 
     - debug: var=out.stdout_lines
 
+    # @TODO: create symbolic lin: ln -s /vagrant_date/emnies-dev/docroot /var/www/html/emnies-dev
+    # @TODO: apply patch: https://www.drupal.org/files/issues/2018-06-06/2977835-command_buttons-php72-2.patch
+    # @TODO: sudo apt-get install php7.2-apcu -y
+    # @TODO: Disable css and js aggregation:
+    # ./../vendor/drush/drush/drush vset preprocess_js 0 --yes
+    # ./../vendor/drush/drush/drush vset preprocess_css 0 --yes
+    # @TODO: add Directoy at default host for clean URL:
+    # <Directory /var/www/html>
+    #   Options Indexes FollowSymLinks MultiViews
+    #   AllowOverride All
+    #   Require all granted
+    # </Directory>
+    # /etc/apache2/sites-enabled/000-default.conf
+    # @TODO: download registry_rebuild and run it
+    # @TODO: define standard solr core at settings.local.php:
+    # $conf['search_api_solr_overrides'] = array(
+    #   'solr_server' => array(
+    #     'name' => t('Solr Server (Overridden)'),
+    #     'options' => array(
+    #       'host' => '192.168.0.111',
+    #       'port' => 8983,
+    #       'path' => '/solr/collection1',
+    #     ),
+    #   ),
+    # );
+    # @TODO: run solr commands:
+    # drush -v sapi-c solr_user_index
+    # drush -v sapi-r solr_user_index
+    # @TODO: disable login expire
+    # @TODO: enable krumo search

@@ -11,14 +11,6 @@
     - name: Update apt cache.
       apt: update_cache=yes cache_valid_time=86400
 
-    # @TODO: provide a local copy of solr instead for always preventing timeout
-    - name: Download Solr with extended timeout.
-      get_url:
-        url: "https://archive.apache.org/dist/lucene/solr/8.2.0/solr-8.2.0.tgz"
-        dest: "/root/solr-8.2.0.tgz"
-        force: no
-        timeout: 240
-
   roles:
     - { role: geerlingguy.apache }
     - { role: geerlingguy.php, tags: [ 'php' ] }
@@ -27,6 +19,8 @@
     - { role: geerlingguy.adminer, tags: [ 'adminer' ] }
     - { role: geerlingguy.java }
     - { role: geerlingguy.solr }
+    - { role: geerlingguy.composer }
+    - { role: geerlingguy.drush }
 
   post_tasks:
 

@@ -170,6 +170,36 @@
     - debug: var=out.stdout_lines
       tags: [ansible, ansible_mysql]
 
+    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.composer
+      register: geerlingguy_composer_exists
+      tags: [ansible, ansible_composer]
+
+    - name: install geerlingguy composer from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.composer
+      register: out
+      tags: [ansible, ansible_composer]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_composer_exists.stat.exists == False
+
+    - debug: var=out.stdout_lines
+      tags: [ansible, ansible_composer]
+
+    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.drush
+      register: geerlingguy_drush_exists
+      tags: [ansible, ansible_drush]
+
+    - name: install geerlingguy drush from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.drush
+      register: out
+      tags: [ansible, ansible_drush]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_drush_exists.stat.exists == False
+
+    - debug: var=out.stdout_lines
+      tags: [ansible, ansible_drush]
+
     - name: ssh-keygen
       shell: ssh-keygen -f /home/{{ emnies_host_username }}/.ssh/known_hosts -R [127.0.0.1]:2222
       register: out
