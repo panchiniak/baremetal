@@ -207,3 +207,5 @@
 
     - debug: var=out.stdout_lines
       tags: host_authoized_key_purge
+
+    # @TODO: Get sanitized database from DIGIT and extract it at /ansible/vagrant/data

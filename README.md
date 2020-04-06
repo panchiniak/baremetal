@@ -28,7 +28,9 @@ Replace `<host>` by the host you want to run the playbook against:
 
 `cd ansible`
 
-`ansible-playbook -l <host> -i emnies_hosts -u $(whoami) playbook.yml --extra-vars "ansible_sudo_pass=yourPassword"`
+`ansible-playbook -l host -i emnies_hosts -u $(whoami) host.yml --extra-vars "ansible_sudo_pass=yourPassword"`
+
+`ansible-playbook -l guest -i emnies_hosts -u vagrant guest.yml`
 
 Warning: for safety constrains please read and understand `playbook.yml` file before running it.
 

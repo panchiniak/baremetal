@@ -24,6 +24,8 @@
 
     - debug: var=out.stdout_lines
 
+    # @TODO: Get sanitized database from DIGIT and extract it at /vagrant_data if not available
+
     - name: Import sanitized_daily_ami_production_db.sql similar to mysql -u <username> -p <password> < sanitized_daily_ami_production_db.sql
       mysql_db:
         state: import
