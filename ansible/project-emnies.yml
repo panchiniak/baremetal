@@ -73,22 +73,6 @@
     - debug: var=out.stdout_lines
       tags: [cache]
 
-    - name: Set preprocess_js to disagregate js
-      command: ./../vendor/drush/drush/drush vset preprocess_js 0 --yes
-      register: out
-      args:
-        chdir: /var/www/html/emnies-dev/docroot
-
-    - debug: var=out.stdout_lines
-
-    - name: Set preprocess_css to disagregate css
-      command: ./../vendor/drush/drush/drush vset preprocess_css 0 --yes
-      register: out
-      args:
-        chdir: /var/www/html/emnies-dev/docroot
-
-    - debug: var=out.stdout_lines
-
     - local_action: stat path=/home/vagrant/.drush/registry_rebuild
       register: vagrant_drush_registry_rebuild_exists
       tags: rr_dl
@@ -158,6 +142,30 @@
 
     - name: Index users
       command: ./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(solr_user_index));'
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+
+    - name: Set preprocess_js to disagregate js
+      command: ./../vendor/drush/drush/drush vset preprocess_js 0 --yes
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+
+    - name: Set preprocess_css to disagregate css
+      command: ./../vendor/drush/drush/drush vset preprocess_css 0 --yes
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+
+    - name: Clear cache all
+      command: ./../vendor/drush/drush/drush cc all
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
