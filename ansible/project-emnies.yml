@@ -112,6 +112,22 @@
 
     - debug: var=out.stdout_lines
 
+    - name: Update database
+      command: ./../vendor/drush/drush/drush -v -y updb
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+
+    - name: Revert features
+      command: ./../vendor/drush/drush/drush -v -y fra
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+
     # @TODO: if not yet done define standard solr core at settings.local.php:
     # $conf['search_api_solr_overrides'] = array(
     #   'solr_server' => array(
@@ -140,7 +156,7 @@
 
     - debug: var=out.stdout_lines
 
-    - name: Run sapi-r
+    - name: Index users
       command: ./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(solr_user_index));'
       register: out
       args:
