@@ -1,6 +1,11 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# @TODO: use multiple machines: web, db, solr.
+# https://www.vagrantup.com/docs/multi-machine/
+# https://www.vagrantup.com/docs/networking/private_network.html
+# https://www.thisprogrammingthing.com/2015/multiple-vagrant-vms-in-one-vagrantfile/
+
 Vagrant.configure("2") do |config| 
   config.vm.box = "ubuntu/bionic64"
   # @TODO: make the disk size configurable:

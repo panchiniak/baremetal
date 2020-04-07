@@ -13,18 +13,26 @@
         name: ami
         state: absent
       register: out
+      tags: [db]
 
     - debug: var=out.stdout_lines
+      tags: [db]
 
     - name: Create database with name 'ami'
       mysql_db:
         name: ami
         state: present
       register: out
+      tags: [db]
 
     - debug: var=out.stdout_lines
+      tags: [db]
 
+    # @TODO: if a database is not available:
     # @TODO: Get sanitized database from DIGIT and extract it at /vagrant_data if not available
+    # @TODO: if project came from git:
+    # @TODO: get https://www.drupal.org/files/issues/2018-06-06/2977835-command_buttons-php72-2.patch and put in /vagrant_data/patches
+    # @TODO: apply patch: 2977835-command_buttons-php72-2.patch to /var/www/html/emnies-dev/sites/all/modules/contrib/command_buttons/includes
 
     - name: Import sanitized_daily_ami_production_db.sql similar to mysql -u <username> -p <password> < sanitized_daily_ami_production_db.sql
       mysql_db:
@@ -32,36 +40,110 @@
         name: ami
         target: /vagrant_data/sanitized_daily_ami_production_db.sql
       register: out
+      tags: [db]
+
+    - debug: var=out.stdout_lines
+      tags: [db]
+
+    - name: create symbolique link from apache to shared folder
+      command: ln -s /vagrant_data/emnies-dev/ /var/www/html/emnies-dev
+      register: out
+      tags: [apache_link]
+
+    - debug: var=out.stdout_lines
+      tags: [apache_link]
+
+    - name: TRUNCATE TABLE cache
+      command: ./../vendor/drush/drush/drush -v sqlq "TRUNCATE TABLE cache"
+      register: out
+      tags: [cache]
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+      tags: [cache]
+
+    - name: TRUNCATE TABLE cache_form
+      command: ./../vendor/drush/drush/drush -v sqlq "TRUNCATE TABLE cache_form"
+      register: out
+      tags: [cache]
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+      tags: [cache]
+
+    - name: Set preprocess_js to disagregate js
+      command: ./../vendor/drush/drush/drush vset preprocess_js 0 --yes
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
 
     - debug: var=out.stdout_lines
 
-    # @TODO: create symbolic lin: ln -s /vagrant_date/emnies-dev/docroot /var/www/html/emnies-dev
-    # @TODO: apply patch: https://www.drupal.org/files/issues/2018-06-06/2977835-command_buttons-php72-2.patch
-    # @TODO: sudo apt-get install php7.2-apcu -y
-    # @TODO: Disable css and js aggregation:
-    # ./../vendor/drush/drush/drush vset preprocess_js 0 --yes
-    # ./../vendor/drush/drush/drush vset preprocess_css 0 --yes
-    # @TODO: add Directoy at default host for clean URL:
-    # <Directory /var/www/html>
-    #   Options Indexes FollowSymLinks MultiViews
-    #   AllowOverride All
-    #   Require all granted
-    # </Directory>
-    # /etc/apache2/sites-enabled/000-default.conf
-    # @TODO: download registry_rebuild and run it
-    # @TODO: define standard solr core at settings.local.php:
+    - name: Set preprocess_css to disagregate css
+      command: ./../vendor/drush/drush/drush vset preprocess_css 0 --yes
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+
+    - local_action: stat path=/home/vagrant/.drush/registry_rebuild
+      register: vagrant_drush_registry_rebuild_exists
+      tags: rr_dl
+
+    - name: Download registry rebuild
+      command: ./../vendor/drush/drush/drush dl registry_rebuild --destination=/home/vagrant/.drush
+      register: out
+      tags: rr_dl
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      when: vagrant_drush_registry_rebuild_exists.stat.exists == False
+
+    - debug: var=out.stdout_lines
+      tags: rr_dl
+
+    - name: Run registry rebuild
+      command: ./../vendor/drush/drush/drush rr
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+
+    # @TODO: if not yet done define standard solr core at settings.local.php:
     # $conf['search_api_solr_overrides'] = array(
     #   'solr_server' => array(
     #     'name' => t('Solr Server (Overridden)'),
     #     'options' => array(
-    #       'host' => '192.168.0.111',
+    #       'host' => '127.0.0.1',
     #       'port' => 8983,
     #       'path' => '/solr/collection1',
     #     ),
     #   ),
     # );
-    # @TODO: run solr commands:
-    # drush -v sapi-c solr_user_index
-    # drush -v sapi-r solr_user_index
-    # @TODO: disable login expire
-    # @TODO: enable krumo search
+
+    - name: Run sapi-c
+      command: ./../vendor/drush/drush/drush -v sapi-c solr_user_index
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+
+    - name: Run sapi-r
+      command: ./../vendor/drush/drush/drush -v sapi-r solr_user_index
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+
+    - name: Run sapi-r
+      command: ./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(solr_user_index));'
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines

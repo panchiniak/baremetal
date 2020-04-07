@@ -16,7 +16,7 @@
         state: present
       tags: [apt_apcu]
       register: out
-
+    
     - debug: var=out.stdout_lines
       tags: [apt_apcu]
 
@@ -29,7 +29,6 @@
     - { role: geerlingguy.php, tags: [ 'php' ] }
     - { role: geerlingguy.mysql, tags: [ 'mysql' ] }
     - { role: geerlingguy.php-mysql, tags: [ 'php-mysql' ] }
-    - { role: geerlingguy.adminer, tags: [ 'adminer' ] }
     - { role: geerlingguy.java }
     - { role: geerlingguy.solr }
     - { role: geerlingguy.composer }

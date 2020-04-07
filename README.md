@@ -30,7 +30,14 @@ Replace `<host>` by the host you want to run the playbook against:
 
 `ansible-playbook -l host -i emnies_hosts -u $(whoami) host.yml --extra-vars "ansible_sudo_pass=yourPassword"`
 
-`ansible-playbook -l guest -i emnies_hosts -u vagrant guest.yml`
+`ansible-playbook -l emnies -i emnies_hosts -u vagrant guest.yml`
+
+`ansible-playbook -l emnies -i emnies_hosts -u vagrant project-emnies.yml`
 
 Warning: for safety constrains please read and understand `playbook.yml` file before running it.
 
+## Roadmap
+
+https://www.vagrantup.com/intro/getting-started/share.html
+
+https://www.vagrantup.com/docs/networking/private_network.html

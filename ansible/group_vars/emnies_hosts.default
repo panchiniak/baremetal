@@ -19,8 +19,8 @@ adminer_install_dir: /var/www/html/adminer
 adminer_install_filename: index.php
 php_enablerepo: "remi,epel"
 php_mysql_package: "php7.2-mysql"
-solr_version: "7.7.2"
-file_path = ibdata1:10M:autoextend
+# solr_version: "7.7.2"
+solr_version: "4.4.0"
 mysql_max_allowed_packet: "5000M"
 mysql_innodb_log_file_size: "5000M"
 
