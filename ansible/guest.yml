@@ -36,6 +36,13 @@
     - { role: geerlingguy.drush }
 
   post_tasks:
+
+    - name: Add www-data user to vagrant group
+      command: usermod -a -G vagrant www-data
+      register: out
+
+    - debug: var=out.stdout_lines
+
     - name: Restart apache for enabling MySQL
       command: apache2ctl restart
       register: out

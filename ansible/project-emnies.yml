@@ -21,6 +21,7 @@
     - name: Create database with name 'ami'
       mysql_db:
         name: ami
+        collation: utf8mb4_unicode_ci
         state: present
       register: out
       tags: [db]
@@ -158,6 +159,59 @@
 
     - name: Set preprocess_css to disagregate css
       command: ./../vendor/drush/drush/drush vset preprocess_css 0 --yes
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+
+    - name: Enable email reroute
+      command: ./../vendor/drush/drush/drush -y en reroute_email
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+
+    - name: Set default file path
+      command: ./../vendor/drush/drush/drush vget file_public_path "sites/default/files"
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+
+    - name: Create project folder in vagrant user.
+      command: mkdir /home/vagrant/emnies
+      register: out
+
+    - debug: var=out.stdout_lines
+
+    - name: Create project tmp folder in vagrant user.
+      command: mkdir /home/vagrant/emnies/tmp
+      register: out
+
+    - debug: var=out.stdout_lines
+
+
+    - name: Set file private path
+      command: ./../vendor/drush/drush/drush vget file_private_path "/home/vagrant/emnies"
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+
+    - name: Change tmp default directory
+      command: ./../vendor/drush/drush/drush vget file_temporary_path "/home/vagrant/emnies/tmp"
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+
+    - name: Set file schema
+      command: ./../vendor/drush/drush/drush vget file_default_scheme "private"
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
