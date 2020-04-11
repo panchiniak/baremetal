@@ -46,13 +46,18 @@
     - debug: var=out.stdout_lines
       tags: [db]
 
-    - name: create symbolique link from apache to shared folder
-      command: ln -s /vagrant_data/emnies-dev/ /var/www/html/emnies-dev
+    - name: Create a symbolic link
+      file:
+        src: /vagrant_data/emnies-dev
+        dest: /var/www/html/emnies-dev
+        owner: vagrant
+        group: vagrant
+        state: link
+      tags: apache_link
       register: out
-      tags: [apache_link]
 
     - debug: var=out.stdout_lines
-      tags: [apache_link]
+      tags: apache_link
 
     - name: TRUNCATE TABLE cache
       command: ./../vendor/drush/drush/drush -v sqlq "TRUNCATE TABLE cache"
@@ -74,8 +79,10 @@
     - debug: var=out.stdout_lines
       tags: [cache]
 
-    - local_action: stat path=/home/vagrant/.drush/registry_rebuild
-      register: vagrant_drush_registry_rebuild_exists
+    - name: Check that the somefile.conf exists
+      stat:
+        path: /home/vagrant/.drush/registry_rebuild
+      register: registry_rebuild_exists
       tags: rr_dl
 
     - name: Download registry rebuild
@@ -84,7 +91,7 @@
       tags: rr_dl
       args:
         chdir: /var/www/html/emnies-dev/docroot
-      when: vagrant_drush_registry_rebuild_exists.stat.exists == False
+      when: registry_rebuild_exists.stat.exists == False
 
     - debug: var=out.stdout_lines
       tags: rr_dl
@@ -94,24 +101,30 @@
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
+      tags: rr
 
     - debug: var=out.stdout_lines
+      tags: rr
 
     - name: Update database
       command: ./../vendor/drush/drush/drush -v -y updb
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
+      tags: updb
 
     - debug: var=out.stdout_lines
+      tags: updb
 
     - name: Revert features
       command: ./../vendor/drush/drush/drush -v -y fra
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
+      tags: fra
 
     - debug: var=out.stdout_lines
+      tags: fra
 
     # @TODO: if not yet done define standard solr core at settings.local.php:
     # $conf['search_api_solr_overrides'] = array(
@@ -130,98 +143,137 @@
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
+      tags: sapi
 
     - debug: var=out.stdout_lines
+      tags: sapi
 
     - name: Run sapi-r
       command: ./../vendor/drush/drush/drush -v sapi-r solr_user_index
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
+      tags: sapi
 
     - debug: var=out.stdout_lines
+      tags: sapi
 
     - name: Index users
       command: ./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(solr_user_index));'
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
+      tags: index_users
 
     - debug: var=out.stdout_lines
-
-    - name: Set preprocess_js to disagregate js
-      command: ./../vendor/drush/drush/drush vset preprocess_js 0 --yes
-      register: out
-      args:
-        chdir: /var/www/html/emnies-dev/docroot
-
-    - debug: var=out.stdout_lines
-
-    - name: Set preprocess_css to disagregate css
-      command: ./../vendor/drush/drush/drush vset preprocess_css 0 --yes
-      register: out
-      args:
-        chdir: /var/www/html/emnies-dev/docroot
-
-    - debug: var=out.stdout_lines
+      tags: index_users
 
     - name: Enable email reroute
       command: ./../vendor/drush/drush/drush -y en reroute_email
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
+      tags: reroute_email_en
 
     - debug: var=out.stdout_lines
-
-    - name: Set default file path
-      command: ./../vendor/drush/drush/drush vget file_public_path "sites/default/files"
-      register: out
-      args:
-        chdir: /var/www/html/emnies-dev/docroot
-
-    - debug: var=out.stdout_lines
+      tags: reroute_email_en
 
     - name: Create project folder in vagrant user.
-      command: mkdir /home/vagrant/emnies
+      file:
+        path: /home/vagrant/emnies
+        state: directory
       register: out
+      tags: mkdir
 
     - debug: var=out.stdout_lines
+      tags: mkdir
 
     - name: Create project tmp folder in vagrant user.
-      command: mkdir /home/vagrant/emnies/tmp
+      file:
+        path: /home/vagrant/emnies/tmp
+        state: directory
       register: out
+      tags: mkdir
 
     - debug: var=out.stdout_lines
+      tags: mkdir
 
+    - name: Set preprocess_js to disagregate js
+      command: ./../vendor/drush/drush/drush vset preprocess_js 0 --yes
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: vset
+
+    - debug: var=out.stdout_lines
+      tags: vset
+
+    - name: Set preprocess_css to disagregate css
+      command: ./../vendor/drush/drush/drush vset preprocess_css 0 --yes
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: vset
+
+    - debug: var=out.stdout_lines
+      tags: vset
+
+    - name: Set default file path
+      command: ./../vendor/drush/drush/drush vset file_public_path "sites/default/files"
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: vset
+
+    - debug: var=out.stdout_lines
+      tags: vset
 
     - name: Set file private path
-      command: ./../vendor/drush/drush/drush vget file_private_path "/home/vagrant/emnies"
+      command: ./../vendor/drush/drush/drush vset file_private_path "/home/vagrant/emnies"
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
+      tags: vset
 
     - debug: var=out.stdout_lines
+      tags: vset
 
     - name: Change tmp default directory
-      command: ./../vendor/drush/drush/drush vget file_temporary_path "/home/vagrant/emnies/tmp"
+      command: ./../vendor/drush/drush/drush vset file_temporary_path "/home/vagrant/emnies/tmp"
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
+      tags: vset
 
     - debug: var=out.stdout_lines
+      tags: vset
 
     - name: Set file schema
-      command: ./../vendor/drush/drush/drush vget file_default_scheme "private"
+      command: ./../vendor/drush/drush/drush vset file_default_scheme "private"
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
+      tags: vset
 
     - debug: var=out.stdout_lines
+      tags: vset
 
     - name: Clear cache all
       command: ./../vendor/drush/drush/drush cc all
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
+      tags: cc_all
 
     - debug: var=out.stdout_lines
+      tags: cc_all
+
+    - name: Run cron
+      command: ./../vendor/drush/drush/drush cron
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: cron
+
+    - debug: var=out.stdout_lines
+      tags: cron
