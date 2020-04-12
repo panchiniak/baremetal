@@ -10,12 +10,12 @@ fi
 if [ ! -f /usr/bin/ansible ]; then
   apt-add-repository ppa:ansible/ansible
   apt update
-  apt install ansible
+  apt -y install ansible
 fi  
 
 # Enable incomming SSH connection in the host machine:
 if [ ! -d /home/$USERNAME/.ssh ]; then
-  apt install openssh-server
+  apt -y install openssh-server
 fi
 
 # Created shared data directory:

@@ -13,7 +13,12 @@
         update_cache: yes
         state: present
 
-    # @TODO: install guest additions
+    - name: Install git
+      become: true
+      apt:
+        name: git
+        update_cache: yes
+        state: present
 
     - local_action: stat path=/{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
       register: zipped_vagrant_exists
@@ -49,8 +54,24 @@
 
     - debug: var=out.stdout_lines
 
+    - name: install guest additions
+      command: ./vagrant plugin install vagrant-vbguest
+      register: out
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
+
+    - debug: var=out.stdout_lines
+
     - name: vagrant force destroy if present
       command: ./vagrant -f destroy
+      register: out
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
+
+    - debug: var=out.stdout_lines
+
+    - name: vagrant plugin install vagrant-disksize
+      command: ./vagrant plugin install vagrant-disksize
       register: out
       args:
         chdir: /{{ playbook_dir }}/vagrant/
