@@ -63,7 +63,7 @@
     - debug: var=out.stdout_lines
 
     - name: vagrant force destroy if present
-      command: ./vagrant -f destroy
+      command: ./vagrant destroy -f
       register: out
       args:
         chdir: /{{ playbook_dir }}/vagrant/
