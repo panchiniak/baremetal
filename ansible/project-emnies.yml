@@ -79,14 +79,29 @@
     - debug: var=out.stdout_lines
       tags: [cache]
 
-    - name: Check that the somefile.conf exists
+    - name: Make .drush writable
+      file:
+        path: /home/vagrant/.drush
+        state: directory
+        recurse: yes
+        owner: vagrant
+        group: vagrant
+        mode: 'o+w'
+      tags: [rr_dl,drush_permi]
+      register: out
+
+    - debug: var=out.stdout_lines
+      tags: rr_dl
+      tags: [rr_dl,drush_permi]
+
+    - name: Check that the registry_rebuild exists
       stat:
         path: /home/vagrant/.drush/registry_rebuild
       register: registry_rebuild_exists
       tags: rr_dl
 
     - name: Download registry rebuild
-      command: ./../vendor/drush/drush/drush dl  registry_rebuild --destination=/home/vagrant/.drush -y
+      command: ./../vendor/drush/drush/drush dl registry_rebuild --destination=/home/vagrant/.drush -y
       register: out
       tags: rr_dl
       args:
@@ -96,8 +111,8 @@
     - debug: var=out.stdout_lines
       tags: rr_dl
 
-    - name: Run registry rebuild
-      command: ./../vendor/drush/drush/drush rr
+    - name: Clear cache of drush
+      command: ./../vendor/drush/drush/drush cache-clear drush
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
@@ -105,6 +120,17 @@
 
     - debug: var=out.stdout_lines
       tags: rr
+
+    # - name: Run registry rebuild
+    #   become: yes
+    #   command: ./../vendor/drush/drush/drush rr
+    #   register: out
+    #   args:
+    #     chdir: /var/www/html/emnies-dev/docroot
+    #   tags: rr
+
+    # - debug: var=out.stdout_lines
+    #   tags: rr
 
     - name: Update database
       command: ./../vendor/drush/drush/drush -v -y updb
@@ -157,16 +183,6 @@
 
     - debug: var=out.stdout_lines
       tags: sapi
-
-    - name: Index users
-      command: ./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(solr_user_index));'
-      register: out
-      args:
-        chdir: /var/www/html/emnies-dev/docroot
-      tags: index_users
-
-    - debug: var=out.stdout_lines
-      tags: index_users
 
     - name: Enable email reroute
       command: ./../vendor/drush/drush/drush -y en reroute_email
@@ -277,3 +293,13 @@
 
     - debug: var=out.stdout_lines
       tags: cron
+
+    - name: Index users
+      command: ./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(solr_user_index));'
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: index_users
+
+    - debug: var=out.stdout_lines
+      tags: index_users
