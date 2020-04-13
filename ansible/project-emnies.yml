@@ -86,7 +86,7 @@
       tags: rr_dl
 
     - name: Download registry rebuild
-      command: ./../vendor/drush/drush/drush dl registry_rebuild --destination=/home/vagrant/.drush
+      command: ./../vendor/drush/drush/drush dl  registry_rebuild --destination=/home/vagrant/.drush -y
       register: out
       tags: rr_dl
       args:
