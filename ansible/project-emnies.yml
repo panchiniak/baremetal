@@ -121,17 +121,6 @@
     - debug: var=out.stdout_lines
       tags: rr
 
-    # - name: Run registry rebuild
-    #   become: yes
-    #   command: ./../vendor/drush/drush/drush rr
-    #   register: out
-    #   args:
-    #     chdir: /var/www/html/emnies-dev/docroot
-    #   tags: rr
-
-    # - debug: var=out.stdout_lines
-    #   tags: rr
-
     - name: Update database
       command: ./../vendor/drush/drush/drush -v -y updb
       register: out
@@ -163,6 +152,38 @@
     #     ),
     #   ),
     # );
+
+    - name: Enable search API
+      become: yes
+      command: ./../vendor/drush/drush/drush -y en search_api
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: rr
+
+    - debug: var=out.stdout_lines
+      tags: rr
+
+    - name: Run registry rebuild
+      become: yes
+      command: ./../vendor/drush/drush/drush rr
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: rr
+
+    - debug: var=out.stdout_lines
+      tags: rr
+
+    - name: Copy solr settings into collection conf folder.
+      command: cp -ar -v /vagrant_data/solr/*.* /var/solr/collection1/conf
+      register: out
+      args:
+        chdir: /vagrant_data/solr/
+      tags: sapi
+
+    - debug: var=out.stdout_lines
+      tags: sapi
 
     - name: Run sapi-c
       command: ./../vendor/drush/drush/drush -v sapi-c solr_user_index
