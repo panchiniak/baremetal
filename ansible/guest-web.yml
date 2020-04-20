@@ -2,7 +2,7 @@
 # Gest configurations
 #################################################
 ---
-- hosts: emnies
+- hosts: web
   become: yes
   vars_files:
     - group_vars/emnies_hosts
@@ -29,8 +29,6 @@
     - { role: geerlingguy.php, tags: [ 'php' ] }
     - { role: geerlingguy.mysql, tags: [ 'mysql' ] }
     - { role: geerlingguy.php-mysql, tags: [ 'php-mysql' ] }
-    - { role: geerlingguy.java }
-    - { role: geerlingguy.solr }
     - { role: geerlingguy.composer }
     - { role: geerlingguy.drush }
 

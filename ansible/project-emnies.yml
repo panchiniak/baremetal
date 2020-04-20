@@ -101,7 +101,7 @@
       tags: rr_dl
 
     - name: Download registry rebuild
-      command: ./../vendor/drush/drush/drush dl registry_rebuild --destination=/home/vagrant/.drush -y
+      command: ./../vendor/drush/drush/drush dl registry_rebuild-7.x --destination=/home/vagrant/.drush -y
       register: out
       tags: rr_dl
       args:
@@ -110,6 +110,24 @@
 
     - debug: var=out.stdout_lines
       tags: rr_dl
+
+    - name: Install unzip - it will be used by drush make
+      become: true
+      apt:
+        name: unzip
+        update_cache: yes
+        state: present
+
+    # Remove __temp_drush_make if present
+    # At project root run drush make from drush at /bin: 
+    # ./bin/drush make --cache-duration-releasexml=300 --concurrency=8 irma.make.yml __temp_drush_make
+    # Fix wrong profile placement.
+    #   mv __temp_drush_make/profiles/contrib/openatrium __temp_drush_make/profiles/openatrium
+    #   rm -rf __temp_drush_make/profiles/contrib/
+    # Move the new files without deleting existing ones.
+    #   rsync -r --update __temp_drush_make/ docroot/
+    # Remove the temporary drush make dir.
+    #   rm -rf __temp_drush_make
 
     - name: Clear cache of drush
       command: ./../vendor/drush/drush/drush cache-clear drush
@@ -121,8 +139,18 @@
     - debug: var=out.stdout_lines
       tags: rr
 
+    - name: Build
+      command: ./../vendor/drush/drush/drush cache-clear drush
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: rr
+
+    - debug: var=out.stdout_lines
+      tags: rr
+
     - name: Update database
-      command: ./../vendor/drush/drush/drush -v -y updb
+      command: ./../vendor/drush/drush/drush updatedb --yes -v
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot

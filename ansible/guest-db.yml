@@ -2,7 +2,7 @@
 # Gest configurations
 #################################################
 ---
-- hosts: emnies
+- hosts: db
   become: yes
   vars_files:
     - group_vars/emnies_hosts

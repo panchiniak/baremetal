@@ -6,7 +6,7 @@
 # https://www.vagrantup.com/docs/networking/private_network.html
 # https://www.thisprogrammingthing.com/2015/multiple-vagrant-vms-in-one-vagrantfile/
 
-Vagrant.configure("2") do |config| 
+Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/bionic64"
   # @TODO: make the disk size configurable:
   config.disksize.size = '100GB'
@@ -30,4 +30,87 @@ Vagrant.configure("2") do |config|
   end
   ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
   config.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys", privileged: false
+
+
+#  config.vm.define "web", autostart: false do |web|
+#    web.vm.box = "ubuntu/bionic64"
+#    # @TODO: make the disk size configurable:
+#    web.disksize.size = '100GB'
+#    # SSH:
+#    web.vm.network "forwarded_port", guest: 22, host: 2223
+#    # Apache from guest to host:
+#    web.vm.network "forwarded_port", guest: 80, host: 8181, host_ip: "127.0.0.1"
+#    # @TODO: provide a mapping from http at host to http at guest for allowing
+#    # provision of locally available files, eg. solr.
+#    # Solr:
+#    # web.vm.network "forwarded_port", guest: 8983, host: 9090, host_ip: "127.0.0.1"
+#    # @TODO: do not use network name or get it automatically of from a configuration file
+#    web.vm.network "public_network", bridge: "enp4s0", ip: "192.168.0.0"
+#    #web.vm.network "public_network", ip: "192.168.0.17"
+#
+#    #web.vm.network "public_network", bridge: [
+#    #  "enp4s0",
+#    #  "other-option",
+#    #]
+#
+#    web.vm.synced_folder "data_web", "/vagrant_data"
+#    web.vm.provider "virtualbox" do |vb|
+#      # Dont display the VirtualBox GUI when booting the machine
+#      vb.gui = false
+#      # Customize the amount of memory on the VM:
+#      vb.memory = "6000"
+#      vb.cpus = "3"
+#    end
+#    ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
+#    web.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys", privileged: false
+#  end
+#
+#  config.vm.define "db", autostart: false do |db|
+#    db.vm.box = "ubuntu/bionic64"
+#    # @TODO: make the disk size configurable:
+#    db.disksize.size = '100GB'
+#    # SSH:
+#    db.vm.network "forwarded_port", guest: 22, host: 2224
+#    # Apache from guest to host:
+#    db.vm.network "forwarded_port", guest: 80, host: 8282, host_ip: "127.0.0.1"
+#    # @TODO: provide a mapping from http at host to http at guest for allowing
+#    # provision of locally available files, eg. solr.
+#    # @TODO: do not use network name or get it automatically of from a configuration file
+#    db.vm.network "public_network", bridge: "enp4s0", ip: "192.168.0.1"
+#    db.vm.synced_folder "data_db", "/vagrant_data"
+#    db.vm.provider "virtualbox" do |vb|
+#      # Dont display the VirtualBox GUI when booting the machine
+#      vb.gui = false
+#      # Customize the amount of memory on the VM:
+#      vb.memory = "6000"
+#      vb.cpus = "3"
+#    end
+#    ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
+#    db.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys", privileged: false
+#  end
+#
+#  config.vm.define "solr", autostart: false do |solr|
+#    solr.vm.box = "ubuntu/bionic64"
+#    # @TODO: make the disk size configurable:
+#    solr.disksize.size = '100GB'
+#    # SSH:
+#    solr.vm.network "forwarded_port", guest: 22, host: 2225
+#    # @TODO: provide a mapping from http at host to http at guest for allowing
+#    # provision of locally available files, eg. solr.
+#    # Solr:
+#    solr.vm.network "forwarded_port", guest: 8983, host: 9191, host_ip: "127.0.0.1"
+#    # @TODO: do not use network name or get it automatically of from a configuration file
+#    solr.vm.network "public_network", bridge: "enp4s0", ip: "192.168.0.2"
+#    solr.vm.synced_folder "data_solr", "/vagrant_data"
+#    solr.vm.provider "virtualbox" do |vb|
+#      # Dont display the VirtualBox GUI when booting the machine
+#      vb.gui = false
+#      # Customize the amount of memory on the VM:
+#      vb.memory = "6000"
+#      vb.cpus = "3"
+#    end
+#    ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
+#    solr.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys", privileged: false
+#  end
+
 end

@@ -7,6 +7,9 @@
 
 [servers]
 emnies ansible_port=2222 ansible_host=127.0.0.1
+web ansible_port=2223 ansible_host=127.0.0.1
+db ansible_port=2224 ansible_host=127.0.0.1
+solr ansible_port=2225 ansible_host=127.0.0.1
 host ansible_port=22 ansible_host=127.0.0.1
 
 # Default settings:

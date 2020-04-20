@@ -1,0 +1,26 @@
+#################################################
+# Gest configurations for solr
+#################################################
+---
+- hosts: solr
+  become: yes
+  vars_files:
+    - group_vars/emnies_hosts
+
+  tasks:
+
+  pre_tasks:
+    - name: Update apt cache.
+      apt: update_cache=yes cache_valid_time=86400
+
+  roles:
+    - { role: geerlingguy.java }
+    - { role: geerlingguy.solr }
+
+    # @TODO: add Directoy at default host for clean URL:
+    # <Directory /var/www/html>
+    #   Options Indexes FollowSymLinks MultiViews
+    #   AllowOverride All
+    #   Require all granted
+    # </Directory>
+    # /etc/apache2/sites-enabled/000-default.conf
