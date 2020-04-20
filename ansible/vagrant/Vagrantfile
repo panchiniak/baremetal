@@ -5,6 +5,7 @@
 # https://www.vagrantup.com/docs/multi-machine/
 # https://www.vagrantup.com/docs/networking/private_network.html
 # https://www.thisprogrammingthing.com/2015/multiple-vagrant-vms-in-one-vagrantfile/
+# https://technology.amis.nl/2018/07/27/virtualbox-networking-explained/#prettyPhoto
 
 Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/bionic64"
