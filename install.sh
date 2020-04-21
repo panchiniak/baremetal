@@ -48,3 +48,9 @@ if [ ! -f ./ansible/group_vars/emnies_hosts ]; then
   cp ./ansible/group_vars/emnies_hosts.default ./ansible/group_vars/emnies_hosts
   printf "\nemnies_host_username: $USERNAME" >> ./ansible/group_vars/emnies_hosts
 fi
+
+# If there is no settings.local.php file copy settings.local.php.default as it
+if [ ! -f ./ansible/vagrant/data_web/assets/settings.local.php ]; then
+  # Concatenate pubkey in the end of file:
+  cp ./ansible/vagrant/data_web/assets/settings.local.php.default ./ansible/vagrant/data_web/assets/settings.local.php
+fi

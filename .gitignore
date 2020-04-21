@@ -4,3 +4,4 @@ ansible/vagrant/.vagrant
 ansible/roles/
 ansible/vagrant/*.log
 ansible/vagrant/data/*
+ansible/vagrant/data_web/assets/settings.local.php

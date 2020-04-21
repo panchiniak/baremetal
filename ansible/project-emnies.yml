@@ -8,6 +8,194 @@
     - group_vars/emnies_hosts
 
   tasks:
+    - name: Install unzip - it will be used by drush make
+      become: true
+      apt:
+        name: unzip
+        update_cache: yes
+        state: present
+      tags: build
+
+    - name: Remove __temp_drush_make if present
+      file:
+        path: /var/www/html/emnies-dev/__temp_drush_make
+        state: absent
+      register: out
+      tags: build
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Remove docroot if present
+      file:
+        path: /var/www/html/emnies-dev/docroot
+        state: absent
+      register: out
+      tags: build
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Build in temporary folder
+      command: ./bin/drush make --cache-duration-releasexml=300 --concurrency=8 irma.make.yml __temp_drush_make
+      register: out
+      tags: build
+      args:
+        chdir: /var/www/html/emnies-dev
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Fix wrong profile placement
+      command: mv __temp_drush_make/profiles/contrib/openatrium __temp_drush_make/profiles/openatrium
+      register: out
+      tags: build
+      args:
+        chdir: /var/www/html/emnies-dev
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Remove docroot if present
+      file:
+        path: __temp_drush_make/profiles/contrib
+        state: absent
+      register: out
+      tags: build
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Fix wrong profile placement
+      command: rsync -r --update __temp_drush_make/ docroot/
+      register: out
+      tags: build
+      args:
+        chdir: /var/www/html/emnies-dev
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Remove __temp_drush_make
+      file:
+        path: /var/www/html/emnies-dev/__temp_drush_make
+        state: absent
+      register: out
+      tags: build
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Create a symbolic link for modules
+      file:
+        src: /var/www/html/emnies-dev/modules
+        dest: /var/www/html/emnies-dev/docroot/sites/default/modules
+        state: link
+      tags: build
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Create a symbolic link for themes
+      file:
+        src: /var/www/html/emnies-dev/themes
+        dest: /var/www/html/emnies-dev/docroot/sites/default/themes
+        state: link
+      tags: build
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Create a symbolic link for settings.php
+      file:
+        src: /var/www/html/emnies-dev/shared/settings.php
+        dest: /var/www/html/emnies-dev/docroot/sites/default/settings.php
+        state: link
+      tags: build
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Create files folder in shared if needed
+      file:
+        path: /var/www/html/emnies-dev/shared/files
+        state: directory
+      register: out
+      tags: build
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Create a symbolic link for files folder
+      file:
+        src: /var/www/html/emnies-dev/shared/files
+        dest: /var/www/html/emnies-dev/docroot/sites/default/files
+        state: link
+      tags: build
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Set permissions for files folder
+      command: chmod -R 0777 files
+      register: out
+      tags: build
+      args:
+        chdir: /var/www/html/emnies-dev/shared
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Create private folder in shared if needed
+      file:
+        path: /var/www/html/emnies-dev/shared/private
+        state: directory
+      register: out
+      tags: build
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Create a symbolic link for private folder
+      file:
+        src: /var/www/html/emnies-dev/shared/private
+        dest: /var/www/html/emnies-dev/docroot/sites/default/private
+        state: link
+      tags: build
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Set permissions for private folder
+      command: chmod -R 0777 private
+      register: out
+      tags: build
+      args:
+        chdir: /var/www/html/emnies-dev/shared
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Create a symbolic link for local settings
+      file:
+        src: /vagrant_data/assets/settings.local.php
+        dest: /var/www/html/emnies-dev/docroot/sites/default/settings.local.php
+        state: link
+      tags: build
+
+    - debug: var=out.stdout_lines
+      tags: build
+
+    - name: Create project tmp folder in vagrant user.
+      file:
+        path: /home/vagrant/emnies/tmp
+        state: directory
+      register: out
+      tags: mkdir
+
     - name: Delete database with name 'ami'
       mysql_db:
         name: ami
@@ -32,8 +220,7 @@
     # @TODO: if a database is not available:
     # @TODO: Get sanitized database from DIGIT and extract it at /vagrant_data if not available
     # @TODO: if project came from git:
-    # @TODO: get https://www.drupal.org/files/issues/2018-06-06/2977835-command_buttons-php72-2.patch and put in /vagrant_data/patches
-    # @TODO: apply patch: 2977835-command_buttons-php72-2.patch to /var/www/html/emnies-dev/sites/all/modules/contrib/command_buttons/includes
+    # @TODO: get patch at https://www.drupal.org/project/drupal/issues/3031631 , put in /vagrant_data/patches and apply to includes/forms.inc
 
     - name: Import sanitized_daily_ami_production_db.sql similar to mysql -u <username> -p <password> < sanitized_daily_ami_production_db.sql
       mysql_db:
@@ -79,6 +266,16 @@
     - debug: var=out.stdout_lines
       tags: [cache]
 
+    - name: TRUNCATE TABLE ctools_object_cache
+      command: ./../vendor/drush/drush/drush -v sqlq "TRUNCATE TABLE ctools_object_cache"
+      register: out
+      tags: [cache]
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+
+    - debug: var=out.stdout_lines
+      tags: [cache]
+
     - name: Make .drush writable
       file:
         path: /home/vagrant/.drush
@@ -110,24 +307,6 @@
 
     - debug: var=out.stdout_lines
       tags: rr_dl
-
-    - name: Install unzip - it will be used by drush make
-      become: true
-      apt:
-        name: unzip
-        update_cache: yes
-        state: present
-
-    # Remove __temp_drush_make if present
-    # At project root run drush make from drush at /bin: 
-    # ./bin/drush make --cache-duration-releasexml=300 --concurrency=8 irma.make.yml __temp_drush_make
-    # Fix wrong profile placement.
-    #   mv __temp_drush_make/profiles/contrib/openatrium __temp_drush_make/profiles/openatrium
-    #   rm -rf __temp_drush_make/profiles/contrib/
-    # Move the new files without deleting existing ones.
-    #   rsync -r --update __temp_drush_make/ docroot/
-    # Remove the temporary drush make dir.
-    #   rm -rf __temp_drush_make
 
     - name: Clear cache of drush
       command: ./../vendor/drush/drush/drush cache-clear drush
@@ -168,18 +347,6 @@
 
     - debug: var=out.stdout_lines
       tags: fra
-
-    # @TODO: if not yet done define standard solr core at settings.local.php:
-    # $conf['search_api_solr_overrides'] = array(
-    #   'solr_server' => array(
-    #     'name' => t('Solr Server (Overridden)'),
-    #     'options' => array(
-    #       'host' => '127.0.0.1',
-    #       'port' => 8983,
-    #       'path' => '/solr/collection1',
-    #     ),
-    #   ),
-    # );
 
     - name: Enable search API
       become: yes
@@ -315,6 +482,16 @@
 
     - name: Set file schema
       command: ./../vendor/drush/drush/drush vset file_default_scheme "private"
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: vset
+
+    - debug: var=out.stdout_lines
+      tags: vset
+
+    - name: Set irma api host
+      command: ./../vendor/drush/drush/drush vset irma_api_ami_settings_host ""
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
