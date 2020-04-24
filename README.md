@@ -5,7 +5,7 @@ This document will guide you through the installation and usage of EMNIES Ansibl
 
 ## OS Requirement
 
-EMNIES Ansible Project Handler has been tested in:
+EMNIES Ansible Project Handler has been tested for both host and guest sides with:
 *  Ubuntu 18.04.4 LTS. 
 
 If this is not your OS and you still want to use EMNIES Ansible Project Handler, please consider creating a PR with the changes needed for running it at your OS.
