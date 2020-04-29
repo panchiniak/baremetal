@@ -16,6 +16,19 @@
         state: present
       tags: build
 
+    - name: Create a symbolic link
+      file:
+        src: /vagrant_data/emnies-dev
+        dest: /var/www/html/emnies-dev
+        owner: vagrant
+        group: vagrant
+        state: link
+      tags: apache_link
+      register: out
+
+    - debug: var=out.stdout_lines
+      tags: [apache_link,build]
+
     - name: Remove __temp_drush_make if present
       file:
         path: /var/www/html/emnies-dev/__temp_drush_make
@@ -233,19 +246,6 @@
     - debug: var=out.stdout_lines
       tags: [db]
 
-    - name: Create a symbolic link
-      file:
-        src: /vagrant_data/emnies-dev
-        dest: /var/www/html/emnies-dev
-        owner: vagrant
-        group: vagrant
-        state: link
-      tags: apache_link
-      register: out
-
-    - debug: var=out.stdout_lines
-      tags: apache_link
-
     - name: TRUNCATE TABLE cache
       command: ./../vendor/drush/drush/drush -v sqlq "TRUNCATE TABLE cache"
       register: out
@@ -298,7 +298,7 @@
       tags: rr_dl
 
     - name: Download registry rebuild
-      command: ./../vendor/drush/drush/drush dl registry_rebuild-7.x --destination=/home/vagrant/.drush -y
+      command: ./../vendor/drush/drush/drush dl registry_rebuild --destination=/home/vagrant/.drush -y
       register: out
       tags: rr_dl
       args:
@@ -309,16 +309,6 @@
       tags: rr_dl
 
     - name: Clear cache of drush
-      command: ./../vendor/drush/drush/drush cache-clear drush
-      register: out
-      args:
-        chdir: /var/www/html/emnies-dev/docroot
-      tags: rr
-
-    - debug: var=out.stdout_lines
-      tags: rr
-
-    - name: Build
       command: ./../vendor/drush/drush/drush cache-clear drush
       register: out
       args:
@@ -359,9 +349,19 @@
     - debug: var=out.stdout_lines
       tags: rr
 
+    - name: Drush cache-clear drush
+      command: ./../vendor/drush/drush/drush cache-clear drush
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: rr
+
+    - debug: var=out.stdout_lines
+      tags: rr
+
     - name: Run registry rebuild
       become: yes
-      command: ./../vendor/drush/drush/drush rr
+      command: ./../bin/drush rr
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
@@ -371,10 +371,10 @@
       tags: rr
 
     - name: Copy solr settings into collection conf folder.
-      command: cp -ar -v /vagrant_data/solr/*.* /var/solr/collection1/conf
+      shell: cp -ar /var/www/html/emnies-dev/docroot/sites/all/modules/contrib/search_api_solr/solr-conf/7.x/*.* /var/solr/data/collection1/conf
       register: out
       args:
-        chdir: /vagrant_data/solr/
+        chdir: /vagrant_data/solr
       tags: sapi
 
     - debug: var=out.stdout_lines
@@ -429,6 +429,14 @@
 
     - debug: var=out.stdout_lines
       tags: mkdir
+
+    - name: Allow all to write in emnies
+      command: chmod a+w -R /home/vagrant/emnies
+      register: out
+      tags: chmod
+
+    - debug: var=out.stdout_lines
+      tags: chmod
 
     - name: Set preprocess_js to disagregate js
       command: ./../vendor/drush/drush/drush vset preprocess_js 0 --yes
@@ -529,3 +537,36 @@
 
     - debug: var=out.stdout_lines
       tags: index_users
+
+    - name: Run sapi-c
+      command: ./../vendor/drush/drush/drush -v sapi-c node_index
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: sapi
+
+    - debug: var=out.stdout_lines
+      tags: sapi
+
+    - name: Run sapi-r
+      command: ./../vendor/drush/drush/drush -v sapi-r node_index
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: sapi
+
+    - debug: var=out.stdout_lines
+      tags: sapi
+
+    - name: Index nodes
+      command: ./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(node_index));'
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: index_users
+
+    - debug: var=out.stdout_lines
+      tags: index_users
+
+
+# @TODO: install, enable and configure krumo search and file log

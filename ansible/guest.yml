@@ -56,3 +56,5 @@
     #   Require all granted
     # </Directory>
     # /etc/apache2/sites-enabled/000-default.conf
+    # @TODO: set http password using:
+    # https://github.com/geerlingguy/ansible-role-htpasswd
