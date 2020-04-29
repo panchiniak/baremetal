@@ -221,6 +221,21 @@
     - debug: var=out.stdout_lines
       tags: [ansible, ansible_drush]
 
+    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.htpasswd
+      register: geerlingguy_htpasswd_exists
+      tags: [ansible, ansible_htpasswd]
+
+    - name: install geerlingguy drush from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.htpasswd
+      register: out
+      tags: [ansible, ansible_htpasswd]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_htpasswd_exists.stat.exists == False
+
+    - debug: var=out.stdout_lines
+      tags: [ansible, ansible_htpasswd]
+
     - name: ssh-keygen
       shell: ssh-keygen -f /home/{{ emnies_host_username }}/.ssh/known_hosts -R [127.0.0.1]:2222
       register: out
