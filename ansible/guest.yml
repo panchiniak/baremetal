@@ -34,6 +34,7 @@
     - { role: geerlingguy.solr }
     - { role: geerlingguy.composer }
     - { role: geerlingguy.drush }
+    - { role: geerlingguy.htpasswd, tags: [ 'htpasswd' ]}
 
   post_tasks:
 
@@ -53,7 +54,10 @@
     # <Directory /var/www/html>
     #   Options Indexes FollowSymLinks MultiViews
     #   AllowOverride All
-    #   Require all granted
+    #   AuthType Basic
+    #   AuthName "Apache with basic auth."
+    #   AuthUserFile /etc/apache-passwdfile
+    #   Require valid-user
     # </Directory>
     # /etc/apache2/sites-enabled/000-default.conf
     # @TODO: set http password using:
