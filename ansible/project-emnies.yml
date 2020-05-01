@@ -49,6 +49,16 @@
     - debug: var=out.stdout_lines
       tags: build
 
+    - name: Composer install.
+      command: composer install
+      register: out
+      tags: build
+      args:
+        chdir: /var/www/html/emnies-dev
+
+    - debug: var=out.stdout_lines
+      tags: build
+
     - name: Build in temporary folder
       command: ./bin/drush make --cache-duration-releasexml=300 --concurrency=8 irma.make.yml __temp_drush_make
       register: out
@@ -529,7 +539,7 @@
       tags: cron
 
     - name: Index users
-      command: ./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(solr_user_index));'
+      shell: ./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(solr_user_index));'
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
