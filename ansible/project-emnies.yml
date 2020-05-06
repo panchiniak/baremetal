@@ -329,7 +329,8 @@
       tags: rr
 
     - name: Update database
-      command: ./../vendor/drush/drush/drush updatedb --yes -v
+      shell: "./../bin/drush updatedb --yes -v"
+      ignore_errors: true
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
@@ -370,8 +371,8 @@
       tags: rr
 
     - name: Run registry rebuild
-      become: yes
-      command: ./../bin/drush rr
+      become: no
+      shell: './../bin/drush rr'
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
@@ -411,7 +412,7 @@
       tags: sapi
 
     - name: Enable email reroute
-      command: ./../vendor/drush/drush/drush -y en reroute_email
+      shell: "./../bin/drush -y en reroute_email"
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
