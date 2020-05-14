@@ -13,14 +13,12 @@ Vagrant.configure("2") do |config|
   config.disksize.size = '100GB'
   # SSH:
   config.vm.network "forwarded_port", guest: 22, host: 2222
-  # Apache from guest to host:
-  config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
-  # @TODO: provide a mapping from http at host to http at guest for allowing
-  # provision of locally available files, eg. solr.
-  # Solr:
+  # Apache from guest in SSL to any IP in host for allowing redirection:
+  config.vm.network "forwarded_port", guest: 443, host: 8181, host_ip: "0.0.0.0"
+  # Solr by default stays at 8983:
   config.vm.network "forwarded_port", guest: 8983, host: 9090, host_ip: "127.0.0.1"
-  # @TODO: do not use network name or get it automatically of from a configuration file
-  config.vm.network "public_network", bridge: "enp4s0"
+  # @TODO: do not use network name or get it from a configuration file
+  config.vm.network "public_network", bridge: "enp4s0", ip: "192.168.0.222"
   config.vm.synced_folder "data", "/vagrant_data"
   config.vm.provider "virtualbox" do |vb|
     # Dont display the VirtualBox GUI when booting the machine

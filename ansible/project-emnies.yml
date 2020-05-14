@@ -49,6 +49,16 @@
     - debug: var=out.stdout_lines
       tags: build
 
+    - name: Composer install.
+      command: composer install
+      register: out
+      tags: build
+      args:
+        chdir: /var/www/html/emnies-dev
+
+    - debug: var=out.stdout_lines
+      tags: build
+
     - name: Build in temporary folder
       command: ./bin/drush make --cache-duration-releasexml=300 --concurrency=8 irma.make.yml __temp_drush_make
       register: out
@@ -319,7 +329,8 @@
       tags: rr
 
     - name: Update database
-      command: ./../vendor/drush/drush/drush updatedb --yes -v
+      shell: "./../bin/drush updatedb --yes -v"
+      ignore_errors: true
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
@@ -360,8 +371,8 @@
       tags: rr
 
     - name: Run registry rebuild
-      become: yes
-      command: ./../bin/drush rr
+      become: no
+      shell: './../bin/drush rr'
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
@@ -401,7 +412,7 @@
       tags: sapi
 
     - name: Enable email reroute
-      command: ./../vendor/drush/drush/drush -y en reroute_email
+      shell: "./../bin/drush -y en reroute_email"
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
@@ -529,7 +540,7 @@
       tags: cron
 
     - name: Index users
-      command: ./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(solr_user_index));'
+      shell: ./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(solr_user_index));'
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
