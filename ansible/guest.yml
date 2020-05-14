@@ -52,6 +52,9 @@
 
     # @TODO: add Directoy at default host for clean URL:
     # <Directory /var/www/html>
+    # Options Indexes FollowSymLinks MultiViews
+    # AllowOverride All
+    #   Require all granted
     #   Options Indexes FollowSymLinks MultiViews
     #   AllowOverride All
     #   AuthType Basic
