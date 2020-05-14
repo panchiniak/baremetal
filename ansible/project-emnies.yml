@@ -340,8 +340,9 @@
       tags: updb
 
     - name: Revert features
-      command: ./../vendor/drush/drush/drush -v -y fra
+      shell: "./../vendor/drush/drush/drush fra -y"
       register: out
+      ignore_errors: true
       args:
         chdir: /var/www/html/emnies-dev/docroot
       tags: fra
@@ -362,17 +363,6 @@
 
     - name: Drush cache-clear drush
       command: ./../vendor/drush/drush/drush cache-clear drush
-      register: out
-      args:
-        chdir: /var/www/html/emnies-dev/docroot
-      tags: rr
-
-    - debug: var=out.stdout_lines
-      tags: rr
-
-    - name: Run registry rebuild
-      become: no
-      shell: './../bin/drush rr'
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
@@ -410,16 +400,6 @@
 
     - debug: var=out.stdout_lines
       tags: sapi
-
-    - name: Enable email reroute
-      shell: "./../bin/drush -y en reroute_email"
-      register: out
-      args:
-        chdir: /var/www/html/emnies-dev/docroot
-      tags: reroute_email_en
-
-    - debug: var=out.stdout_lines
-      tags: reroute_email_en
 
     - name: Create project folder in vagrant user.
       file:
@@ -520,7 +500,8 @@
       tags: vset
 
     - name: Clear cache all
-      command: ./../vendor/drush/drush/drush cc all
+      become: no
+      shell: "./../vendor/drush/drush/drush cc all"
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
@@ -529,15 +510,26 @@
     - debug: var=out.stdout_lines
       tags: cc_all
 
-    - name: Run cron
-      command: ./../vendor/drush/drush/drush cron
+    - name: Run registry rebuild
+      become: no
+      shell: "./../bin/drush rr"
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
-      tags: cron
+      tags: rr
 
     - debug: var=out.stdout_lines
-      tags: cron
+      tags: rr
+
+    - name: Enable email reroute
+      shell: "./../bin/drush en reroute_email -y"
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: reroute_email_en
+
+    - debug: var=out.stdout_lines
+      tags: reroute_email_en
 
     - name: Index users
       shell: ./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(solr_user_index));'
@@ -569,15 +561,15 @@
     - debug: var=out.stdout_lines
       tags: sapi
 
-    - name: Index nodes
-      command: ./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(node_index));'
-      register: out
-      args:
-        chdir: /var/www/html/emnies-dev/docroot
-      tags: index_users
+    # - name: Index nodes
+    #   command: ./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(node_index));'
+    #   register: out
+    #   args:
+    #     chdir: /var/www/html/emnies-dev/docroot
+    #   tags: index_users
 
-    - debug: var=out.stdout_lines
-      tags: index_users
+    # - debug: var=out.stdout_lines
+    #   tags: index_users
 
 
 # @TODO: install, enable and configure krumo search and file log
