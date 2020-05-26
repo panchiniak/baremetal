@@ -5,10 +5,10 @@ This document will guide you through the installation and usage of Baremetal Vag
 
 ## OS Requirement
 
-EMNIES Ansible Project Handler has been tested for both host and guest sides with:
+Baremetal Vagrant/Ansible Infrastructure and Applications Handler has been tested for both host and guest sides with:
 *  Ubuntu 18.04.4 LTS. 
 
-If this is not your OS and you still want to use EMNIES Ansible Project Handler, please consider creating a PR with the changes needed for running it at your OS.
+If this is not your OS and you still want to use Baremetal Vagrant/Ansible Infrastructure and Applications Handler, please consider creating a PR with the changes needed for running it at your OS.
 
 ## Install Software Requirements
 
@@ -28,11 +28,11 @@ Replace `<host>` by the host you want to run the playbook against:
 
 `cd ansible`
 
-`ansible-playbook -l host -i emnies_hosts -u $(whoami) host.yml --extra-vars "ansible_sudo_pass=yourPassword"`
+`ansible-playbook -l host -i app_hosts -u $(whoami) host.yml --extra-vars "ansible_sudo_pass=yourPassword"`
 
-`ansible-playbook -l emnies -i emnies_hosts -u vagrant guest.yml`
+`ansible-playbook -l app -i app_hosts -u vagrant guest.yml`
 
-`ansible-playbook -l emnies -i emnies_hosts -u vagrant project-emnies.yml`
+`ansible-playbook -l app -i app_hosts -u vagrant project-app.yml`
 
 Warning: for safety constrains please read and understand `playbook.yml` file before running it.
 
