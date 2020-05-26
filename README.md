@@ -1,4 +1,4 @@
-# EMNIES Ansible Project Handler
+# Beremetal Vagrant/Ansible Project Handler
 
 This document will guide you through the installation and usage of EMNIES Ansible Project Handler. 
 
