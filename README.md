@@ -1,6 +1,6 @@
-# Beremetal Vagrant/Ansible Project Handler
+# Baremetal Vagrant/Ansible Infrastructure and Applications Handler
 
-This document will guide you through the installation and usage of EMNIES Ansible Project Handler. 
+This document will guide you through the installation and usage of Baremetal Vagrant/Ansible Infrastructure and Applications Handler. 
 
 
 ## OS Requirement
