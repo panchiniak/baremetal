@@ -522,6 +522,16 @@
     - debug: var=out.stdout_lines
       tags: reroute_email_en
 
+    - name: Enable search krumo
+      shell: "./../bin/drush en search_krumo -y"
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: search_krumo_en
+
+    - debug: var=out.stdout_lines
+      tags: search_krumo_en
+
     - name: Run sapi-c
       shell: "./../bin/drush -v sapi-c solr_user_index"
       register: out
