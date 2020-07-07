@@ -329,69 +329,6 @@
     - debug: var=out.stdout_lines
       tags: rr_dl
 
-    - name: Clear cache of drush
-      command: ./../vendor/drush/drush/drush cache-clear drush
-      register: out
-      args:
-        chdir: /var/www/html/emnies-dev/docroot
-      tags: rr
-
-    - debug: var=out.stdout_lines
-      tags: rr
-
-    - name: Update database
-      shell: "./../bin/drush updatedb --yes -v"
-      ignore_errors: true
-      register: out
-      args:
-        chdir: /var/www/html/emnies-dev/docroot
-      tags: updb
-
-    - debug: var=out.stdout_lines
-      tags: updb
-
-    - name: Revert features
-      shell: "./../vendor/drush/drush/drush fra -y"
-      register: out
-      ignore_errors: true
-      args:
-        chdir: /var/www/html/emnies-dev/docroot
-      tags: fra
-
-    - debug: var=out.stdout_lines
-      tags: fra
-
-    - name: Enable search API
-      become: yes
-      command: ./../vendor/drush/drush/drush -y en search_api
-      register: out
-      args:
-        chdir: /var/www/html/emnies-dev/docroot
-      tags: rr
-
-    - debug: var=out.stdout_lines
-      tags: rr
-
-    - name: Drush cache-clear drush
-      command: ./../vendor/drush/drush/drush cache-clear drush
-      register: out
-      args:
-        chdir: /var/www/html/emnies-dev/docroot
-      tags: rr
-
-    - debug: var=out.stdout_lines
-      tags: rr
-
-    - name: Copy solr settings into collection conf folder.
-      shell: cp -ar /var/www/html/emnies-dev/docroot/sites/all/modules/contrib/search_api_solr/solr-conf/7.x/*.* /var/solr/data/collection1/conf
-      register: out
-      args:
-        chdir: /vagrant_data/solr
-      tags: sapi
-
-    - debug: var=out.stdout_lines
-      tags: sapi
-
     - name: Create project folder in vagrant user.
       file:
         path: /home/vagrant/emnies
@@ -490,6 +427,82 @@
     - debug: var=out.stdout_lines
       tags: vset
 
+    - name: Clear cache of drush
+      command: ./../vendor/drush/drush/drush cache-clear drush
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: rr
+
+    - debug: var=out.stdout_lines
+      tags: rr
+
+    - name: Update database
+      shell: "./../bin/drush updatedb --yes -v"
+      ignore_errors: true
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: updb
+
+    - debug: var=out.stdout_lines
+      tags: updb
+
+    - name: Revert features
+      shell: "./../vendor/drush/drush/drush fra -y"
+      register: out
+      ignore_errors: true
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: fra
+
+    - debug: var=out.stdout_lines
+      tags: fra
+
+    - name: Enable search API
+      become: yes
+      command: ./../vendor/drush/drush/drush -y en search_api
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: rr
+
+    - debug: var=out.stdout_lines
+      tags: rr
+
+    - name: Drush cache-clear drush
+      command: ./../vendor/drush/drush/drush cache-clear drush
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: rr
+
+    - debug: var=out.stdout_lines
+      tags: rr
+
+    - name: Copy solr settings into collection conf folder.
+      shell: cp -ar /var/www/html/emnies-dev/docroot/sites/all/modules/contrib/search_api_solr/solr-conf/7.x/*.* /var/solr/data/collection1/conf
+      register: out
+      args:
+        chdir: /vagrant_data/solr
+      tags: sapi
+
+    - debug: var=out.stdout_lines
+      tags: sapi
+
+    - name: Disable irma_log
+      become: no
+      shell: "./../bin/drush -y dis irma_log"
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: dis_irma_log
+
+    - debug: var=out.stdout_lines
+      tags: dis_irma_log
+
+    # @TODO: consider running cron before cc all:
+
     - name: Clear cache all
       become: no
       shell: "./../vendor/drush/drush/drush cc all"
@@ -533,7 +546,8 @@
       tags: search_krumo_en
 
     - name: Run sapi-c
-      shell: "./../bin/drush -v sapi-c solr_user_index"
+      command: ./../bin/drush -v sapi-c solr_user_index
+      become: no
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
@@ -544,6 +558,7 @@
 
     - name: Run sapi-r
       shell: "./../vendor/drush/drush/drush -v sapi-r solr_user_index"
+      become: no
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
@@ -553,7 +568,8 @@
       tags: sapi
 
     - name: Index users
-      shell: ./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(solr_user_index));'
+      shell: "./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(solr_user_index));'"
+      become: no
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
@@ -563,7 +579,8 @@
       tags: index_users
 
     - name: Run sapi-c
-      command: ./../vendor/drush/drush/drush -v sapi-c node_index
+      shell: "./../vendor/drush/drush/drush -y en search_api; ./../vendor/drush/drush/drush -v sapi-c node_index"
+      become: no
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
@@ -573,7 +590,8 @@
       tags: sapi
 
     - name: Run sapi-r
-      command: ./../vendor/drush/drush/drush -v sapi-r node_index
+      shell: "./../vendor/drush/drush/drush -v sapi-r node_index"
+      become: no
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
@@ -583,7 +601,8 @@
       tags: sapi
 
     - name: Index nodes
-      command: ./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(node_index));'
+      shell: "./../vendor/drush/drush/drush -v php-eval 'print search_api_index_items(search_api_index_load(node_index));'"
+      become: no
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
@@ -592,4 +611,5 @@
     - debug: var=out.stdout_lines
       tags: index_users
 
-# @TODO: install, enable and configure krumo search and file log
+# @TODO: install, enable and configure file log
+# @TODO: set drush user-password one_agency_admin --password="jUn7q3aUPmH2gQfBEcddeLQNJd48FWaK"
