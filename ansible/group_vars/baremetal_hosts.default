@@ -1,0 +1,29 @@
+---
+# Default settings:
+php_memory_limit: "128M"
+php_max_execution_time: "90"
+php_upload_max_filesize: "256M"
+php_version: "7.2"
+php_default_version_debian: "7.2"
+php_memory_limit: "-1"
+php_max_execution_time: "90"
+php_upload_max_filesize: "256M"
+php_packages:
+  - php
+  - php-cli
+  - php-common
+  - php-gd
+  - php-ldap
+  - php-xml
+  - php-mbstring
+  - php-curl
+adminer_install_dir: /var/www/html/adminer
+adminer_install_filename: index.php
+php_enablerepo: "remi,epel"
+php_mysql_package: "php7.2-mysql"
+# solr_version: "7.7.2"
+solr_version: "4.4.0"
+mysql_max_allowed_packet: "5000M"
+mysql_innodb_log_file_size: "5000M"
+
+# Custom settings:
