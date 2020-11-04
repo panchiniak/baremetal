@@ -240,8 +240,6 @@
     - debug: var=out.stdout_lines
       tags: [db]
 
-    # @TODO: if a database is not available:
-    # @TODO: Get sanitized database from DIGIT and extract it at /vagrant_data if not available
     # @TODO: if project came from git:
     # @TODO: get patch at https://www.drupal.org/project/drupal/issues/3031631 , put in /vagrant_data/patches and apply to includes/forms.inc
 
@@ -256,6 +254,9 @@
     - debug: var=out.stdout_lines
       tags: patch
 
+    # # @TODO: if a database is not available:
+    # # @TODO: Get sanitized database from DIGIT and extract it at /vagrant_data if not available
+ 
     - name: Import sanitized_daily_ami_production_db.sql similar to mysql -u <username> -p <password> < sanitized_daily_ami_production_db.sql
       mysql_db:
         state: import
@@ -437,6 +438,28 @@
     - debug: var=out.stdout_lines
       tags: rr
 
+    - name: Disable irma_log
+      become: no
+      shell: "./../bin/drush -y dis irma_log"
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: dis_irma_log
+
+    - debug: var=out.stdout_lines
+      tags: dis_irma_log
+
+    - name: Revert features
+      shell: "./../vendor/drush/drush/drush fra -y"
+      register: out
+      ignore_errors: true
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: fra
+
+    - debug: var=out.stdout_lines
+      tags: fra
+
     - name: Update database
       shell: "./../bin/drush updatedb --yes -v"
       ignore_errors: true
@@ -490,18 +513,16 @@
     - debug: var=out.stdout_lines
       tags: sapi
 
-    - name: Disable irma_log
+    - name: Run registry rebuild
       become: no
-      shell: "./../bin/drush -y dis irma_log"
+      shell: "./../bin/drush rr"
       register: out
       args:
         chdir: /var/www/html/emnies-dev/docroot
-      tags: dis_irma_log
+      tags: rr
 
     - debug: var=out.stdout_lines
-      tags: dis_irma_log
-
-    # @TODO: consider running cron before cc all:
+      tags: rr
 
     - name: Clear cache all
       become: no
@@ -514,16 +535,7 @@
     - debug: var=out.stdout_lines
       tags: cc_all
 
-    - name: Run registry rebuild
-      become: no
-      shell: "./../bin/drush rr"
-      register: out
-      args:
-        chdir: /var/www/html/emnies-dev/docroot
-      tags: rr
-
-    - debug: var=out.stdout_lines
-      tags: rr
+    # @TODO: consider running cron before cc all:
 
     - name: Enable email reroute
       shell: "./../bin/drush en reroute_email -y"
@@ -544,6 +556,36 @@
 
     - debug: var=out.stdout_lines
       tags: search_krumo_en
+
+    - name: Enable flog
+      shell: "./../bin/drush en flog -y"
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: flog_en
+
+    - debug: var=out.stdout_lines
+      tags: flog_en
+
+    - name: Set flog enabled
+      command: ./../vendor/drush/drush/drush vset flog_enabled 1
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: vset
+
+    - debug: var=out.stdout_lines
+      tags: vset
+
+    - name: Set flog path
+      command: ./../vendor/drush/drush/drush vset flog_path "/vagrant_data"
+      register: out
+      args:
+        chdir: /var/www/html/emnies-dev/docroot
+      tags: vset
+
+    - debug: var=out.stdout_lines
+      tags: vset
 
     - name: Run sapi-c
       command: ./../bin/drush -v sapi-c solr_user_index
@@ -611,5 +653,11 @@
     - debug: var=out.stdout_lines
       tags: index_users
 
-# @TODO: install, enable and configure file log
 # @TODO: set drush user-password one_agency_admin --password="jUn7q3aUPmH2gQfBEcddeLQNJd48FWaK"
+# @TODO: make sure to have run: sudo apt-get install -y php-dev
+# it is needed for xdebug
+# For running drush cc all faster:
+#  drush vset features_rebuild_on_flush FALSE
+#  drush vset entity_rebuild_on_flush FALSE
+# @TODO: add patch on token 1.7 for php7: 
+# https://www.drupal.org/files/issues/token-fix-cannot-use-string-offset-as-array_0.patch
