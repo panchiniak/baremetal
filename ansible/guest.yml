@@ -11,7 +11,7 @@
     - name: Set APCu
       become: true
       apt:
-        name: php7.2-apcu
+        name: php-apcu
         update_cache: yes
         state: present
       tags: [apt_apcu]
@@ -19,6 +19,55 @@
 
     - debug: var=out.stdout_lines
       tags: [apt_apcu]
+
+    - name: Set mbstring
+      become: true
+      apt:
+        name: php7.4-mbstring
+        update_cache: yes
+        state: present
+      tags: [apt_mbstring]
+      register: out
+
+    - debug: var=out.stdout_lines
+      tags: [apt_apcu]
+
+    - name: Set php json
+      become: true
+      apt:
+        name: php7.4-json
+        update_cache: yes
+        state: present
+      tags: [apt_mbstring]
+      register: out
+
+    - debug: var=out.stdout_lines
+      tags: [apt_phpjson]
+
+    - name: Set imap
+      become: true
+      apt:
+        name: php7.4-imap
+        update_cache: yes
+        state: present
+      tags: [apt_imap]
+      register: out
+
+    - debug: var=out.stdout_lines
+      tags: [apt_phpjson]
+
+# Set swp file:
+# Reference: https://bogdancornianu.com/change-swap-size-in-ubuntu/
+# sudo swapoff -a
+## For 8 GB:
+# sudo dd if=/dev/zero of=/swapfile bs=1G count=8
+# sudo chmod 600 /swapfile
+# sudo mkswap /swapfile
+# sudo swapon /swapfile
+## Edit /etc/fstab and add the new swapfile if it isn’t already there
+# /swapfile none swap sw 0 0
+## Check result:
+# grep SwapTotal /proc/meminfo
 
   pre_tasks:
     - name: Update apt cache.
@@ -30,11 +79,21 @@
     - { role: geerlingguy.mysql, tags: [ 'mysql' ] }
     - { role: geerlingguy.php-mysql, tags: [ 'php-mysql' ] }
     - { role: geerlingguy.adminer, tags: [ 'adminer' ] }
-    - { role: geerlingguy.java }
+    # - { role: geerlingguy.java }
+    #sudo apt install default-jre -y
+    #sudo apt install composer
     - { role: geerlingguy.solr }
     - { role: geerlingguy.composer }
     - { role: geerlingguy.drush }
     - { role: geerlingguy.htpasswd, tags: [ 'htpasswd' ]}
+    - { role: geerlingguy.php-xdebug }
+
+# @TODO: add zend_extension=/usr/lib/php/20170718/xdebug.so
+# to /etc/php/7.2/apache2/php.ini
+# Also add to /etc/php/7.2/apache2/php.ini
+# [XDebug]
+# xdebug.remote_enable = 1
+# xdebug.remote_autostart = 1
 
   post_tasks:
 

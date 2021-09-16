@@ -6,85 +6,85 @@
   vars_files:
     - group_vars/emnies_hosts
   tasks:
-    - name: Install virtualbox if needed
-      become: true
-      apt:
-        name: virtualbox
-        update_cache: yes
-        state: present
+    # - name: Install virtualbox if needed
+    #   become: true
+    #   apt:
+    #     name: virtualbox
+    #     update_cache: yes
+    #     state: present
 
-    - name: Install git
-      become: true
-      apt:
-        name: git
-        update_cache: yes
-        state: present
+    # - name: Install git
+    #   become: true
+    #   apt:
+    #     name: git
+    #     update_cache: yes
+    #     state: present
 
-    - local_action: stat path=/{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
-      register: zipped_vagrant_exists
-      tags: vagrant
+    # - local_action: stat path=/{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
+    #   register: zipped_vagrant_exists
+    #   tags: vagrant
 
-    - name: If vagrant is not available get vagrant zip source and checksum it
-      get_url:
-        url: "{{ vagrant_zip_base_path }}{{ vagrant_zip_file }}"
-        dest: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
-        checksum: "{{ vagrant_zip_file_checksum }}"
-        force: no
-      register: get_vagrant
-      when: zipped_vagrant_exists.stat.exists == False
-      tags: vagrant
+    # - name: If vagrant is not available get vagrant zip source and checksum it
+    #   get_url:
+    #     url: "{{ vagrant_zip_base_path }}{{ vagrant_zip_file }}"
+    #     dest: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
+    #     checksum: "{{ vagrant_zip_file_checksum }}"
+    #     force: no
+    #   register: get_vagrant
+    #   when: zipped_vagrant_exists.stat.exists == False
+    #   tags: vagrant
 
-    - name: Unzip vagrant zip if available and keep it
-      unarchive:
-        src: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
-        dest: /{{ playbook_dir }}/vagrant/
-        remote_src: yes
-        creates: /{{ playbook_dir }}/vagrant/vagrant
-      tags: [vagrant, unzip]
+    # - name: Unzip vagrant zip if available and keep it
+    #   unarchive:
+    #     src: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
+    #     dest: /{{ playbook_dir }}/vagrant/
+    #     remote_src: yes
+    #     creates: /{{ playbook_dir }}/vagrant/vagrant
+    #   tags: [vagrant, unzip]
 
-    - name: Remove vagrant zip source
-      file:
-        path: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
-        state: absent
-      tags: vagrant
+    # - name: Remove vagrant zip source
+    #   file:
+    #     path: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
+    #     state: absent
+    #   tags: vagrant
 
-    - name: ls
-      shell: ls {{ playbook_dir }}/vagrant
-      register: out
+    # - name: ls
+    #   shell: ls {{ playbook_dir }}/vagrant
+    #   register: out
 
-    - debug: var=out.stdout_lines
+    # - debug: var=out.stdout_lines
 
-    - name: install guest additions
-      command: ./vagrant plugin install vagrant-vbguest
-      register: out
-      args:
-        chdir: /{{ playbook_dir }}/vagrant/
+    # - name: install guest additions
+    #   command: ./vagrant plugin install vagrant-vbguest
+    #   register: out
+    #   args:
+    #     chdir: /{{ playbook_dir }}/vagrant/
 
-    - debug: var=out.stdout_lines
+    # - debug: var=out.stdout_lines
 
-    - name: vagrant force destroy if present
-      command: ./vagrant destroy -f
-      register: out
-      args:
-        chdir: /{{ playbook_dir }}/vagrant/
+    # - name: vagrant force destroy if present
+    #   command: ./vagrant destroy -f
+    #   register: out
+    #   args:
+    #     chdir: /{{ playbook_dir }}/vagrant/
 
-    - debug: var=out.stdout_lines
+    # - debug: var=out.stdout_lines
 
-    - name: vagrant plugin install vagrant-disksize
-      command: ./vagrant plugin install vagrant-disksize
-      register: out
-      args:
-        chdir: /{{ playbook_dir }}/vagrant/
+    # - name: vagrant plugin install vagrant-disksize
+    #   command: ./vagrant plugin install vagrant-disksize
+    #   register: out
+    #   args:
+    #     chdir: /{{ playbook_dir }}/vagrant/
 
-    - debug: var=out.stdout_lines
+    # - debug: var=out.stdout_lines
 
-    - name: vagrant up with provision
-      command: ./vagrant up --provision
-      register: out
-      args:
-        chdir: /{{ playbook_dir }}/vagrant/
+    # - name: vagrant up with provision
+    #   command: ./vagrant up --provision
+    #   register: out
+    #   args:
+    #     chdir: /{{ playbook_dir }}/vagrant/
 
-    - debug: var=out.stdout_lines
+    # - debug: var=out.stdout_lines
 
     - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.apache
       register: geerlingguy_apache_exists
@@ -236,12 +236,34 @@
     - debug: var=out.stdout_lines
       tags: [ansible, ansible_htpasswd]
 
-    - name: ssh-keygen
-      shell: ssh-keygen -f /home/{{ emnies_host_username }}/.ssh/known_hosts -R [127.0.0.1]:2222
+    - name: install geerlingguy certbot from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.certbot
       register: out
-      tags: host_authoized_key_purge
+      tags: [ansible, certbot]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_htpasswd_exists.stat.exists == False
 
     - debug: var=out.stdout_lines
-      tags: host_authoized_key_purge
+      tags: [ansible, certbot]
+
+    - name: install geerlingguy xdebug from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.php-xdebug
+      register: out
+      tags: [ansible, xdebug]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_htpasswd_exists.stat.exists == False
+
+    - debug: var=out.stdout_lines
+      tags: [ansible, xdebug]
+
+    # - name: ssh-keygen
+    #   shell: ssh-keygen -f /home/{{ emnies_host_username }}/.ssh/known_hosts -R [127.0.0.1]:2222
+    #   register: out
+    #   tags: host_authoized_key_purge
+
+    # - debug: var=out.stdout_lines
+    #   tags: host_authoized_key_purge
 
     # @TODO: Get sanitized database from DIGIT and extract it at /ansible/vagrant/data

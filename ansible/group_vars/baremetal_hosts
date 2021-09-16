@@ -1,13 +1,10 @@
 ---
 # Default settings:
-php_memory_limit: "128M"
+php_memory_limit: "768M"
 php_max_execution_time: "90"
 php_upload_max_filesize: "256M"
 php_version: "7.2"
 php_default_version_debian: "7.2"
-php_memory_limit: "-1"
-php_max_execution_time: "90"
-php_upload_max_filesize: "256M"
 php_packages:
   - php
   - php-cli
@@ -17,6 +14,7 @@ php_packages:
   - php-xml
   - php-mbstring
   - php-curl
+  - php-zip
 adminer_install_dir: /var/www/html/adminer
 adminer_install_filename: index.php
 php_enablerepo: "remi,epel"
