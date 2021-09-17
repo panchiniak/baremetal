@@ -1,0 +1,84 @@
+---
+# Default settings:
+php_memory_limit: "4000M"
+php_max_execution_time: "90"
+php_upload_max_filesize: "256M"
+php_version: "7.4"
+php_default_version_debian: "7.4"
+php_packages:
+  - php
+  - php-cli
+  - php-common
+  - php-gd
+  - php-ldap
+  - php-xml
+  - php-mbstring
+  - php-curl
+  - php-zip
+php_enablerepo: "remi,epel"
+php_mysql_package: "php7.4-mysql"
+mysql_max_allowed_packet: "1000M"
+mysql_innodb_log_file_size: "1000M"
+solr_version: "7.7.2"
+adminer_install_dir: /var/www/html/adminer
+adminer_install_filename: index.php
+# xdebug:
+workspace: /vagrant_data
+php_xdebug_version: 2.9.6
+php_xdebug_default_enable: 1
+php_xdebug_coverage_enable: 1
+php_xdebug_module_path: /usr/lib/php/20170718
+php_xdebug_remote_enable: "true"
+php_xdebug_remote_connect_back: "true"
+php_xdebug_remote_host: localhost
+php_xdebug_remote_port: "9000"
+php_xdebug_remote_log: /vagrant_data/xdebug.log
+php_xdebug_idekey: sublime.xdebug
+php_xdebug_max_nesting_level: 256
+php_xdebug_cli_disable: false
+
+# Custom settings:
+emnies_host_username: rodrigo
+htpasswd_credentials:
+  - path: /etc/apache-passwdfile
+    name: panchiniak
+    password: 'Digo978813.'
+    owner: root
+    group: www-data
+    mode: 'u+rw,g+r'
+
+#  - path: /etc/apache-passwdfile
+#    name: pascal
+#    password: 'T?b8b%^u$v(xR:=nXB/$[q)Jpn!t!%s"x%v0y|"(Beg>uoyHxs,y8nEhI]h3ue{VH;DO#%;x.TM^J@RM@aQ.}t76Ym~gagD,YLz]'
+#    owner: root
+#    group: www-data
+#    mode: 'u+rw,g+r'
+#
+#  - path: /etc/apache-passwdfile
+#    name: jhonny
+#    password: 'qHx$_+t8L&M~8kJCA;`3(=.AX+QiM0GNQV)3n?[!qVTY"pW,{yR$Yi#[:?CH~M6Mt{5PE0vK9LALjvJQol"?_-jqbd=/:*I^"<pX'
+#    owner: root
+#    group: www-data
+#    mode: 'u+rw,g+r'
+#
+#  - path: /etc/apache-passwdfile
+#    name: duarte
+#    password: 'kF?V.#oJ+Gpi7(>2_^%Fe;us6q~PvagS^!#%m0eya"an)USM-A>IuEeB2D0$f3Lny8mIeK;H%w)iJh%g1hOEY0)bNILp<'Klz28s'
+#    owner: root
+#    group: www-data
+#    mode: 'u+rw,g+r'
+
+apache_remove_default_vhost: True
+apache_vhosts:
+  - listen: "80"
+    servername: "emnies.test"
+    documentroot: "/var/www/html"
+    extra_parameters: |
+        <Directory /var/www/html>
+            Options Indexes FollowSymLinks MultiViews
+            AllowOverride All
+            AuthType Basic
+            AuthName "Apache with basic auth."
+            AuthUserFile /etc/apache-passwdfile
+            Require valid-user
+        </Directory>
