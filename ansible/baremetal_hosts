@@ -2,8 +2,9 @@
 # - ansible-inventory --list -y -i emnies_hosts
 # Test Ansible connection:
 # - ansible all -m ping -u <user-name> -i emnies_hosts
-# Command example:
+# Command examples:
 # - ansible emnies -a "df -h" -u <user-name> -i emnies_hosts
+# - ansible-playbook -l emnies -i baremetal_hosts -u vagrant project-emnies.yml
 
 [servers]
 emnies ansible_port=2222 ansible_host=127.0.0.1
