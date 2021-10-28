@@ -21,7 +21,7 @@ This will be used to allow Ansible to access the host machine with no need of ty
 
 ## Custom variables
 
-After installation you can add your custom variables at `ansible/group_vars/emnies_hosts`
+After installation you can add your custom variables at `ansible/group_vars/baremetal_hosts`
 
 ## Usage
 
