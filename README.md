@@ -5,8 +5,9 @@ This document will guide you through the installation and usage of Baremetal Vag
 
 ## OS Requirement
 
-Baremetal Vagrant/Ansible Infrastructure and Applications Handler has been tested for both host and guest sides with:
-*  Ubuntu 18.04.4 LTS. 
+Baremetal Vagrant/Ansible Infrastructure and Applications Handler has been tested with:
+*  Ubuntu 18.04.4 LTS. (as guest and host)
+*  MacOS Big Sur vs. 11.6 (as host)
 
 If this is not your OS and you still want to use Baremetal Vagrant/Ansible Infrastructure and Applications Handler, please consider creating a PR with the changes needed for running it at your OS.
 
