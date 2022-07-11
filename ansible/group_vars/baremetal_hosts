@@ -1,10 +1,10 @@
 ---
 # Default settings:
-php_memory_limit: "768M"
+php_memory_limit: "4000M"
 php_max_execution_time: "90"
 php_upload_max_filesize: "256M"
-php_version: "7.2"
-php_default_version_debian: "7.2"
+php_version: "7.4"
+php_default_version_debian: "7.4"
 php_packages:
   - php
   - php-cli
@@ -15,14 +15,27 @@ php_packages:
   - php-mbstring
   - php-curl
   - php-zip
+php_enablerepo: "remi,epel"
+php_mysql_package: "php7.4-mysql"
+mysql_max_allowed_packet: "1000M"
+mysql_innodb_log_file_size: "1000M"
+solr_version: "7.7.2"
 adminer_install_dir: /var/www/html/adminer
 adminer_install_filename: index.php
-php_enablerepo: "remi,epel"
-php_mysql_package: "php7.2-mysql"
-solr_version: "7.7.2"
-# solr_version: "4.4.0"
-mysql_max_allowed_packet: "5000M"
-mysql_innodb_log_file_size: "5000M"
+# xdebug:
+workspace: /vagrant_data
+php_xdebug_version: 2.9.6
+php_xdebug_default_enable: 1
+php_xdebug_coverage_enable: 1
+php_xdebug_module_path: /usr/lib/php/20170718
+php_xdebug_remote_enable: "true"
+php_xdebug_remote_connect_back: "true"
+php_xdebug_remote_host: localhost
+php_xdebug_remote_port: "9000"
+php_xdebug_remote_log: /vagrant_data/xdebug.log
+php_xdebug_idekey: sublime.xdebug
+php_xdebug_max_nesting_level: 256
+php_xdebug_cli_disable: false
 
 # Custom settings:
 emnies_host_username: rodrigo

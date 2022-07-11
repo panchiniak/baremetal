@@ -2,16 +2,16 @@
 # Gest configurations
 #################################################
 ---
-- hosts: db
+- hosts: tpp
   become: yes
   vars_files:
-    - group_vars/emnies_hosts
+    - group_vars/baremetal_hosts
 
   tasks:
     - name: Set APCu
       become: true
       apt:
-        name: php7.2-apcu
+        name: php7.4-apcu
         update_cache: yes
         state: present
       tags: [apt_apcu]

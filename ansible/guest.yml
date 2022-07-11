@@ -2,21 +2,45 @@
 # Gest configurations
 #################################################
 ---
-- hosts: emnies
+- hosts: tpp
   become: yes
   vars_files:
-    - group_vars/emnies_hosts
+    - group_vars/baremetal_hosts
 
   tasks:
+    - name: Install unzip - it will be used by drush make
+      become: true
+      apt:
+        name: unzip
+        update_cache: yes
+        state: present
+      tags: build
+      register: out
+
+    - debug: var=out.stdout_lines
+      tags: [unzip]
+
+    - name: Install unzip default-jre
+      become: true
+      apt:
+        name: default-jre
+        update_cache: yes
+        state: present
+      tags: build
+      register: out
+
+    - debug: var=out.stdout_lines
+      tags: [java]
+
     - name: Set APCu
       become: true
       apt:
-        name: php-apcu
+        name: php7.4-apcu
         update_cache: yes
         state: present
       tags: [apt_apcu]
       register: out
-
+    
     - debug: var=out.stdout_lines
       tags: [apt_apcu]
 
@@ -70,8 +94,54 @@
 # grep SwapTotal /proc/meminfo
 
   pre_tasks:
+    - name: Copy proxy settings
+      shell: cp -ar /vagrant_data/assets/environment /etc/
+      become: true      
+      register: out
+      args:
+        chdir: /
+      tags: sapi
+
+    - debug: var=out.stdout_lines
+      tags: proxy
+
     - name: Update apt cache.
       apt: update_cache=yes cache_valid_time=86400
+
+    - name: APT Update
+      shell: "apt-get update -y"
+      become: true
+      register: out
+
+    - debug: var=out.stdout_lines
+
+    - name: APT Update
+      shell: "apt-get update -y"
+      become: true
+      register: out
+
+    - debug: var=out.stdout_lines
+
+    - name: APT Update
+      shell: "apt-get update -y"
+      become: true
+      register: out
+
+    - debug: var=out.stdout_lines
+
+    - name: APT install php-dev
+      shell: "apt-get install -y php-dev"
+      become: true
+      register: out
+
+    - debug: var=out.stdout_lines
+
+    - name: APT install composer
+      shell: "apt install -y composer"
+      become: true
+      register: out
+
+    - debug: var=out.stdout_lines
 
   roles:
     - { role: geerlingguy.apache }
@@ -79,9 +149,7 @@
     - { role: geerlingguy.mysql, tags: [ 'mysql' ] }
     - { role: geerlingguy.php-mysql, tags: [ 'php-mysql' ] }
     - { role: geerlingguy.adminer, tags: [ 'adminer' ] }
-    # - { role: geerlingguy.java }
-    #sudo apt install default-jre -y
-    #sudo apt install composer
+    - { role: geerlingguy.java }
     - { role: geerlingguy.solr }
     - { role: geerlingguy.composer }
     - { role: geerlingguy.drush }
@@ -124,3 +192,13 @@
     # /etc/apache2/sites-enabled/000-default.conf
     # @TODO: set http password using:
     # https://github.com/geerlingguy/ansible-role-htpasswd
+
+
+    # # @todo: add as a pre task, to be run in the host
+    # - name: ssh-keygen
+    #   shell: ssh-keygen -f /home/{{ emnies_host_username }}/.ssh/known_hosts -R [127.0.0.1]:2222
+    #   register: out
+    #   tags: host_authoized_key_purge
+
+    # - debug: var=out.stdout_lines
+    #   tags: host_authoized_key_purge

@@ -15,10 +15,28 @@
     #     update_cache: yes
     #     state: present
 
+    # - name: Install virtualbox-dkms if needed
+    #   become: true
+    #   apt:
+    #     name: virtualbox-dkms
+    #     update_cache: yes
+    #     state: present
+
     # - name: Install git
     #   become: true
     #   apt:
     #     name: git
+    #     update_cache: yes
+    #     state: present
+
+    # - local_action: stat path=/{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
+    #   register: zipped_vagrant_exists
+    #   tags: vagrant
+
+    # - name: Install sshfs
+    #   become: true
+    #   apt:
+    #     name: sshfs
     #     update_cache: yes
     #     state: present
 
@@ -80,17 +98,27 @@
 
     # - debug: var=out.stdout_lines
 
+    ### ./vagrant box add ubuntu/focal64
+    ### @todo: ./vagrant box add {{ default_box }}
+    ##- name: add box if needed
+    ##  command: ./vagrant box add ubuntu/focal64
+    ##  register: out
+    ##  args:
+    ##    chdir: /{{ playbook_dir }}/vagrant/
+
+    ##- debug: var=out.stdout_lines
+
     # - name: vagrant up with provision
-    #   command: ./vagrant up --provision
+    #   command: ./vagrant up default --provision --provider=virtualbox
     #   register: out
     #   args:
     #     chdir: /{{ playbook_dir }}/vagrant/
 
     # - debug: var=out.stdout_lines
 
-    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.apache
-    #   register: geerlingguy_apache_exists
-    #   tags: ansible
+    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.apache
+      register: geerlingguy_apache_exists
+      tags: ansible
 
     - name: install geerlingguy apache from galaxy
       command: ansible-galaxy install --roles-path roles geerlingguy.apache
@@ -260,6 +288,41 @@
     - debug: var=out.stdout_lines
       tags: [ansible, xdebug]
 
+    - name: install geerlingguy php-versions from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.php-versions
+      register: out
+      tags: [ansible, xdebug]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_htpasswd_exists.stat.exists == False
+
+    - debug: var=out.stdout_lines
+      tags: [ansible, xdebug]
+
+# @todo : for mouting the remote filesystem via ssh:
+# https://stackoverflow.com/questions/3407287/how-do-you-edit-files-over-ssh
+# sudo apt-get install sshfs
+# mkdir ~/remote_code
+# sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/devlin/baremetal/ansible/vagrant/data/assets/tpp/code
+
+    # - name: ./vagrant box add ubuntu/focal64 --insecure 
+    #   shell: ./vagrant box add ubuntu/focal64 --insecure
+    #   register: out
+    #   tags: host_authoized_key_purge
+
+    # - debug: var=out.stdout_lines
+    #   tags: host_authoized_key_purge
+
+    # - name: ./vagrant box update --insecure 
+    #   shell: ./vagrant box update --insecure
+    #   register: out
+    #   tags: host_authoized_key_purge
+
+    # - debug: var=out.stdout_lines
+    #   tags: host_authoized_key_purge
+
+    # @todo clone the projects
+
     # - name: ssh-keygen
     #   shell: ssh-keygen -f /home/{{ emnies_host_username }}/.ssh/known_hosts -R [127.0.0.1]:2222
     #   register: out
@@ -269,3 +332,8 @@
     #   tags: host_authoized_key_purge
 
     # @TODO: Get sanitized database from DIGIT and extract it at /ansible/vagrant/data
+
+    # sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/devlin/baremetal/ansible/vagrant/data/assets/tpp/code
+
+  # @todo: sudo apt-get install php-xml
+  # sudo apt-get install php-curl

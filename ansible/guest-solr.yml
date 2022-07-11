@@ -22,3 +22,4 @@
     #   Require all granted
     # </Directory>
     # /etc/apache2/sites-enabled/000-default.conf
+    # Solr control panel available at: http://127.0.0.1:9191/solr/

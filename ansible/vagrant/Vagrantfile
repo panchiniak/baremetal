@@ -8,11 +8,27 @@
 # https://technology.amis.nl/2018/07/27/virtualbox-networking-explained/#prettyPhoto
 # Define machine, provider and host names:
 # https://stackoverflow.com/questions/17845637/how-to-change-vagrant-default-machine-name
+# ssh vagrant@127.0.0.1 -p 2222
+# cat /etc/environment
+# Configuration for Search API for C9/AWS/DIGIT
+# Get at admin/config/search/search_api/server/solr_server/edit and configure:
+#     HTTP protocol: 
+#     Solr Host: 127.0.0.1
+#     Solr port: 8983
+#     Solr path:  /solr/d7_search_api
+# Configuration for Search API for Baremetal/Vagrant
+# Get at admin/config/search/search_api/server/solr_server/edit and configure:
+#     HTTP protocol: 
+#     Solr Host: 127.0.0.1
+#     Solr port: 8983
+#     Solr path:  /solr/collection1
+
 
 Vagrant.configure("2") do |config|
 
   config.vm.define "default", autostart: false do |default|
     default.vm.box = "ubuntu/focal64"
+    # default.vm.box = "ubuntu/impish64"
     # @TODO: make the disk size configurable:
     default.disksize.size = '100GB'
     # SSH:
@@ -22,7 +38,7 @@ Vagrant.configure("2") do |config|
     # Redirection for xdebug:
     default.vm.network "forwarded_port", guest: 9000, host: 9001, host_ip: "127.0.0.1"
     # Solr by default stays at 8983:
-    default.vm.network "forwarded_port", guest: 8983, host: 9090, host_ip: "127.0.0.1"
+    default.vm.network "forwarded_port", guest: 8983, host: 9191, host_ip: "127.0.0.1"
     # @TODO: do not use network name or get it from a configuration file
     default.vm.network "public_network", bridge: "enp4s0", ip: "192.168.0.222"
     default.vm.synced_folder "data", "/vagrant_data"
@@ -119,3 +135,5 @@ Vagrant.configure("2") do |config|
   end
 
 end
+
+# sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/devlin/baremetal/ansible/vagrant/data/assets/tpp/code

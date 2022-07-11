@@ -268,6 +268,12 @@
     # # M_2sGWYf6vG_LZjGp2CT
     # # https://webgate.ec.europa.eu/fpfis/files-for/automate_dumps/ami/
 
+    # # new credentials for AWS:
+    # just-emnies
+    # sAq3uA3ZQ3fSPMjhtUMm6CVg1nxhFMHw
+    # # https://asda.fpfis.tech.ec.europa.eu/ec-europa/just-emnies-reference/dumps/
+
+
     # - name: Import sanitized_daily_ami_production_db.sql similar to mysql -u <username> -p <database> < sanitized_daily_ami_production_db.sql
     #   mysql_db:
     #     state: import
