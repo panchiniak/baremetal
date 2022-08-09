@@ -399,3 +399,7 @@
 # vagrant@ubuntu-focal:/vagrant_data/tpd-dev$ composer install
 # vagrant@ubuntu-focal:/vagrant_data/tpd-dev$ ./toolkit/phing build-platform
 # vagrant@ubuntu-focal:/vagrant_data/tpd-dev$ ./toolkit/phing build-subsite-dev
+
+# solr host: 127.0.0.1 
+# Solr port: 8983
+# Solr path: /solr/collection1
