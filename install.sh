@@ -8,8 +8,8 @@ fi
 
 # Install Ansible:
 if [ ! -f /usr/bin/ansible ]; then
-  apt-add-repository ppa:ansible/ansible
   apt update
+  apt-add-repository ppa:ansible/ansible
   apt -y install ansible
 fi  
 
