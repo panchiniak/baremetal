@@ -136,4 +136,4 @@ Vagrant.configure("2") do |config|
 
 end
 
-# sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/devlin/baremetal/ansible/vagrant/data/assets/tpp/code
+# sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/devlin/baremetal/ansible/vagrant/data/assets/project/code
