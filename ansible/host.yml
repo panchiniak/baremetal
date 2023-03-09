@@ -1,5 +1,7 @@
 #################################################
 # Host Configurations
+#
+# ansible-playbook -l host -i baremetal_hosts -u $(whoami) host.yml -K
 #################################################
 ---
 - hosts: host
