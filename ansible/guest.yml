@@ -196,7 +196,7 @@
 
     # # @todo: add as a pre task, to be run in the host
     # - name: ssh-keygen
-    #   shell: ssh-keygen -f /home/{{ emnies_host_username }}/.ssh/known_hosts -R [127.0.0.1]:2222
+    #   shell: ssh-keygen -f /home/{{ baremetal_host_username }}/.ssh/known_hosts -R [127.0.0.1]:2222
     #   register: out
     #   tags: host_authoized_key_purge
 

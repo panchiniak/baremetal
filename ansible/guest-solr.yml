@@ -5,7 +5,7 @@
 - hosts: solr
   become: yes
   vars_files:
-    - group_vars/emnies_hosts
+    - group_vars/baremetal_hosts
 
   pre_tasks:
     - name: Update apt cache.

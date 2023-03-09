@@ -38,7 +38,7 @@ php_xdebug_max_nesting_level: 256
 php_xdebug_cli_disable: false
 
 # Custom settings:
-emnies_host_username: rodrigo
+baremetal_host_username: rodrigo
 htpasswd_credentials:
   - path: /etc/apache-passwdfile
     name: panchiniak
@@ -71,7 +71,7 @@ htpasswd_credentials:
 apache_remove_default_vhost: True
 apache_vhosts:
   - listen: "80"
-    servername: "emnies.test"
+    servername: "baremetal.test"
     documentroot: "/var/www/html"
     extra_parameters: |
         <Directory /var/www/html>

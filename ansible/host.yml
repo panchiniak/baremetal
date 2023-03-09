@@ -5,7 +5,7 @@
 - hosts: host
   become: yes
   vars_files:
-    - group_vars/emnies_hosts
+    - group_vars/baremetal_hosts
 
   tasks:
     - name: Install virtualbox if needed
@@ -324,7 +324,7 @@
     # @todo clone the projects
 
     # - name: ssh-keygen
-    #   shell: ssh-keygen -f /home/{{ emnies_host_username }}/.ssh/known_hosts -R [127.0.0.1]:2222
+    #   shell: ssh-keygen -f /home/{{ baremetal_host_username }}/.ssh/known_hosts -R [127.0.0.1]:2222
     #   register: out
     #   tags: host_authoized_key_purge
 

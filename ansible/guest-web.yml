@@ -2,10 +2,10 @@
 # Gest configurations
 #################################################
 ---
-- hosts: emnies
+- hosts: baremetal
   become: yes
   vars_files:
-    - group_vars/emnies_hosts
+    - group_vars/baremetal_hosts
 
   tasks:
     - name: Set APCu
