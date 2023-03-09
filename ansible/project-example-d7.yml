@@ -112,7 +112,7 @@
     # # this will be available inside the guest machine at /vagrant_data/assets/
     # just-tpdt-reference_202205302241-sanitized.sql.gz
     # - name: Download database.
-    #   shell: "wget https://just-tpdt:JZewzHpVQUKCmyZ3AErA5eqU3qdx5TVK@asda.fpfis.tech.ec.europa.eu/ec-europa/just-tpdt-reference/dumps/just-tpdt-reference_202206071542-sanitized.sql.gz"
+    #   shell: "wget https://user:pass@asda.domain/domain/project/dumps/project_date-sanitized.sql.gz"
     #   ignore_errors: true
     #   register: out
     #   tags: build
@@ -386,7 +386,7 @@
     # - debug: var=out.stdout_lines
     #   tags: vset
 
-# @TODO: set drush user-password one_agency_admin --password="jUn7q3aUPmH2gQfBEcddeLQNJd48FWaK"
+# @TODO: set drush user-password one_agency_admin --password="bla"
 # it is needed for xdebug
 # For running drush cc all faster:
 #  drush vset features_rebuild_on_flush FALSE

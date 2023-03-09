@@ -25,11 +25,13 @@ After installation you can add your custom variables at `ansible/group_vars/bare
 
 ## Usage
 
-Replace `<host>` by the host you want to run the playbook against:
+Replace `<host>` by the host you want to run the playbook against. Use -K for being asked to prompt a password:
 
 `cd ansible`
 
 `ansible-playbook -l host -i app_hosts -u $(whoami) host.yml --extra-vars "ansible_sudo_pass=yourPassword"`
+
+`ansible-playbook -l host -i app_hosts -u $(whoami) host.yml -K`
 
 `ansible-playbook -l app -i app_hosts -u vagrant guest.yml`
 

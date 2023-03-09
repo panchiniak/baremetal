@@ -8,12 +8,12 @@
     - group_vars/emnies_hosts
 
   tasks:
-    # - name: Install virtualbox if needed
-    #   become: true
-    #   apt:
-    #     name: virtualbox
-    #     update_cache: yes
-    #     state: present
+    - name: Install virtualbox if needed
+      become: true
+      apt:
+        name: virtualbox
+        update_cache: yes
+        state: present
 
     # - name: Install virtualbox-dkms if needed
     #   become: true
@@ -116,188 +116,188 @@
 
     # - debug: var=out.stdout_lines
 
-    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.apache
-      register: geerlingguy_apache_exists
-      tags: ansible
+    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.apache
+    #   register: geerlingguy_apache_exists
+    #   tags: ansible
 
-    - name: install geerlingguy apache from galaxy
-      command: ansible-galaxy install --roles-path roles geerlingguy.apache
-      register: out
-      tags: ansible
-      args:
-        chdir: /{{ playbook_dir }}/
-      when: geerlingguy_apache_exists.stat.exists == False
+    # - name: install geerlingguy apache from galaxy
+    #   command: ansible-galaxy install --roles-path roles geerlingguy.apache
+    #   register: out
+    #   tags: ansible
+    #   args:
+    #     chdir: /{{ playbook_dir }}/
+    #   when: geerlingguy_apache_exists.stat.exists == False
 
-    - debug: var=out.stdout_lines
-      tags: ansible
+    # - debug: var=out.stdout_lines
+    #   tags: ansible
 
-    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.php
-      register: geerlingguy_php_exists
-      tags: [ansible, ansible_php]
+    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.php
+    #   register: geerlingguy_php_exists
+    #   tags: [ansible, ansible_php]
 
-    - name: install geerlingguy php from galaxy
-      command: ansible-galaxy install --roles-path roles geerlingguy.php
-      register: out
-      tags: [ansible, ansible_php]
-      args:
-        chdir: /{{ playbook_dir }}/
-      when: geerlingguy_php_exists.stat.exists == False
+    # - name: install geerlingguy php from galaxy
+    #   command: ansible-galaxy install --roles-path roles geerlingguy.php
+    #   register: out
+    #   tags: [ansible, ansible_php]
+    #   args:
+    #     chdir: /{{ playbook_dir }}/
+    #   when: geerlingguy_php_exists.stat.exists == False
 
-    - debug: var=out.stdout_lines
-      tags: [ansible, ansible_php]
+    # - debug: var=out.stdout_lines
+    #   tags: [ansible, ansible_php]
 
-    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.php-mysql
-      register: geerlingguy_php_mysql_exists
-      tags: [ansible, ansible_php_mysql]
+    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.php-mysql
+    #   register: geerlingguy_php_mysql_exists
+    #   tags: [ansible, ansible_php_mysql]
 
-    - name: install geerlingguy php-mysql from galaxy
-      command: ansible-galaxy install --roles-path roles geerlingguy.php-mysql
-      register: out
-      tags: [ansible, ansible_php_mysql]
-      args:
-        chdir: /{{ playbook_dir }}/
-      when: geerlingguy_php_mysql_exists.stat.exists == False
+    # - name: install geerlingguy php-mysql from galaxy
+    #   command: ansible-galaxy install --roles-path roles geerlingguy.php-mysql
+    #   register: out
+    #   tags: [ansible, ansible_php_mysql]
+    #   args:
+    #     chdir: /{{ playbook_dir }}/
+    #   when: geerlingguy_php_mysql_exists.stat.exists == False
 
-    - debug: var=out.stdout_lines
-      tags: [ansible, ansible_php_mysql]
+    # - debug: var=out.stdout_lines
+    #   tags: [ansible, ansible_php_mysql]
 
-    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.adminer
-      register: geerlingguy_adminer_exists
-      tags: [ansible, ansible_adminer]
+    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.adminer
+    #   register: geerlingguy_adminer_exists
+    #   tags: [ansible, ansible_adminer]
 
-    - name: install geerlingguy adminer from galaxy
-      command: ansible-galaxy install --roles-path roles geerlingguy.adminer
-      register: out
-      tags: [ansible, ansible_adminer]
-      args:
-        chdir: /{{ playbook_dir }}/
-      when: geerlingguy_adminer_exists.stat.exists == False
+    # - name: install geerlingguy adminer from galaxy
+    #   command: ansible-galaxy install --roles-path roles geerlingguy.adminer
+    #   register: out
+    #   tags: [ansible, ansible_adminer]
+    #   args:
+    #     chdir: /{{ playbook_dir }}/
+    #   when: geerlingguy_adminer_exists.stat.exists == False
 
-    - debug: var=out.stdout_lines
-      tags: [ansible, ansible_adminer]
+    # - debug: var=out.stdout_lines
+    #   tags: [ansible, ansible_adminer]
 
-    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.java
-      register: geerlingguy_java_exists
-      tags: [ansible, ansible_java]
+    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.java
+    #   register: geerlingguy_java_exists
+    #   tags: [ansible, ansible_java]
 
-    - name: install geerlingguy java from galaxy
-      command: ansible-galaxy install --roles-path roles geerlingguy.java
-      register: out
-      tags: [ansible, ansible_java]
-      args:
-        chdir: /{{ playbook_dir }}/
-      when: geerlingguy_java_exists.stat.exists == False
+    # - name: install geerlingguy java from galaxy
+    #   command: ansible-galaxy install --roles-path roles geerlingguy.java
+    #   register: out
+    #   tags: [ansible, ansible_java]
+    #   args:
+    #     chdir: /{{ playbook_dir }}/
+    #   when: geerlingguy_java_exists.stat.exists == False
 
-    - debug: var=out.stdout_lines
-      tags: [ansible, ansible_java]
+    # - debug: var=out.stdout_lines
+    #   tags: [ansible, ansible_java]
 
-    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.solr
-      register: geerlingguy_solr_exists
-      tags: [ansible, ansible_solr]
+    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.solr
+    #   register: geerlingguy_solr_exists
+    #   tags: [ansible, ansible_solr]
 
-    - name: install geerlingguy solr from galaxy
-      command: ansible-galaxy install --roles-path roles geerlingguy.solr
-      register: out
-      tags: [ansible, ansible_solr]
-      args:
-        chdir: /{{ playbook_dir }}/
-      when: geerlingguy_solr_exists.stat.exists == False
+    # - name: install geerlingguy solr from galaxy
+    #   command: ansible-galaxy install --roles-path roles geerlingguy.solr
+    #   register: out
+    #   tags: [ansible, ansible_solr]
+    #   args:
+    #     chdir: /{{ playbook_dir }}/
+    #   when: geerlingguy_solr_exists.stat.exists == False
 
-    - debug: var=out.stdout_lines
-      tags: [ansible, ansible_solr]
+    # - debug: var=out.stdout_lines
+    #   tags: [ansible, ansible_solr]
 
-    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.mysql
-      register: geerlingguy_mysql_exists
-      tags: [ansible, ansible_mysql]
+    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.mysql
+    #   register: geerlingguy_mysql_exists
+    #   tags: [ansible, ansible_mysql]
 
-    - name: install geerlingguy mysql from galaxy
-      command: ansible-galaxy install --roles-path roles geerlingguy.mysql
-      register: out
-      tags: [ansible, ansible_mysql]
-      args:
-        chdir: /{{ playbook_dir }}/
-      when: geerlingguy_mysql_exists.stat.exists == False
+    # - name: install geerlingguy mysql from galaxy
+    #   command: ansible-galaxy install --roles-path roles geerlingguy.mysql
+    #   register: out
+    #   tags: [ansible, ansible_mysql]
+    #   args:
+    #     chdir: /{{ playbook_dir }}/
+    #   when: geerlingguy_mysql_exists.stat.exists == False
 
-    - debug: var=out.stdout_lines
-      tags: [ansible, ansible_mysql]
+    # - debug: var=out.stdout_lines
+    #   tags: [ansible, ansible_mysql]
 
-    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.composer
-      register: geerlingguy_composer_exists
-      tags: [ansible, ansible_composer]
+    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.composer
+    #   register: geerlingguy_composer_exists
+    #   tags: [ansible, ansible_composer]
 
-    - name: install geerlingguy composer from galaxy
-      command: ansible-galaxy install --roles-path roles geerlingguy.composer
-      register: out
-      tags: [ansible, ansible_composer]
-      args:
-        chdir: /{{ playbook_dir }}/
-      when: geerlingguy_composer_exists.stat.exists == False
+    # - name: install geerlingguy composer from galaxy
+    #   command: ansible-galaxy install --roles-path roles geerlingguy.composer
+    #   register: out
+    #   tags: [ansible, ansible_composer]
+    #   args:
+    #     chdir: /{{ playbook_dir }}/
+    #   when: geerlingguy_composer_exists.stat.exists == False
 
-    - debug: var=out.stdout_lines
-      tags: [ansible, ansible_composer]
+    # - debug: var=out.stdout_lines
+    #   tags: [ansible, ansible_composer]
 
-    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.drush
-      register: geerlingguy_drush_exists
-      tags: [ansible, ansible_drush]
+    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.drush
+    #   register: geerlingguy_drush_exists
+    #   tags: [ansible, ansible_drush]
 
-    - name: install geerlingguy drush from galaxy
-      command: ansible-galaxy install --roles-path roles geerlingguy.drush
-      register: out
-      tags: [ansible, ansible_drush]
-      args:
-        chdir: /{{ playbook_dir }}/
-      when: geerlingguy_drush_exists.stat.exists == False
+    # - name: install geerlingguy drush from galaxy
+    #   command: ansible-galaxy install --roles-path roles geerlingguy.drush
+    #   register: out
+    #   tags: [ansible, ansible_drush]
+    #   args:
+    #     chdir: /{{ playbook_dir }}/
+    #   when: geerlingguy_drush_exists.stat.exists == False
 
-    - debug: var=out.stdout_lines
-      tags: [ansible, ansible_drush]
+    # - debug: var=out.stdout_lines
+    #   tags: [ansible, ansible_drush]
 
-    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.htpasswd
-      register: geerlingguy_htpasswd_exists
-      tags: [ansible, ansible_htpasswd]
+    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.htpasswd
+    #   register: geerlingguy_htpasswd_exists
+    #   tags: [ansible, ansible_htpasswd]
 
-    - name: install geerlingguy drush from galaxy
-      command: ansible-galaxy install --roles-path roles geerlingguy.htpasswd
-      register: out
-      tags: [ansible, ansible_htpasswd]
-      args:
-        chdir: /{{ playbook_dir }}/
-      when: geerlingguy_htpasswd_exists.stat.exists == False
+    # - name: install geerlingguy drush from galaxy
+    #   command: ansible-galaxy install --roles-path roles geerlingguy.htpasswd
+    #   register: out
+    #   tags: [ansible, ansible_htpasswd]
+    #   args:
+    #     chdir: /{{ playbook_dir }}/
+    #   when: geerlingguy_htpasswd_exists.stat.exists == False
 
-    - debug: var=out.stdout_lines
-      tags: [ansible, ansible_htpasswd]
+    # - debug: var=out.stdout_lines
+    #   tags: [ansible, ansible_htpasswd]
 
-    - name: install geerlingguy certbot from galaxy
-      command: ansible-galaxy install --roles-path roles geerlingguy.certbot
-      register: out
-      tags: [ansible, certbot]
-      args:
-        chdir: /{{ playbook_dir }}/
-      when: geerlingguy_htpasswd_exists.stat.exists == False
+    # - name: install geerlingguy certbot from galaxy
+    #   command: ansible-galaxy install --roles-path roles geerlingguy.certbot
+    #   register: out
+    #   tags: [ansible, certbot]
+    #   args:
+    #     chdir: /{{ playbook_dir }}/
+    #   when: geerlingguy_htpasswd_exists.stat.exists == False
 
-    - debug: var=out.stdout_lines
-      tags: [ansible, certbot]
+    # - debug: var=out.stdout_lines
+    #   tags: [ansible, certbot]
 
-    - name: install geerlingguy xdebug from galaxy
-      command: ansible-galaxy install --roles-path roles geerlingguy.php-xdebug
-      register: out
-      tags: [ansible, xdebug]
-      args:
-        chdir: /{{ playbook_dir }}/
-      when: geerlingguy_htpasswd_exists.stat.exists == False
+    # - name: install geerlingguy xdebug from galaxy
+    #   command: ansible-galaxy install --roles-path roles geerlingguy.php-xdebug
+    #   register: out
+    #   tags: [ansible, xdebug]
+    #   args:
+    #     chdir: /{{ playbook_dir }}/
+    #   when: geerlingguy_htpasswd_exists.stat.exists == False
 
-    - debug: var=out.stdout_lines
-      tags: [ansible, xdebug]
+    # - debug: var=out.stdout_lines
+    #   tags: [ansible, xdebug]
 
-    - name: install geerlingguy php-versions from galaxy
-      command: ansible-galaxy install --roles-path roles geerlingguy.php-versions
-      register: out
-      tags: [ansible, xdebug]
-      args:
-        chdir: /{{ playbook_dir }}/
-      when: geerlingguy_htpasswd_exists.stat.exists == False
+    # - name: install geerlingguy php-versions from galaxy
+    #   command: ansible-galaxy install --roles-path roles geerlingguy.php-versions
+    #   register: out
+    #   tags: [ansible, xdebug]
+    #   args:
+    #     chdir: /{{ playbook_dir }}/
+    #   when: geerlingguy_htpasswd_exists.stat.exists == False
 
-    - debug: var=out.stdout_lines
-      tags: [ansible, xdebug]
+    # - debug: var=out.stdout_lines
+    #   tags: [ansible, xdebug]
 
 # @todo : for mouting the remote filesystem via ssh:
 # https://stackoverflow.com/questions/3407287/how-do-you-edit-files-over-ssh
