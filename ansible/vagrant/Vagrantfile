@@ -32,7 +32,7 @@ Vagrant.configure("2") do |config|
     # @TODO: make the disk size configurable:
     default.disksize.size = '100GB'
     # SSH:
-    default.vm.network "forwarded_port", guest: 22, host: 2222
+    default.vm.network "forwarded_port", guest: 22, host: 2224
     # Apache from guest in SSL to any IP in host for allowing redirection:
     default.vm.network "forwarded_port", guest: 443, host: 8181, host_ip: "0.0.0.0"    
     # Redirection for xdebug:

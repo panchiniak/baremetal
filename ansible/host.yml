@@ -17,311 +17,358 @@
         update_cache: yes
         state: present
 
-    # - name: Install virtualbox-dkms if needed
-    #   become: true
-    #   apt:
-    #     name: virtualbox-dkms
-    #     update_cache: yes
-    #     state: present
+    - name: Install FUSE
+      become: true
+      apt:
+        name: fuse
+        update_cache: yes
+        state: present
 
-    # - name: Install git
-    #   become: true
-    #   apt:
-    #     name: git
-    #     update_cache: yes
-    #     state: present
+    - name: Install virtualbox-dkms if needed
+      become: true
+      apt:
+        name: virtualbox-dkms
+        update_cache: yes
+        state: present
 
-    # - local_action: stat path=/{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
-    #   register: zipped_vagrant_exists
-    #   tags: vagrant
+    - name: dpkg-reconfigure virtualbox-dkms 
+      command: dpkg-reconfigure virtualbox-dkms
+      become: true
+      register: out
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
 
-    # - name: Install sshfs
-    #   become: true
-    #   apt:
-    #     name: sshfs
-    #     update_cache: yes
-    #     state: present
+    - debug: var=out.stdout_lines
 
-    # - local_action: stat path=/{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
-    #   register: zipped_vagrant_exists
-    #   tags: vagrant
+    - name: dpkg-reconfigure virtualbox 
+      command: dpkg-reconfigure virtualbox
+      become: true
+      register: out
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
 
-    # - name: If vagrant is not available get vagrant zip source and checksum it
-    #   get_url:
-    #     url: "{{ vagrant_zip_base_path }}{{ vagrant_zip_file }}"
-    #     dest: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
-    #     checksum: "{{ vagrant_zip_file_checksum }}"
-    #     force: no
-    #   register: get_vagrant
-    #   when: zipped_vagrant_exists.stat.exists == False
-    #   tags: vagrant
+    - debug: var=out.stdout_lines
 
-    # - name: Unzip vagrant zip if available and keep it
-    #   unarchive:
-    #     src: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
-    #     dest: /{{ playbook_dir }}/vagrant/
-    #     remote_src: yes
-    #     creates: /{{ playbook_dir }}/vagrant/vagrant
-    #   tags: [vagrant, unzip]
+    - name: Install headers
+      become: true
+      apt:
+        name: linux-headers-generic
+        update_cache: yes
+        state: present
 
-    # - name: Remove vagrant zip source
-    #   file:
-    #     path: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
-    #     state: absent
-    #   tags: vagrant
+    - name: Install git
+      become: true
+      apt:
+        name: git
+        update_cache: yes
+        state: present
 
-    # - name: ls
-    #   shell: ls {{ playbook_dir }}/vagrant
-    #   register: out
+    - local_action: stat path=/{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
+      register: zipped_vagrant_exists
+      tags: vagrant
 
-    # - debug: var=out.stdout_lines
+    - name: Install sshfs
+      become: true
+      apt:
+        name: sshfs
+        update_cache: yes
+        state: present
 
-    # - name: install guest additions
-    #   command: ./vagrant plugin install vagrant-vbguest
-    #   register: out
-    #   args:
-    #     chdir: /{{ playbook_dir }}/vagrant/
+    - local_action: stat path=/{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
+      register: zipped_vagrant_exists
+      tags: vagrant
 
-    # - debug: var=out.stdout_lines
+    - name: If vagrant is not available get vagrant zip source and checksum it
+      get_url:
+        url: "{{ vagrant_zip_base_path }}{{ vagrant_zip_file }}"
+        dest: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
+        checksum: "{{ vagrant_zip_file_checksum }}"
+        force: no
+      register: get_vagrant
+      when: zipped_vagrant_exists.stat.exists == False
+      tags: vagrant
 
-    # - name: vagrant force destroy if present
-    #   command: ./vagrant destroy -f
-    #   register: out
-    #   args:
-    #     chdir: /{{ playbook_dir }}/vagrant/
+    - name: Unzip vagrant zip if available and keep it
+      unarchive:
+        src: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
+        dest: /{{ playbook_dir }}/vagrant/
+        remote_src: yes
+        creates: /{{ playbook_dir }}/vagrant/vagrant
+      tags: [vagrant, unzip]
 
-    # - debug: var=out.stdout_lines
+    - name: Create baremetal/ansible/vagrant/.vagrant/machines if it does not exist
+      ansible.builtin.file:
+        path: /{{ playbook_dir }}/vagrant/.vagrant/machines
+        state: directory
+        mode: '0755'
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
 
-    # - name: vagrant plugin install vagrant-disksize
-    #   command: ./vagrant plugin install vagrant-disksize
-    #   register: out
-    #   args:
-    #     chdir: /{{ playbook_dir }}/vagrant/
+    - name: Recursively change ownership of a directory
+      ansible.builtin.file:
+        path: /{{ playbook_dir }}
+        state: directory
+        recurse: yes
+        owner: devlin
+    # cp id_rsa.pub from user to /root/ssh
 
-    # - debug: var=out.stdout_lines
+    - name: Remove vagrant zip source
+      file:
+        path: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
+        state: absent
+      tags: vagrant
 
-    ### ./vagrant box add ubuntu/focal64
-    ### @todo: ./vagrant box add {{ default_box }}
-    ##- name: add box if needed
-    ##  command: ./vagrant box add ubuntu/focal64
-    ##  register: out
-    ##  args:
-    ##    chdir: /{{ playbook_dir }}/vagrant/
+    - name: ls
+      shell: ls {{ playbook_dir }}/vagrant
+      register: out
 
-    ##- debug: var=out.stdout_lines
+    - debug: var=out.stdout_lines
+
+    - name: install guest additions
+      command: ./vagrant plugin install vagrant-vbguest
+      register: out
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
+
+    - debug: var=out.stdout_lines
+
+    - name: vagrant force destroy if present
+      command: ./vagrant destroy -f
+      register: out
+      ignore_errors: true 
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
+
+    - debug: var=out.stdout_lines
+
+    - name: vagrant plugin install vagrant-disksize
+      command: ./vagrant plugin install vagrant-disksize
+      register: out
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
+
+    - debug: var=out.stdout_lines
+
+    # @todo: ./vagrant box add {{ default_box }}
+
+    - name: add box if needed
+      shell: "./vagrant box add ubuntu/focal64 --insecure"
+      register: out
+      ignore_errors: true      
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
+
+    - debug: var=out.stdout_lines
 
     # - name: vagrant up with provision
     #   command: ./vagrant up default --provision --provider=virtualbox
+    #   become: true
     #   register: out
     #   args:
     #     chdir: /{{ playbook_dir }}/vagrant/
 
     # - debug: var=out.stdout_lines
 
-    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.apache
-    #   register: geerlingguy_apache_exists
-    #   tags: ansible
+    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.apache
+      register: geerlingguy_apache_exists
+      tags: ansible
 
-    # - name: install geerlingguy apache from galaxy
-    #   command: ansible-galaxy install --roles-path roles geerlingguy.apache
-    #   register: out
-    #   tags: ansible
-    #   args:
-    #     chdir: /{{ playbook_dir }}/
-    #   when: geerlingguy_apache_exists.stat.exists == False
+    - name: install geerlingguy apache from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.apache
+      register: out
+      tags: ansible
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_apache_exists.stat.exists == False
 
-    # - debug: var=out.stdout_lines
-    #   tags: ansible
+    - debug: var=out.stdout_lines
+      tags: ansible
 
-    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.php
-    #   register: geerlingguy_php_exists
-    #   tags: [ansible, ansible_php]
+    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.php
+      register: geerlingguy_php_exists
+      tags: [ansible, ansible_php]
 
-    # - name: install geerlingguy php from galaxy
-    #   command: ansible-galaxy install --roles-path roles geerlingguy.php
-    #   register: out
-    #   tags: [ansible, ansible_php]
-    #   args:
-    #     chdir: /{{ playbook_dir }}/
-    #   when: geerlingguy_php_exists.stat.exists == False
+    - name: install geerlingguy php from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.php
+      register: out
+      tags: [ansible, ansible_php]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_php_exists.stat.exists == False
 
-    # - debug: var=out.stdout_lines
-    #   tags: [ansible, ansible_php]
+    - debug: var=out.stdout_lines
+      tags: [ansible, ansible_php]
 
-    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.php-mysql
-    #   register: geerlingguy_php_mysql_exists
-    #   tags: [ansible, ansible_php_mysql]
+    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.php-mysql
+      register: geerlingguy_php_mysql_exists
+      tags: [ansible, ansible_php_mysql]
 
-    # - name: install geerlingguy php-mysql from galaxy
-    #   command: ansible-galaxy install --roles-path roles geerlingguy.php-mysql
-    #   register: out
-    #   tags: [ansible, ansible_php_mysql]
-    #   args:
-    #     chdir: /{{ playbook_dir }}/
-    #   when: geerlingguy_php_mysql_exists.stat.exists == False
+    - name: install geerlingguy php-mysql from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.php-mysql
+      register: out
+      tags: [ansible, ansible_php_mysql]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_php_mysql_exists.stat.exists == False
 
-    # - debug: var=out.stdout_lines
-    #   tags: [ansible, ansible_php_mysql]
+    - debug: var=out.stdout_lines
+      tags: [ansible, ansible_php_mysql]
 
-    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.adminer
-    #   register: geerlingguy_adminer_exists
-    #   tags: [ansible, ansible_adminer]
+    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.adminer
+      register: geerlingguy_adminer_exists
+      tags: [ansible, ansible_adminer]
 
-    # - name: install geerlingguy adminer from galaxy
-    #   command: ansible-galaxy install --roles-path roles geerlingguy.adminer
-    #   register: out
-    #   tags: [ansible, ansible_adminer]
-    #   args:
-    #     chdir: /{{ playbook_dir }}/
-    #   when: geerlingguy_adminer_exists.stat.exists == False
+    - name: install geerlingguy adminer from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.adminer
+      register: out
+      tags: [ansible, ansible_adminer]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_adminer_exists.stat.exists == False
 
-    # - debug: var=out.stdout_lines
-    #   tags: [ansible, ansible_adminer]
+    - debug: var=out.stdout_lines
+      tags: [ansible, ansible_adminer]
 
-    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.java
-    #   register: geerlingguy_java_exists
-    #   tags: [ansible, ansible_java]
+    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.java
+      register: geerlingguy_java_exists
+      tags: [ansible, ansible_java]
 
-    # - name: install geerlingguy java from galaxy
-    #   command: ansible-galaxy install --roles-path roles geerlingguy.java
-    #   register: out
-    #   tags: [ansible, ansible_java]
-    #   args:
-    #     chdir: /{{ playbook_dir }}/
-    #   when: geerlingguy_java_exists.stat.exists == False
+    - name: install geerlingguy java from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.java
+      register: out
+      tags: [ansible, ansible_java]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_java_exists.stat.exists == False
 
-    # - debug: var=out.stdout_lines
-    #   tags: [ansible, ansible_java]
+    - debug: var=out.stdout_lines
+      tags: [ansible, ansible_java]
 
-    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.solr
-    #   register: geerlingguy_solr_exists
-    #   tags: [ansible, ansible_solr]
+    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.solr
+      register: geerlingguy_solr_exists
+      tags: [ansible, ansible_solr]
 
-    # - name: install geerlingguy solr from galaxy
-    #   command: ansible-galaxy install --roles-path roles geerlingguy.solr
-    #   register: out
-    #   tags: [ansible, ansible_solr]
-    #   args:
-    #     chdir: /{{ playbook_dir }}/
-    #   when: geerlingguy_solr_exists.stat.exists == False
+    - name: install geerlingguy solr from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.solr
+      register: out
+      tags: [ansible, ansible_solr]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_solr_exists.stat.exists == False
 
-    # - debug: var=out.stdout_lines
-    #   tags: [ansible, ansible_solr]
+    - debug: var=out.stdout_lines
+      tags: [ansible, ansible_solr]
 
-    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.mysql
-    #   register: geerlingguy_mysql_exists
-    #   tags: [ansible, ansible_mysql]
+    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.mysql
+      register: geerlingguy_mysql_exists
+      tags: [ansible, ansible_mysql]
 
-    # - name: install geerlingguy mysql from galaxy
-    #   command: ansible-galaxy install --roles-path roles geerlingguy.mysql
-    #   register: out
-    #   tags: [ansible, ansible_mysql]
-    #   args:
-    #     chdir: /{{ playbook_dir }}/
-    #   when: geerlingguy_mysql_exists.stat.exists == False
+    - name: install geerlingguy mysql from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.mysql
+      register: out
+      tags: [ansible, ansible_mysql]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_mysql_exists.stat.exists == False
 
-    # - debug: var=out.stdout_lines
-    #   tags: [ansible, ansible_mysql]
+    - debug: var=out.stdout_lines
+      tags: [ansible, ansible_mysql]
 
-    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.composer
-    #   register: geerlingguy_composer_exists
-    #   tags: [ansible, ansible_composer]
+    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.composer
+      register: geerlingguy_composer_exists
+      tags: [ansible, ansible_composer]
 
-    # - name: install geerlingguy composer from galaxy
-    #   command: ansible-galaxy install --roles-path roles geerlingguy.composer
-    #   register: out
-    #   tags: [ansible, ansible_composer]
-    #   args:
-    #     chdir: /{{ playbook_dir }}/
-    #   when: geerlingguy_composer_exists.stat.exists == False
+    - name: install geerlingguy composer from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.composer
+      register: out
+      tags: [ansible, ansible_composer]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_composer_exists.stat.exists == False
 
-    # - debug: var=out.stdout_lines
-    #   tags: [ansible, ansible_composer]
+    - debug: var=out.stdout_lines
+      tags: [ansible, ansible_composer]
 
-    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.drush
-    #   register: geerlingguy_drush_exists
-    #   tags: [ansible, ansible_drush]
+    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.drush
+      register: geerlingguy_drush_exists
+      tags: [ansible, ansible_drush]
 
-    # - name: install geerlingguy drush from galaxy
-    #   command: ansible-galaxy install --roles-path roles geerlingguy.drush
-    #   register: out
-    #   tags: [ansible, ansible_drush]
-    #   args:
-    #     chdir: /{{ playbook_dir }}/
-    #   when: geerlingguy_drush_exists.stat.exists == False
+    - name: install geerlingguy drush from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.drush
+      register: out
+      tags: [ansible, ansible_drush]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_drush_exists.stat.exists == False
 
-    # - debug: var=out.stdout_lines
-    #   tags: [ansible, ansible_drush]
+    - debug: var=out.stdout_lines
+      tags: [ansible, ansible_drush]
 
-    # - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.htpasswd
-    #   register: geerlingguy_htpasswd_exists
-    #   tags: [ansible, ansible_htpasswd]
+    - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.htpasswd
+      register: geerlingguy_htpasswd_exists
+      tags: [ansible, ansible_htpasswd]
 
-    # - name: install geerlingguy drush from galaxy
-    #   command: ansible-galaxy install --roles-path roles geerlingguy.htpasswd
-    #   register: out
-    #   tags: [ansible, ansible_htpasswd]
-    #   args:
-    #     chdir: /{{ playbook_dir }}/
-    #   when: geerlingguy_htpasswd_exists.stat.exists == False
+    - name: install geerlingguy drush from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.htpasswd
+      register: out
+      tags: [ansible, ansible_htpasswd]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_htpasswd_exists.stat.exists == False
 
-    # - debug: var=out.stdout_lines
-    #   tags: [ansible, ansible_htpasswd]
+    - debug: var=out.stdout_lines
+      tags: [ansible, ansible_htpasswd]
 
-    # - name: install geerlingguy certbot from galaxy
-    #   command: ansible-galaxy install --roles-path roles geerlingguy.certbot
-    #   register: out
-    #   tags: [ansible, certbot]
-    #   args:
-    #     chdir: /{{ playbook_dir }}/
-    #   when: geerlingguy_htpasswd_exists.stat.exists == False
+    - name: install geerlingguy certbot from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.certbot
+      register: out
+      tags: [ansible, certbot]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_htpasswd_exists.stat.exists == False
 
-    # - debug: var=out.stdout_lines
-    #   tags: [ansible, certbot]
+    - debug: var=out.stdout_lines
+      tags: [ansible, certbot]
 
-    # - name: install geerlingguy xdebug from galaxy
-    #   command: ansible-galaxy install --roles-path roles geerlingguy.php-xdebug
-    #   register: out
-    #   tags: [ansible, xdebug]
-    #   args:
-    #     chdir: /{{ playbook_dir }}/
-    #   when: geerlingguy_htpasswd_exists.stat.exists == False
+    - name: install geerlingguy xdebug from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.php-xdebug
+      register: out
+      tags: [ansible, xdebug]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_htpasswd_exists.stat.exists == False
 
-    # - debug: var=out.stdout_lines
-    #   tags: [ansible, xdebug]
+    - debug: var=out.stdout_lines
+      tags: [ansible, xdebug]
 
-    # - name: install geerlingguy php-versions from galaxy
-    #   command: ansible-galaxy install --roles-path roles geerlingguy.php-versions
-    #   register: out
-    #   tags: [ansible, xdebug]
-    #   args:
-    #     chdir: /{{ playbook_dir }}/
-    #   when: geerlingguy_htpasswd_exists.stat.exists == False
+    - name: install geerlingguy php-versions from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.php-versions
+      register: out
+      tags: [ansible, xdebug]
+      args:
+        chdir: /{{ playbook_dir }}/
+      when: geerlingguy_htpasswd_exists.stat.exists == False
 
-    # - debug: var=out.stdout_lines
-    #   tags: [ansible, xdebug]
+    - debug: var=out.stdout_lines
+      tags: [ansible, xdebug]
 
 # @todo : for mouting the remote filesystem via ssh:
 # https://stackoverflow.com/questions/3407287/how-do-you-edit-files-over-ssh
 # sudo apt-get install sshfs
 # mkdir ~/remote_code
-# sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/devlin/baremetal/ansible/vagrant/data/assets/tpp/code
+# sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/devlin/baremetal/ansible/vagrant/data/assets/project/code
 
-    # - name: ./vagrant box add ubuntu/focal64 --insecure 
-    #   shell: ./vagrant box add ubuntu/focal64 --insecure
-    #   register: out
-    #   tags: host_authoized_key_purge
+    - name: ./vagrant box update --insecure 
+      shell: ./vagrant box update --insecure
+      register: out
+      ignore_errors: true
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
 
-    # - debug: var=out.stdout_lines
-    #   tags: host_authoized_key_purge
+      tags: host_authoized_key_purge
 
-    # - name: ./vagrant box update --insecure 
-    #   shell: ./vagrant box update --insecure
-    #   register: out
-    #   tags: host_authoized_key_purge
-
-    # - debug: var=out.stdout_lines
-    #   tags: host_authoized_key_purge
+    - debug: var=out.stdout_lines
+      tags: host_authoized_key_purge
 
     # @todo clone the projects
 
@@ -333,9 +380,9 @@
     # - debug: var=out.stdout_lines
     #   tags: host_authoized_key_purge
 
-    # @TODO: Get sanitized database from DIGIT and extract it at /ansible/vagrant/data
+    # @TODO: Get sanitized database for project and extract it at /ansible/vagrant/data
 
-    # sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/devlin/baremetal/ansible/vagrant/data/assets/tpp/code
+    # sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/devlin/baremetal/ansible/vagrant/data/assets/project/code
 
   # @todo: sudo apt-get install php-xml
   # sudo apt-get install php-curl
