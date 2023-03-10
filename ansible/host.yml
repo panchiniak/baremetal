@@ -365,7 +365,6 @@
 
     - name: vagrant up with provision
       command: ./vagrant up default --provision --provider=virtualbox
-      become: true
       register: out
       args:
         chdir: /{{ playbook_dir }}/vagrant/
@@ -374,7 +373,6 @@
 
     - name: vagrant halt default
       command: ./vagrant halt default
-      become: true
       register: out
       args:
         chdir: /{{ playbook_dir }}/vagrant/
