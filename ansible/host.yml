@@ -94,13 +94,6 @@
       tags: [vagrant, unzip]
 
     - name: Recursively change ownership of a directory
-      ansible.builtin.file:
-        path: /{{ playbook_dir }}
-        state: directory
-        recurse: yes
-        owner: {baremetal_host_username}
-
-    - name: Recursively change ownership of a directory
       shell: chown -R {{baremetal_host_username}} /{{ playbook_dir }}
       register: out
       ignore_errors: true      
