@@ -85,6 +85,13 @@
       when: zipped_vagrant_exists.stat.exists == False
       tags: vagrant
 
+    - name: Install unzip
+      become: true
+      apt:
+        name: unzip
+        update_cache: yes
+        state: present
+
     - name: Unzip vagrant zip if available and keep it
       unarchive:
         src: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
