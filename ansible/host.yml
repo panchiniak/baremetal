@@ -53,14 +53,12 @@
       become: true
       apt:
         name: linux-headers-generic
-        update_cache: yes
         state: present
 
     - name: Install git
       become: true
       apt:
         name: git
-        update_cache: yes
         state: present
 
     - local_action: stat path=/{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
@@ -71,7 +69,6 @@
       become: true
       apt:
         name: sshfs
-        update_cache: yes
         state: present
 
     - local_action: stat path=/{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
@@ -96,20 +93,31 @@
         creates: /{{ playbook_dir }}/vagrant/vagrant
       tags: [vagrant, unzip]
 
-    - name: Create baremetal/ansible/vagrant/.vagrant/machines if it does not exist
-      ansible.builtin.file:
-        path: /{{ playbook_dir }}/vagrant/.vagrant/machines
-        state: directory
-        mode: '0755'
-      args:
-        chdir: /{{ playbook_dir }}/vagrant/
-
     - name: Recursively change ownership of a directory
       ansible.builtin.file:
         path: /{{ playbook_dir }}
         state: directory
         recurse: yes
-        owner: devlin
+        owner: {baremetal_host_username}
+
+    - name: Recursively change ownership of a directory
+      shell: chown -R {{baremetal_host_username}} /{{ playbook_dir }}
+      register: out
+      ignore_errors: true      
+      args:
+        chdir: /{{ playbook_dir }}/
+
+    - debug: var=out.stdout_lines
+
+    # - name: Create baremetal/ansible/vagrant/.vagrant/machines if it does not exist
+    #   shell: "mkdir .vagrant/machines; chmod a+w .vagrant/machines"
+    #   register: out
+    #   ignore_errors: true      
+    #   args:
+    #     chdir: /{{ playbook_dir }}/vagrant/
+
+    # - debug: var=out.stdout_lines
+
     # cp id_rsa.pub from user to /root/ssh
 
     - name: Remove vagrant zip source
@@ -159,15 +167,6 @@
         chdir: /{{ playbook_dir }}/vagrant/
 
     - debug: var=out.stdout_lines
-
-    # - name: vagrant up with provision
-    #   command: ./vagrant up default --provision --provider=virtualbox
-    #   become: true
-    #   register: out
-    #   args:
-    #     chdir: /{{ playbook_dir }}/vagrant/
-
-    # - debug: var=out.stdout_lines
 
     - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.apache
       register: geerlingguy_apache_exists
@@ -356,7 +355,7 @@
 # https://stackoverflow.com/questions/3407287/how-do-you-edit-files-over-ssh
 # sudo apt-get install sshfs
 # mkdir ~/remote_code
-# sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/devlin/baremetal/ansible/vagrant/data/assets/project/code
+# sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/{{ baremetal_host_username }}/baremetal/ansible/vagrant/data/assets/project/code
 
     - name: ./vagrant box update --insecure 
       shell: ./vagrant box update --insecure
@@ -370,6 +369,17 @@
     - debug: var=out.stdout_lines
       tags: host_authoized_key_purge
 
+    # - name: vagrant up with provision
+    #   command: ./vagrant up default --provision --provider=virtualbox
+    #   become: true
+    #   register: out
+    #   args:
+    #     chdir: /{{ playbook_dir }}/vagrant/
+
+    # - debug: var=out.stdout_lines
+
+
+
     # @todo clone the projects
 
     # - name: ssh-keygen
@@ -382,7 +392,7 @@
 
     # @TODO: Get sanitized database for project and extract it at /ansible/vagrant/data
 
-    # sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/devlin/baremetal/ansible/vagrant/data/assets/project/code
+    # sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/{{ baremetal_host_username }}/baremetal/ansible/vagrant/data/assets/project/code
 
   # @todo: sudo apt-get install php-xml
   # sudo apt-get install php-curl

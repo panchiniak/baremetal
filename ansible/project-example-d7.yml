@@ -108,7 +108,7 @@
     # - debug: var=out.stdout_lines
     #   tags: [db]
 
-    # # wget does not work. Try using curl, uncompress and place the .sql inside /home/devlin/baremetal/ansible/vagrant/data/assets
+    # # wget does not work. Try using curl, uncompress and place the .sql inside /home/{{ baremetal_host_username }}/baremetal/ansible/vagrant/data/assets
     # # this will be available inside the guest machine at /vagrant_data/assets/
     # just-tpdt-reference_202205302241-sanitized.sql.gz
     # - name: Download database.
