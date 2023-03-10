@@ -26,7 +26,7 @@ fi
 # Create ssh keys if needed:
 if [ ! -f /home/$USERNAME/.ssh/id_rsa.pub ]; then
   su $USERNAME
-  ssh-keygen -t rsa -b 4096
+  ssh-keygen -q -b 4096 -t rsa -N '' <<< $'\ny' >/dev/null 2>&1
 fi
 
 # Enable access without password:
