@@ -1,9 +1,9 @@
 # Test this file syntax:
 # - ansible-inventory --list -y -i baremetal_hosts
 # Test Ansible connection:
-# - ansible all -m ping -u <user-name> -i baremetal_hosts
+# - ansible all -m ping -u $(whoami) -i baremetal_hosts
 # Command example:
-# - ansible baremetal -a "df -h" -u <user-name> -i baremetal_hosts
+# - ansible host -a "df -h" -u $(whoami) -i baremetal_hosts
 
 [servers]
 host ansible_port=22 ansible_host=127.0.0.1
