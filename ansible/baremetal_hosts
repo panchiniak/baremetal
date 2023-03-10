@@ -1,5 +1,5 @@
 # Test this file syntax:
-# - ansible-inventory --list -y -i hosts
+# - ansible-inventory --list -y -i baremetal_hosts
 # Test Ansible connection:
 # - ansible all -m ping -u <user-name> -i baremetal_hosts
 # Command example:
