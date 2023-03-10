@@ -384,8 +384,6 @@
 
     - debug: var=out.stdout_lines
 
-
-
     # @todo clone the projects
 
     # - name: ssh-keygen
