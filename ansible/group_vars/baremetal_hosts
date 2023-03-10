@@ -42,7 +42,7 @@ baremetal_host_username: devlin
 htpasswd_credentials:
   - path: /etc/apache-passwdfile
     name: panchiniak
-    password: 'Digo978813.'
+    password: 'blabla'
     owner: root
     group: www-data
     mode: 'u+rw,g+r'

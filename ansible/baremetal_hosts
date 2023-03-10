@@ -1,13 +1,12 @@
 # Test this file syntax:
 # - ansible-inventory --list -y -i baremetal_hosts
-# Test Ansible connection:
+# Test Ansible connection to the host:
 # - ansible all -m ping -u $(whoami) -i baremetal_hosts
 # Command example:
 # - ansible host -a "df -h" -u $(whoami) -i baremetal_hosts
 
 [servers]
 host ansible_port=22 ansible_host=127.0.0.1
-
 
 # Default settings:
 [servers:vars]
