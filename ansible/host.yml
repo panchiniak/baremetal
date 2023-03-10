@@ -356,6 +356,7 @@
     - name: Recursively change ownership of a directory
       shell: chown -R {{baremetal_host_username}} /{{ playbook_dir }}
       register: out
+      become: true
       ignore_errors: true
       tags: chown
       args:
@@ -363,21 +364,23 @@
 
     - debug: var=out.stdout_lines
 
-    - name: vagrant up with provision
-      command: ./vagrant up default --provision --provider=virtualbox
-      register: out
-      args:
-        chdir: /{{ playbook_dir }}/vagrant/
+    # Add the uid of current user in baremetal/ansible/vagrant/.vagrant/machines/default/virtualbox/creator_uid
 
-    - debug: var=out.stdout_lines
+    # - name: vagrant up with provision
+    #   command: ./vagrant up default --provision --provider=virtualbox
+    #   register: out
+    #   args:
+    #     chdir: /{{ playbook_dir }}/vagrant/
 
-    - name: vagrant halt default
-      command: ./vagrant halt default
-      register: out
-      args:
-        chdir: /{{ playbook_dir }}/vagrant/
+    # - debug: var=out.stdout_lines
 
-    - debug: var=out.stdout_lines
+    # - name: vagrant halt default
+    #   command: ./vagrant halt default
+    #   register: out
+    #   args:
+    #     chdir: /{{ playbook_dir }}/vagrant/
+
+    # - debug: var=out.stdout_lines
 
 
 

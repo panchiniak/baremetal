@@ -41,10 +41,8 @@ Warning: for safety constrains please read and understand `playbook.yml` file be
 
 ## Roadmap
 
-https://www.vagrantup.com/intro/getting-started/share.html
-
 https://www.vagrantup.com/docs/networking/private_network.html
 
 Generate baremetal_host_username on install, based on the current user name.
 
-Generate port number for Vagrantfile for guest port 22 based on available ports.
+Generate port numbers at Vagrantfile based on available ports.
