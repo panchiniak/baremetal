@@ -93,15 +93,6 @@
         creates: /{{ playbook_dir }}/vagrant/vagrant
       tags: [vagrant, unzip]
 
-    - name: Recursively change ownership of a directory
-      shell: chown -R {{baremetal_host_username}} /{{ playbook_dir }}
-      register: out
-      ignore_errors: true      
-      args:
-        chdir: /{{ playbook_dir }}/
-
-    - debug: var=out.stdout_lines
-
     # - name: Create baremetal/ansible/vagrant/.vagrant/machines if it does not exist
     #   shell: "mkdir .vagrant/machines; chmod a+w .vagrant/machines"
     #   register: out
@@ -361,6 +352,16 @@
 
     - debug: var=out.stdout_lines
       tags: host_authoized_key_purge
+
+    - name: Recursively change ownership of a directory
+      shell: chown -R {{baremetal_host_username}} /{{ playbook_dir }}
+      register: out
+      ignore_errors: true
+      tags: chown
+      args:
+        chdir: /{{ playbook_dir }}/
+
+    - debug: var=out.stdout_lines
 
     # - name: vagrant up with provision
     #   command: ./vagrant up default --provision --provider=virtualbox
