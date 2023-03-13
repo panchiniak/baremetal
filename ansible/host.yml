@@ -342,12 +342,6 @@
     - debug: var=out.stdout_lines
       tags: [ansible, xdebug]
 
-# @todo : for mouting the remote filesystem via ssh:
-# https://stackoverflow.com/questions/3407287/how-do-you-edit-files-over-ssh
-# sudo apt-get install sshfs
-# mkdir ~/remote_code
-# sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/{{ baremetal_host_username }}/baremetal/ansible/vagrant/data/assets/project/code
-
     - name: ./vagrant box update --insecure 
       shell: ./vagrant box update --insecure
       register: out
@@ -404,6 +398,3 @@
     # @TODO: Get sanitized database for project and extract it at /ansible/vagrant/data
 
     # sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/{{ baremetal_host_username }}/baremetal/ansible/vagrant/data/assets/project/code
-
-  # @todo: sudo apt-get install php-xml
-  # sudo apt-get install php-curl
