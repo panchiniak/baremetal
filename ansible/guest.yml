@@ -177,28 +177,41 @@
 
     - debug: var=out.stdout_lines
 
-    # @TODO: add Directoy at default host for clean URL:
-    # <Directory /var/www/html>
-    # Options Indexes FollowSymLinks MultiViews
-    # AllowOverride All
-    #   Require all granted
-    #   Options Indexes FollowSymLinks MultiViews
-    #   AllowOverride All
-    #   AuthType Basic
-    #   AuthName "Apache with basic auth."
-    #   AuthUserFile /etc/apache-passwdfile
-    #   Require valid-user
-    # </Directory>
-    # /etc/apache2/sites-enabled/000-default.conf
-    # @TODO: set http password using:
-    # https://github.com/geerlingguy/ansible-role-htpasswd
+# @TODO: add Directoy at default host for clean URL:
+# <Directory /var/www/html>
+# Options Indexes FollowSymLinks MultiViews
+# AllowOverride All
+#   Require all granted
+#   Options Indexes FollowSymLinks MultiViews
+#   AllowOverride All
+#   AuthType Basic
+#   AuthName "Apache with basic auth."
+#   AuthUserFile /etc/apache-passwdfile
+#   Require valid-user
+# </Directory>
+# /etc/apache2/sites-enabled/000-default.conf
+# @TODO: set http password using:
+# https://github.com/geerlingguy/ansible-role-htpasswd
 
 
-    # # @todo: add as a pre task, to be run in the host
-    # - name: ssh-keygen
-    #   shell: ssh-keygen -f /home/{{ baremetal_host_username }}/.ssh/known_hosts -R [127.0.0.1]:2222
-    #   register: out
-    #   tags: host_authoized_key_purge
+# # @todo: add as a pre task, to be run in the host
+# - name: ssh-keygen
+#   shell: ssh-keygen -f /home/{{ baremetal_host_username }}/.ssh/known_hosts -R [127.0.0.1]:2222
+#   register: out
+#   tags: host_authoized_key_purge
 
-    # - debug: var=out.stdout_lines
-    #   tags: host_authoized_key_purge
+# - debug: var=out.stdout_lines
+#   tags: host_authoized_key_purge
+# Configuration for Search API for C9/AWS/DIGIT
+# Get at admin/config/search/search_api/server/solr_server/edit and configure:
+#     HTTP protocol: 
+#     Solr Host: 127.0.0.1
+#     Solr port: 8983
+#     Solr path:  /solr/d7_search_api
+# Configuration for Search API for Baremetal/Vagrant
+# Get at admin/config/search/search_api/server/solr_server/edit and configure:
+#     HTTP protocol: 
+#     Solr Host: 127.0.0.1
+#     Solr port: 8983
+#     Solr path:  /solr/collection1
+
