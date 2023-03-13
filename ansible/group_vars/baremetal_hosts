@@ -38,7 +38,7 @@ php_xdebug_max_nesting_level: 256
 php_xdebug_cli_disable: false
 
 # Custom settings:
-baremetal_host_username: devlin
+baremetal_host_username: vagrant
 htpasswd_credentials:
   - path: /etc/apache-passwdfile
     name: panchiniak
