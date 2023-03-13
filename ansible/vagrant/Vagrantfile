@@ -12,6 +12,8 @@ Vagrant.configure("2") do |config|
   host_port_443 = 8181
   host_port_9000 = 9001
   host_port_8983 = 9191
+  # Default public_network_bridge for nested machine:
+  # public_network_bridge = "enp0s3"
   public_network_bridge = "wlp0s20f3"
 
   config.trigger.after :up do |trigger|
