@@ -367,23 +367,23 @@
 
     # Consider adding the uid of current user in baremetal/ansible/vagrant/.vagrant/machines/default/virtualbox/creator_uid
 
-    - name: vagrant up with provision
-      command: ./vagrant up default --provision --provider=virtualbox
-      register: out
-      tags: up      
-      args:
-        chdir: /{{ playbook_dir }}/vagrant/
+    # - name: vagrant up with provision
+    #   command: ./vagrant up default --provision --provider=virtualbox
+    #   register: out
+    #   tags: up      
+    #   args:
+    #     chdir: /{{ playbook_dir }}/vagrant/
 
-    - debug: var=out.stdout_lines
+    # - debug: var=out.stdout_lines
 
-    - name: vagrant halt default
-      command: ./vagrant halt default
-      register: out
-      tags: halt
-      args:
-        chdir: /{{ playbook_dir }}/vagrant/
+    # - name: vagrant halt default
+    #   command: ./vagrant halt default
+    #   register: out
+    #   tags: halt
+    #   args:
+    #     chdir: /{{ playbook_dir }}/vagrant/
 
-    - debug: var=out.stdout_lines
+    # - debug: var=out.stdout_lines
 
     # @todo clone the projects
 
