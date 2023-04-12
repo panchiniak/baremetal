@@ -1,7 +1,5 @@
-ansible/group_vars/emnies_hosts
 ansible/vagrant/vagrant
 ansible/vagrant/.vagrant
 ansible/roles/
 ansible/vagrant/*.log
 ansible/vagrant/data/*
-ansible/vagrant/data_web/assets/settings.local.php
