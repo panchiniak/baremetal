@@ -7,6 +7,7 @@
 
 [servers]
 host ansible_port=22 ansible_host=127.0.0.1
+proc ansible_port=2224 ansible_host=127.0.0.1
 
 # Default settings:
 [servers:vars]
@@ -15,3 +16,5 @@ vagrant_zip_base_path=https://releases.hashicorp.com/vagrant/2.3.4/
 vagrant_zip_file=vagrant_2.3.4_linux_amd64.zip
 vagrant_zip_file_checksum=sha256:63510217d37dbdf96d8e4756fa45fc5a137883beec33a639e361a4fd742aa99a
 baremetal_guest_username=vagrant
+private_key_file=/home/devlin/.ssh/id_rsa
+remote_user=vagrant

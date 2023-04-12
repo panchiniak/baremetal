@@ -2,7 +2,7 @@
 # Gest configurations
 #################################################
 ---
-- hosts: tpp
+- hosts: proc
   become: yes
   vars_files:
     - group_vars/baremetal_hosts
@@ -94,16 +94,16 @@
 # grep SwapTotal /proc/meminfo
 
   pre_tasks:
-    - name: Copy proxy settings
-      shell: cp -ar /vagrant_data/assets/environment /etc/
-      become: true      
-      register: out
-      args:
-        chdir: /
-      tags: sapi
+    # - name: Copy proxy settings
+    #   shell: cp -ar /vagrant_data/assets/environment /etc/
+    #   become: true      
+    #   register: out
+    #   args:
+    #     chdir: /
+    #   tags: sapi
 
-    - debug: var=out.stdout_lines
-      tags: proxy
+    # - debug: var=out.stdout_lines
+    #   tags: proxy
 
     - name: Update apt cache.
       apt: update_cache=yes cache_valid_time=86400
