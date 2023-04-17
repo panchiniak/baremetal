@@ -4,3 +4,4 @@ ansible/roles/
 ansible/vagrant/*.log
 ansible/vagrant/data/*
 ansible/vagrant/projects/*
+code
