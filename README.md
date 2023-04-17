@@ -1,6 +1,7 @@
-# Baremetal Vagrant/Ansible Infrastructure and Applications Handler
+# Baremetal Infrastructure and Applications Handler and Hypervisor
 
-This document will guide you through the installation and usage of Baremetal Vagrant/Ansible Infrastructure and Applications Handler. 
+This document will guide you through the installation and usage of Baremetal Infrastructure and Applications Handler and Hypervisor.
+Baremetal helps you to setup an web infrastructure for multiple purposes and multiple machines based on Vagrant and Ansible automation tools.
 
 
 ## OS Requirement
@@ -21,7 +22,7 @@ This will be used to allow Ansible to access the host machine with no need of ty
 
 ## Custom variables
 
-After installation you can add your custom variables at `ansible/group_vars/baremetal_hosts`
+After installation you can copy `ansible/group_vars/baremetal_hosts` as `ansible/group_vars/my_app_hosts` for adding your custom variables. 
 
 ## Usage
 
