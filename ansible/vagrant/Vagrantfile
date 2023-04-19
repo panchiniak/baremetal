@@ -16,15 +16,19 @@ Vagrant.configure("2") do |config|
   # Default public_network_bridge for nested machine:
   # public_network_bridge = "enp0s3"
   public_network_bridge = "wlp0s20f3"
+  # public_network_bridge = "enp0s31f6"
+  
   # @todo: make this to be dynamic:
   # Get current user for /home/<current user>/.ssh/known_hosts
   host_user_name = "devlin"
 
   config.trigger.after :up do |trigger|
     trigger.name = "ssh-keygen"
-    trigger.info = "Running ssh-keygen for refreshing known hosts."
-    # trigger.run = {inline: 'ssh-keygen -f "/home/' << host_user_name << '/.ssh/known_hosts" -R "[127.0.0.1]:' << host_port_22 << '"'}
     trigger.run = {inline: 'ssh-keygen -f "/home/' << host_user_name << '/.ssh/known_hosts" -R "[127.0.0.1]:' << host_port_22_string}
+    trigger.info = "Mounting the code folder."    
+    # trigger.run = {inline: 'sshfs -p '<< host_port_22 << ' vagrant@127.0.0.1:/var/www/html /home/'<< host_user_name <<'/baremetal/ansible/code'}
+    trigger.run = {inline: 'sshfs -p 2224 vagrant@127.0.0.1:/var/www/html /home/devlin/baremetal/ansible/code'}
+    # fusermount -u /folder/for/unmounting
   end
 
   config.vm.define "default", autostart: false do |default|
@@ -146,3 +150,4 @@ Vagrant.configure("2") do |config|
 end
 
 # sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/{{ baremetal_host_username }}/baremetal/ansible/vagrant/data/assets/project/code
+# sshfs -p 2224 vagrant@127.0.0.1:/var/www/html /home/{{ baremetal_host_username }}/baremetal/code

@@ -365,6 +365,25 @@
 
     - debug: var=out.stdout_lines
 
+    - name: Create code directory
+      become: yes
+      file:
+        path: /{{ playbook_dir }}/code
+        state: directory
+      tags: [code-directory]
+
+    - name: Recursively change ownership of a directory
+      shell: chown -R {{baremetal_host_username}} {{ playbook_dir }}/code
+      register: out
+      become: true
+      ignore_errors: true
+      tags: chown
+      args:
+        chdir: /{{ playbook_dir }}/
+      tags: [code-directory]
+
+
+
     # Consider adding the uid of current user in baremetal/ansible/vagrant/.vagrant/machines/default/virtualbox/creator_uid
 
     # - name: vagrant up with provision

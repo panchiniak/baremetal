@@ -1,5 +1,5 @@
 ---
-# Default settings:
+# Example settings. 
 php_memory_limit: "4000M"
 php_max_execution_time: "90"
 php_upload_max_filesize: "256M"
@@ -38,26 +38,5 @@ php_xdebug_max_nesting_level: 256
 php_xdebug_cli_disable: false
 
 # Custom settings:
+# @todo: define baremetal_host_username on install.sh 
 baremetal_host_username: devlin
-# htpasswd_credentials:
-#   - path: /etc/apache-passwdfile
-#     name: panchiniak
-#     password: 'blabla'
-#     owner: root
-#     group: www-data
-#     mode: 'u+rw,g+r'
-
-# apache_remove_default_vhost: True
-# apache_vhosts:
-#   - listen: "80"
-#     servername: "baremetal.test"
-#     documentroot: "/var/www/html"
-#     extra_parameters: |
-#         <Directory /var/www/html>
-#             Options Indexes FollowSymLinks MultiViews
-#             AllowOverride All
-#             AuthType Basic
-#             AuthName "Apache with basic auth."
-#             AuthUserFile /etc/apache-passwdfile
-#             Require valid-user
-#         </Directory>
