@@ -33,7 +33,8 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "default", autostart: false do |default|
-    default.vm.box = "ubuntu/focal64"
+    # default.vm.box = "ubuntu/focal64"
+    default.vm.box = "ubuntu/jammy64"
     # default.vm.box = "ubuntu/impish64"
     # @TODO: make the disk size configurable:
     default.disksize.size = '100GB'
