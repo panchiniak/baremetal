@@ -6,3 +6,4 @@ ansible/vagrant/data/*
 ansible/vagrant/projects/*
 code
 .vscode/
+*.box

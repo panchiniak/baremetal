@@ -3,8 +3,8 @@
 php_memory_limit: "4000M"
 php_max_execution_time: "90"
 php_upload_max_filesize: "256M"
-php_version: "7.4"
-php_default_version_debian: "7.4"
+php_version: "8.2"
+php_default_version_debian: "8.2"
 php_packages:
   - php
   - php-cli
@@ -16,7 +16,7 @@ php_packages:
   - php-curl
   - php-zip
 php_enablerepo: "remi,epel"
-php_mysql_package: "php7.4-mysql"
+php_mysql_package: "php8.2-mysql"
 mysql_max_allowed_packet: "1000M"
 mysql_innodb_log_file_size: "1000M"
 solr_version: "7.7.2"
