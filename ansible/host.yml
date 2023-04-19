@@ -382,38 +382,12 @@
         chdir: /{{ playbook_dir }}/
       tags: [code-directory]
 
-
-
-    # Consider adding the uid of current user in baremetal/ansible/vagrant/.vagrant/machines/default/virtualbox/creator_uid
-
-    # - name: vagrant up with provision
-    #   command: ./vagrant up default --provision --provider=virtualbox
-    #   register: out
-    #   tags: up      
-    #   args:
-    #     chdir: /{{ playbook_dir }}/vagrant/
-
-    # - debug: var=out.stdout_lines
-
-    # - name: vagrant halt default
-    #   command: ./vagrant halt default
-    #   register: out
-    #   tags: halt
-    #   args:
-    #     chdir: /{{ playbook_dir }}/vagrant/
-
-    # - debug: var=out.stdout_lines
-
-    # @todo clone the projects
-
-    # - name: ssh-keygen
-    #   shell: ssh-keygen -f /home/{{ baremetal_host_username }}/.ssh/known_hosts -R [127.0.0.1]:2222
-    #   register: out
-    #   tags: host_authoized_key_purge
-
-    # - debug: var=out.stdout_lines
-    #   tags: host_authoized_key_purge
-
-    # @TODO: Get sanitized database for project and extract it at /ansible/vagrant/data
+    # @todo: add /home/<user>/.ssh/config file with "StrictHostKeyChecking no" in it.
+    # this will avoid: 
+    # "The authenticity of host '[127.0.0.1]:2224 ([127.0.0.1]:2224)' can't be established.
+    # ED25519 key fingerprint is SHA256:TC+EDR3vM0ip12itwnuPa8G9Er2ZVIvamKCIF2kd378.  
+    # This key is not known by any other names
+    # Are you sure you want to continue connecting"
+    # when running the guest playbook for the first time after machine creation.
 
     # sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/{{ baremetal_host_username }}/baremetal/ansible/vagrant/data/assets/project/code

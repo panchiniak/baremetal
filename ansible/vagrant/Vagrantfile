@@ -9,7 +9,7 @@ Vagrant.configure("2") do |config|
   # For accessing it from the host machine:
   # ssh vagrant@127.0.0.1 -p <host_port_22>
   host_port_22 = 2224
-  host_port_22_string = "2224\""
+  host_port_22_string = "2224"
   host_port_443 = 8181
   host_port_9000 = 9001
   host_port_8983 = 9191
@@ -24,10 +24,11 @@ Vagrant.configure("2") do |config|
 
   config.trigger.after :up do |trigger|
     trigger.name = "ssh-keygen"
-    trigger.run = {inline: 'ssh-keygen -f "/home/' << host_user_name << '/.ssh/known_hosts" -R "[127.0.0.1]:' << host_port_22_string}
-    trigger.info = "Mounting the code folder."    
+    trigger.run = {inline: 'ssh-keygen -f "/home/' << host_user_name << '/.ssh/known_hosts" -R "[127.0.0.1]:' << host_port_22_string << '"'}
+    # ssh-keygen -f "/home/devlin/.ssh/known_hosts" -R "[127.0.0.1]:2224"
+    # trigger.info = "Mounting the code folder."    
     # trigger.run = {inline: 'sshfs -p '<< host_port_22 << ' vagrant@127.0.0.1:/var/www/html /home/'<< host_user_name <<'/baremetal/ansible/code'}
-    trigger.run = {inline: 'sshfs -p 2224 vagrant@127.0.0.1:/var/www/html /home/devlin/baremetal/ansible/code'}
+    # trigger.run = {inline: 'sshfs -p 2224 vagrant@127.0.0.1:/var/www/html /home/devlin/baremetal/ansible/code'}
     # fusermount -u /folder/for/unmounting
   end
 
