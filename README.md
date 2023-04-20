@@ -7,7 +7,7 @@ Baremetal helps you to setup a web infrastructure for multiple purposes and mult
 ## OS Requirement
 
 Baremetal Vagrant/Ansible Infrastructure and Applications Handler has been tested with:
-*  Ubuntu 18.04.4 LTS. (as guest and host)
+*  Ubuntu 22.04.2 LTS. (as guest and host)
 *  MacOS Big Sur vs. 11.6 (as host)
 
 If this is not your OS and you still want to use Baremetal Vagrant/Ansible Infrastructure and Applications Handler, please consider creating a PR with the changes needed for running it at your OS.
