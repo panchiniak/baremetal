@@ -1,7 +1,7 @@
 # Baremetal Infrastructure and Applications Handler and Hypervisor
 
 This document will guide you through the installation and usage of Baremetal Infrastructure and Applications Handler and Hypervisor.
-Baremetal helps you to setup an web infrastructure for multiple purposes and multiple machines based on Vagrant and Ansible automation tools.
+Baremetal helps you to setup a web infrastructure for multiple purposes and multiple machines based on Vagrant and Ansible automation tools.
 
 
 ## OS Requirement
