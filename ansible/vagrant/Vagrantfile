@@ -6,20 +6,37 @@
 
 Vagrant.configure("2") do |config|
 
+  config.vm.network "private_network", type: "dhcp"
+
   # For accessing it from the host machine:
   # ssh vagrant@127.0.0.1 -p <host_port_22>
+  # For openinig the xdebug port:
+  # ssh -R 9003:127.0.0.1:9004 vagrant@127.0.0.1 -p 2224
+  # Get current user for /home/<current user>/.ssh/known_hosts
+  # https://www.digitalocean.com/community/tutorials/how-to-allow-remote-access-to-mysql
+
+  memory = 3000
+  cpus = 2
+
   host_port_22 = 2224
   host_port_22_string = "2224"
   host_port_443 = 8181
-  host_port_9000 = 9001
+  host_port_8080 = 8282
+  host_port_9001 = 9004
   host_port_8983 = 9191
-  # Default public_network_bridge for nested machine:
-  # public_network_bridge = "enp0s3"
+  host_port_8890 = 8890
+  host_port_8585 = 8585
+
+
+  legacy_host_port_22 = 2225
+  legacy_host_port_22_string = "2225"
+  legacy_host_port_443 = 8383
+  legacy_host_port_8080 = 8484
+  legacy_host_port_9001 = 9005
+  legacy_host_port_8983 = 9292
+  legacy_host_port_3306 = 3307
+
   public_network_bridge = "wlp0s20f3"
-  # public_network_bridge = "enp0s31f6"
-  
-  # @todo: make this to be dynamic:
-  # Get current user for /home/<current user>/.ssh/known_hosts
   host_user_name = "devlin"
 
   config.trigger.after :up do |trigger|
@@ -35,17 +52,22 @@ Vagrant.configure("2") do |config|
   config.vm.define "default", autostart: false do |default|
     # default.vm.box = "ubuntu/focal64"
     default.vm.box = "ubuntu/jammy64"
-    # default.vm.box = "ubuntu/impish64"
     # @TODO: make the disk size configurable:
     default.disksize.size = '100GB'
     # SSH:
     default.vm.network "forwarded_port", guest: 22, host: host_port_22
     # Apache from guest in SSL to any IP in host for allowing redirection:
     default.vm.network "forwarded_port", guest: 443, host: host_port_443, host_ip: "0.0.0.0"
+    # Docker from guest in SSL to any IP in host for allowing redirection:
+    default.vm.network "forwarded_port", guest: 8080, host: host_port_8080, host_ip: "0.0.0.0"
+    # Redirection for Virtuoso:
+    default.vm.network "forwarded_port", guest: 8890, host: host_port_8890, host_ip: "0.0.0.0" 
+    # Redirection for PHPMYADMIN from docker:
+    default.vm.network "forwarded_port", guest: 8585, host: host_port_8585, host_ip: "0.0.0.0" 
     # Redirection for xdebug:
-    default.vm.network "forwarded_port", guest: 9000, host: host_port_9000, host_ip: "127.0.0.1"
+    default.vm.network "forwarded_port", guest: 9003, host: host_port_9001, host_ip: "0.0.0.0"
     # Solr by default stays at 8983:
-    default.vm.network "forwarded_port", guest: 8983, host: host_port_8983, host_ip: "127.0.0.1"
+    default.vm.network "forwarded_port", guest: 8983, host: host_port_8983, host_ip: "0.0.0.0"
     # @TODO: do not use network name or get it from a configuration file
     default.vm.network "public_network", bridge: public_network_bridge, ip: "192.168.0.222"
     default.vm.synced_folder "data", "/vagrant_data"
@@ -53,8 +75,8 @@ Vagrant.configure("2") do |config|
       # Dont display the VirtualBox GUI when booting the machine
       vb.gui = false
       # Customize the amount of memory on the VM:
-      vb.memory = "6000"
-      vb.cpus = "3"
+      vb.memory = memory
+      vb.cpus = cpus
       vb.customize ['modifyvm', :id, '--hwvirtex', 'on']
       vb.customize ['modifyvm', :id, '--nested-hw-virt', 'on']
       vb.customize ['modifyvm', :id, '--nestedpaging', 'on']
@@ -67,6 +89,48 @@ Vagrant.configure("2") do |config|
     ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
     default.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys", privileged: false
   end
+
+  config.vm.define "legacy", autostart: false do |default|
+    default.vm.box = "ubuntu/focal64"
+    # default.vm.box = "ubuntu/jammy64"
+    # @TODO: make the disk size configurable:
+    default.disksize.size = '100GB'
+    # SSH:
+    default.vm.network "forwarded_port", guest: 22, host: legacy_host_port_22
+    # Apache from guest in SSL to any IP in host for allowing redirection:
+    default.vm.network "forwarded_port", guest: 443, host: legacy_host_port_443, host_ip: "0.0.0.0"
+    # Docker from guest in SSL to any IP in host for allowing redirection:
+    default.vm.network "forwarded_port", guest: 8080, host: legacy_host_port_8080, host_ip: "0.0.0.0"    
+    # Redirection for xdebug:
+    default.vm.network "forwarded_port", guest: 9003, host: legacy_host_port_9001, host_ip: "0.0.0.0"
+    # Solr by default stays at 8983:
+    default.vm.network "forwarded_port", guest: 8983, host: legacy_host_port_8983, host_ip: "127.0.0.1"
+    # @TODO: do not use network name or get it from a configuration file
+    # Mysql 3306:
+    default.vm.network "forwarded_port", guest: 3306, host: legacy_host_port_3306, host_ip: "0.0.0.0"
+
+    default.vm.network "public_network", bridge: public_network_bridge, ip: "192.168.0.222"
+    default.vm.synced_folder "data", "/vagrant_data"
+    default.vm.provider "virtualbox" do |vb|
+      # Dont display the VirtualBox GUI when booting the machine
+      vb.gui = false
+      # Customize the amount of memory on the VM:
+      vb.memory = memory
+      vb.cpus = cpus
+      vb.customize ['modifyvm', :id, '--hwvirtex', 'on']
+      vb.customize ['modifyvm', :id, '--nested-hw-virt', 'on']
+      vb.customize ['modifyvm', :id, '--nestedpaging', 'on']
+      vb.customize ['modifyvm', :id, '--largepages', 'on']
+      vb.customize ['modifyvm', :id, '--vtxux', 'on']
+      vb.customize ['modifyvm', :id, '--vtxvpid', 'on']
+      vb.customize ['modifyvm', :id, '--graphicscontroller', 'vmsvga']
+      vb.customize ['modifyvm', :id, '--paravirtprovider', 'kvm']
+    end
+    ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
+    default.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys", privileged: false
+  end
+
+
 
   # config.vm.define "web", autostart: false do |web|
   #   web.vm.box = "ubuntu/bionic64"
@@ -153,3 +217,5 @@ end
 
 # sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/{{ baremetal_host_username }}/baremetal/ansible/vagrant/data/assets/project/code
 # sshfs -p 2224 vagrant@127.0.0.1:/var/www/html /home/{{ baremetal_host_username }}/baremetal/code
+# For opening connection to xdebug:
+# ssh -R 9003:127.0.0.1:9003 vagrant@127.0.0.1
