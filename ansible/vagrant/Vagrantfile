@@ -15,13 +15,15 @@ Vagrant.configure("2") do |config|
   # Get current user for /home/<current user>/.ssh/known_hosts
   # https://www.digitalocean.com/community/tutorials/how-to-allow-remote-access-to-mysql
 
-  memory = 3000
+  memory = 4000
   cpus = 2
 
   host_port_22 = 2224
   host_port_22_string = "2224"
   host_port_443 = 8181
   host_port_8080 = 8282
+  # PHPmyadmin from docker composer at 8081:80
+  host_port_8081 = 8383
   host_port_9001 = 9004
   host_port_8983 = 9191
   host_port_8890 = 8890
@@ -60,6 +62,10 @@ Vagrant.configure("2") do |config|
     default.vm.network "forwarded_port", guest: 443, host: host_port_443, host_ip: "0.0.0.0"
     # Docker from guest in SSL to any IP in host for allowing redirection:
     default.vm.network "forwarded_port", guest: 8080, host: host_port_8080, host_ip: "0.0.0.0"
+
+    # Docker from guest in SSL to any IP in host for allowing redirection:
+    default.vm.network "forwarded_port", guest: 8081, host: host_port_8081, host_ip: "0.0.0.0"
+
     # Redirection for Virtuoso:
     default.vm.network "forwarded_port", guest: 8890, host: host_port_8890, host_ip: "0.0.0.0" 
     # Redirection for PHPMYADMIN from docker:
