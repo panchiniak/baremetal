@@ -7,3 +7,4 @@ ansible/vagrant/projects/*
 code
 .vscode/
 *.box
+.idea

@@ -67,9 +67,9 @@ Vagrant.configure("2") do |config|
     default.vm.network "forwarded_port", guest: 8081, host: host_port_8081, host_ip: "0.0.0.0"
 
     # Redirection for Virtuoso:
-    default.vm.network "forwarded_port", guest: 8890, host: host_port_8890, host_ip: "0.0.0.0" 
+    default.vm.network "forwarded_port", guest: 8890, host: host_port_8890, host_ip: "0.0.0.0"
     # Redirection for PHPMYADMIN from docker:
-    default.vm.network "forwarded_port", guest: 8585, host: host_port_8585, host_ip: "0.0.0.0" 
+    default.vm.network "forwarded_port", guest: 8585, host: host_port_8585, host_ip: "0.0.0.0"
     # Redirection for xdebug:
     default.vm.network "forwarded_port", guest: 9003, host: host_port_9001, host_ip: "0.0.0.0"
     # Solr by default stays at 8983:
@@ -95,6 +95,52 @@ Vagrant.configure("2") do |config|
     ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
     default.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys", privileged: false
   end
+
+  config.vm.define "dev", autostart: false do |dev|
+    # dev.vm.box = "ubuntu/focal64"
+    dev.vm.box = "ubuntu/jammy64"
+    # @TODO: make the disk size configurable:
+    dev.disksize.size = '50GB'
+    # SSH:
+    dev.vm.network "forwarded_port", guest: 22, host: host_port_22, auto_correct: true
+    # Apache from guest in SSL to any IP in host for allowing redirection:
+    dev.vm.network "forwarded_port", guest: 443, host: host_port_443, host_ip: "0.0.0.0", auto_correct: true
+    # Docker from guest in SSL to any IP in host for allowing redirection:
+    dev.vm.network "forwarded_port", guest: 8080, host: host_port_8080, host_ip: "0.0.0.0", auto_correct: true
+
+    # Docker from guest in SSL to any IP in host for allowing redirection:
+    dev.vm.network "forwarded_port", guest: 8081, host: host_port_8081, host_ip: "0.0.0.0", auto_correct: true
+
+    # Redirection for Virtuoso:
+    dev.vm.network "forwarded_port", guest: 8890, host: host_port_8890, host_ip: "0.0.0.0", auto_correct: true
+    # Redirection for PHPMYADMIN from docker:
+    dev.vm.network "forwarded_port", guest: 8585, host: host_port_8585, host_ip: "0.0.0.0", auto_correct: true
+    # Redirection for xdebug:
+    dev.vm.network "forwarded_port", guest: 9003, host: host_port_9001, host_ip: "0.0.0.0", auto_correct: true
+    # Solr by dev stays at 8983:
+    dev.vm.network "forwarded_port", guest: 8983, host: host_port_8983, host_ip: "0.0.0.0", auto_correct: true
+    # @TODO: do not use network name or get it from a configuration file
+    dev.vm.network "public_network", bridge: public_network_bridge, ip: "192.168.0.223"
+    # dev.vm.synced_folder "data", "/vagrant_data"
+    dev.vm.provider "virtualbox" do |vb|
+      # Dont display the VirtualBox GUI when booting the machine
+      vb.gui = false
+      # Customize the amount of memory on the VM:
+      vb.memory = memory
+      vb.cpus = cpus
+      vb.customize ['modifyvm', :id, '--hwvirtex', 'on']
+      vb.customize ['modifyvm', :id, '--nested-hw-virt', 'on']
+      vb.customize ['modifyvm', :id, '--nestedpaging', 'on']
+      vb.customize ['modifyvm', :id, '--largepages', 'on']
+      vb.customize ['modifyvm', :id, '--vtxux', 'on']
+      vb.customize ['modifyvm', :id, '--vtxvpid', 'on']
+      vb.customize ['modifyvm', :id, '--graphicscontroller', 'vmsvga']
+      vb.customize ['modifyvm', :id, '--paravirtprovider', 'kvm']
+    end
+    ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
+    dev.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys", privileged: false
+  end
+
 
   config.vm.define "legacy", autostart: false do |default|
     default.vm.box = "ubuntu/focal64"
