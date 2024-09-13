@@ -7,8 +7,7 @@
 
 [servers]
 host ansible_port=22 ansible_host=127.0.0.1
-proc ansible_port=2225 ansible_host=127.0.0.1
-
+proc ansible_port=2224 ansible_host=127.0.0.1
 # Default settings:
 [servers:vars]
 ansible_python_interpreter=/usr/bin/python3

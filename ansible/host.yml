@@ -391,3 +391,17 @@
     # when running the guest playbook for the first time after machine creation.
 
     # sshfs -p 2222 vagrant@127.0.0.1:/var/www/html /home/{{ baremetal_host_username }}/baremetal/ansible/vagrant/data/assets/project/code
+
+    # For managing proxy settings in order to in the host access to the main port of web server in the guest,
+    # it is needed to install apache also in the host. This can be done with a simple apt-get install apache2. 
+    # After that, is is needed to enable the proxy module: sudo a2enmod proxy_http.
+    # And then add the mapping at the endo of /etc/apache2/ports.conf file:
+    # <VirtualHost *:80>
+    #   ProxyPreserveHost On
+    #   ProxyRequests Off
+    #   ProxyPass / http://localhost:8181/
+    #   ProxyPassReverse / http://localhost:8181/
+    # </VirtualHost>
+
+    # After that, for managing letscrypt certificates, it is needed to use community.crypto collection: 
+    # ansible-galaxy collection install community.crypto
