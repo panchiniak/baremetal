@@ -382,6 +382,12 @@
         chdir: /{{ playbook_dir }}/
       tags: [code-directory]
 
+    - name: Generate an OpenSSL private key with the default values (4096 bits, RSA)
+      community.crypto.openssl_privatekey:
+        path: /etc/ssl/private/ansible.com.pem
+      tags: [crypto]
+
+
     # @todo: add /home/<user>/.ssh/config file with "StrictHostKeyChecking no" in it.
     # this will avoid: 
     # "The authenticity of host '[127.0.0.1]:2224 ([127.0.0.1]:2224)' can't be established.
@@ -405,3 +411,14 @@
 
     # After that, for managing letscrypt certificates, it is needed to use community.crypto collection: 
     # ansible-galaxy collection install community.crypto
+
+    # Added by CERTBOT, needs evaluation: 
+    #<VirtualHost *:80>
+    #     ProxyPreserveHost On
+    #     ProxyRequests Off
+    #     ProxyPass / http://localhost:8181/
+    #     ProxyPassReverse / http://localhost:8181/
+    #RewriteEngine on
+    #RewriteCond %{SERVER_NAME} =procbox.me
+    #RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]
+    # </VirtualHost>

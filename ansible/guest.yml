@@ -143,6 +143,12 @@
 
     - debug: var=out.stdout_lines
 
+    - name: Generate an OpenSSL private key with the default values (4096 bits, RSA)
+      community.crypto.openssl_privatekey:
+        path: /etc/ssl/private/ansible.com.pem
+      tags: [crypto]
+
+
   roles:
     - { role: geerlingguy.apache }
     - { role: geerlingguy.php, tags: [ 'php' ] }
@@ -163,19 +169,19 @@
 # xdebug.remote_enable = 1
 # xdebug.remote_autostart = 1
 
-  post_tasks:
+  # post_tasks:
 
-    - name: Add www-data user to vagrant group
-      command: usermod -a -G vagrant www-data
-      register: out
+  #   - name: Add www-data user to vagrant group
+  #     command: usermod -a -G vagrant www-data
+  #     register: out
 
-    - debug: var=out.stdout_lines
+  #   - debug: var=out.stdout_lines
 
-    - name: Restart apache for enabling MySQL
-      command: apache2ctl restart
-      register: out
+  #   - name: Restart apache for enabling MySQL
+  #     command: apache2ctl restart
+  #     register: out
 
-    - debug: var=out.stdout_lines
+  #   - debug: var=out.stdout_lines
 
 # @TODO: add Directoy at default host for clean URL:
 # <Directory /var/www/html>
