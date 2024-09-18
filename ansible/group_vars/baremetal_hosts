@@ -39,4 +39,4 @@ php_xdebug_cli_disable: false
 
 # Custom settings:
 # @todo: define baremetal_host_username on install.sh 
-baremetal_host_username: devlin
+baremetal_host_username: rodrigo
