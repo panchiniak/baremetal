@@ -18,8 +18,8 @@ Vagrant.configure("2") do |config|
   memory = 4000
   cpus = 2
 
-  host_port_22 = 2224
-  host_port_22_string = "2224"
+  host_port_22 = 2222
+  host_port_22_string = "2222"
   host_port_443 = 8181
   host_port_8080 = 8282
   # PHPmyadmin from docker composer at 8081:80
@@ -39,15 +39,15 @@ Vagrant.configure("2") do |config|
   legacy_host_port_3306 = 3307
 
   public_network_bridge = "wlp0s20f3"
-  host_user_name = "devlin"
+  # @TODO: Define username on install.
+  host_user_name = "rodrigo"
 
   config.trigger.after :up do |trigger|
     trigger.name = "ssh-keygen"
-    trigger.run = {inline: 'ssh-keygen -f "/home/' << host_user_name << '/.ssh/known_hosts" -R "[127.0.0.1]:' << host_port_22_string << '"'}
-    # ssh-keygen -f "/home/devlin/.ssh/known_hosts" -R "[127.0.0.1]:2224"
+    trigger.run = {inline: 'ssh-keygen -f "/home/' << host_user_name << '/.ssh/known_hosts" -R "[127.0.0.1]:' << host_port_22_string << '"'}  
     # trigger.info = "Mounting the code folder."    
     # trigger.run = {inline: 'sshfs -p '<< host_port_22 << ' vagrant@127.0.0.1:/var/www/html /home/'<< host_user_name <<'/baremetal/ansible/code'}
-    # trigger.run = {inline: 'sshfs -p 2224 vagrant@127.0.0.1:/var/www/html /home/devlin/baremetal/ansible/code'}
+    # trigger.run = {inline: 'sshfs -p 2224 vagrant@127.0.0.1:/var/www/html /home/rodrigo/baremetal/ansible/code'}
     # fusermount -u /folder/for/unmounting
   end
 
