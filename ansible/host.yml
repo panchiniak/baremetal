@@ -141,14 +141,27 @@
     - debug: var=out.stdout_lines
 
     - name: vagrant plugin install vagrant-disksize
-      command: ./vagrant plugin install vagrant-disksize
+      shell: "./vagrant plugin install vagrant-disksize"
+      tags: disksize
       register: out
-      async: 600
-      poll: 5
       args:
         chdir: /{{ playbook_dir }}/vagrant/
-
+      become: yes
+      become_user: rodrigo
     - debug: var=out.stdout_lines
+
+    - name: Check vagrant plugin list
+      shell: "./vagrant plugin list"
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
+      tags: disksize
+      register: plugin_list_output
+
+    - debug:
+        var: plugin_install_output.stdout
+
+    - debug:
+        var: plugin_list_output.stdout
 
     # @todo: ./vagrant box add {{ default_box }}
 
