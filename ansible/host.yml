@@ -101,7 +101,7 @@
       tags: [vagrant, unzip]
 
     - name: Create baremetal/ansible/vagrant/.vagrant/machines if it does not exist
-      shell: "mkdir .vagrant/machines; chmod a+w .vagrant/machines"
+      shell: "mkdir -p .vagrant/machines; chmod a+w .vagrant/machines"
       register: out
       ignore_errors: true
       args:
