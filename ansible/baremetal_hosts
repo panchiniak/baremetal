@@ -11,9 +11,9 @@ proc ansible_port=2222 ansible_host=127.0.0.1
 # Default settings:
 [servers:vars]
 ansible_python_interpreter=/usr/bin/python3
-vagrant_zip_base_path=https://releases.hashicorp.com/vagrant/2.3.4/
-vagrant_zip_file=vagrant_2.3.4_linux_amd64.zip
-vagrant_zip_file_checksum=sha256:63510217d37dbdf96d8e4756fa45fc5a137883beec33a639e361a4fd742aa99a
+vagrant_zip_base_path=https://releases.hashicorp.com/vagrant/2.4.1/
+vagrant_zip_file=vagrant_2.4.1_linux_amd64.zip
+vagrant_zip_file_checksum=sha256:73a3dacf3f36fb4af8ef514aeff245833d086430614f0c183be7e263553dd7c2
 baremetal_guest_username=vagrant
 remote_user=vagrant
 # @TODO: Define username on install.
