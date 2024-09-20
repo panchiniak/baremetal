@@ -183,13 +183,20 @@
 
     - debug: var=out.stdout_lines
 
+# @TODO: add baremetal.conf to /etc/apache2/sites-available
+# <Directory /var/www/html/proclab/web/>
+#         Options Indexes FollowSymLinks
+#         AllowOverride All
+#         Require all granted
+# </Directory>
+# and enable it using:
+# sudo a2enconf baremetal.conf
+
 # @TODO: add Directoy at default host for clean URL:
 # <Directory /var/www/html>
-# Options Indexes FollowSymLinks MultiViews
-# AllowOverride All
-#   Require all granted
 #   Options Indexes FollowSymLinks MultiViews
 #   AllowOverride All
+#   Require all granted
 #   AuthType Basic
 #   AuthName "Apache with basic auth."
 #   AuthUserFile /etc/apache-passwdfile
