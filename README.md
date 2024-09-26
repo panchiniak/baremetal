@@ -10,7 +10,7 @@ This program is guided by Automation, Freedom, Independence and Control as value
 ## OS Requirement
 
 BH has been tested with:
-*  Ubuntu 22.04.2 LTS. (as guest and host)
+*  Ubuntu 22.04 LTS. (as guest and host)
 *  MacOS Big Sur vs. 11.6 (as host)
 
 If this is not your OS and you still want to use BH, please consider creating a PR with the changes needed for running it at your OS.
