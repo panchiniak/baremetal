@@ -1,6 +1,6 @@
 # Baremetal Infrastructure and Applications Handler Hypervisor
 
-This document will guide you through the installation and usage of Baremetal Infrastructure and Applications Handler Hypervisor, Baremetal Hypervisor for short or BH.
+This document will guide you through the installation and usage of Baremetal Infrastructure and Applications Handler Hypervisor, BH for short.
 BH helps you to setup a web infrastructure for multiple purposes and multiple machines based on Vagrant and Ansible automation tools.
 
 
@@ -41,8 +41,6 @@ Replace `<host>` by the host you want to run the playbook against. Use -K for be
 Warning: for safety constrains please read and understand `playbook.yml` file before running it.
 
 ## Roadmap
-
-https://www.vagrantup.com/docs/networking/private_network.html
 
 Generate baremetal_host_username on install, based on the current user name.
 
