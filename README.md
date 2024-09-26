@@ -1,12 +1,12 @@
-# Baremetal Infrastructure and Applications Handler and Hypervisor
+# Baremetal Infrastructure and Applications Handler Hypervisor
 
-This document will guide you through the installation and usage of Baremetal Infrastructure and Applications Handler and Hypervisor, Baremetal Hypervisor for short or BH.
+This document will guide you through the installation and usage of Baremetal Infrastructure and Applications Handler Hypervisor, Baremetal Hypervisor for short or BH.
 BH helps you to setup a web infrastructure for multiple purposes and multiple machines based on Vagrant and Ansible automation tools.
 
 
 ## OS Requirement
 
-Baremetal Vagrant/Ansible Infrastructure and Applications Handler has been tested with:
+BH has been tested with:
 *  Ubuntu 22.04.2 LTS. (as guest and host)
 *  MacOS Big Sur vs. 11.6 (as host)
 
