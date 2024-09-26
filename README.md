@@ -1,8 +1,11 @@
 # Baremetal Infrastructure and Applications Handler Hypervisor
 
 This document will guide you through the installation and usage of Baremetal Infrastructure and Applications Handler Hypervisor, BH for short.
-BH helps you to setup a web infrastructure for multiple purposes and multiple machines based on Vagrant and Ansible automation tools.
+BH helps you to setup a web infrastructure for multiple purposes and multiple machines based on Vagrant and Ansible automation tools, either for the bootstrap configuration of the host machine, either for the configuration of guest machines.
 
+## Philosophy
+
+This program is guided by Automation, Freedom, Independence and Control as values. 
 
 ## OS Requirement
 
