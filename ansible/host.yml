@@ -24,6 +24,17 @@
         update_cache: yes
         state: present
 
+    # Commanding the install of FUSE, even if it is alredy installed, triggers a bug that freezes the
+    # boot at "starting gdm.service". A workaround for this when using Ubunto as a host is 
+    # "apt install ubuntu-desktop
+
+    - name: Install ubuntu-desktop
+      become: true
+      apt:
+        name: ubuntu-desktop
+        update_cache: yes
+        state: present
+
     - name: Install virtualbox-dkms if needed
       become: true
       apt:

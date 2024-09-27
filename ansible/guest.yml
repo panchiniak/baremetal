@@ -183,6 +183,14 @@
 
     - debug: var=out.stdout_lines
 
+    # Restart apache:
+    - name: Restart apache
+      command: service apache2 restart
+      become: true
+      register: out
+  
+    - debug: var=out.stdout_lines
+
 # @TODO: add baremetal.conf to /etc/apache2/sites-available
 # <Directory /var/www/html/proclab/web/>
 #         Options Indexes FollowSymLinks
