@@ -1,5 +1,6 @@
 #################################################
 # Gest configurations
+# @todo: consider starting by "do-release-upgrade -f DistUpgradeViewNonInteractive"
 #################################################
 ---
 - hosts: proc
