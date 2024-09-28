@@ -207,6 +207,7 @@
     - { role: geerlingguy.mysql, tags: [ 'mysql' ] }
     - { role: geerlingguy.php-mysql, tags: [ 'php-mysql' ] }
     - { role: geerlingguy.adminer, tags: [ 'adminer' ] }
+    - { role: geerlingguy.adminer, tags: [ 'adminer' ] }
     - { role: geerlingguy.java }
     - { role: geerlingguy.solr }
     - { role: geerlingguy.composer }
