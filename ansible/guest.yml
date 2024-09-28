@@ -105,6 +105,57 @@
 
     # - debug: var=out.stdout_lines
     #   tags: proxy
+    - name: sudo apt update
+      become: true
+      apt:
+        update_cache: yes
+      tags: [apt]
+
+    - name: sudo apt install ca-certificates apt-transport-https software-properties-common lsb-release -y
+      become: true
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - ca-certificates
+        - apt-transport-https
+        - software-properties-common
+        - lsb-release
+      tags: [apt]
+
+    - name: sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+      become: true
+      shell: sysctl -w net.ipv6.conf.all.disable_ipv6=1
+      tags: [ipv6]
+
+    - name: sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+      become: true
+      shell: sysctl -w net.ipv6.conf.default.disable_ipv6=1
+      tags: [ipv6]
+
+    - name: sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=1
+      become: true
+      shell: sysctl -w net.ipv6.conf.lo.disable_ipv6=1
+      tags: [ipv6]
+
+    - name: sudo add-apt-repository ppa:ondrej/php -y
+      become: true
+      apt_repository:
+        repo: ppa:ondrej/php
+        state: present
+      tags: [apt]
+
+    - name: sudo apt update
+      become: true
+      apt:
+        update_cache: yes
+      tags: [apt]
+
+    - name: sudo apt upgrade
+      become: true
+      apt:
+        upgrade: dist
+      tags: [apt]
 
     - name: Update apt cache.
       apt: update_cache=yes cache_valid_time=86400
