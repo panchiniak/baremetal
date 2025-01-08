@@ -35,7 +35,7 @@
     - name: Set APCu
       become: true
       apt:
-        name: php7.4-apcu
+        name: php-apcu
         update_cache: yes
         state: present
       tags: [apt_apcu]
@@ -47,7 +47,7 @@
     - name: Set mbstring
       become: true
       apt:
-        name: php7.4-mbstring
+        name: php-mbstring
         update_cache: yes
         state: present
       tags: [apt_mbstring]
@@ -59,7 +59,7 @@
     - name: Set php json
       become: true
       apt:
-        name: php7.4-json
+        name: php-json
         update_cache: yes
         state: present
       tags: [apt_mbstring]
@@ -71,7 +71,7 @@
     - name: Set imap
       become: true
       apt:
-        name: php7.4-imap
+        name: php-imap
         update_cache: yes
         state: present
       tags: [apt_imap]
@@ -156,11 +156,11 @@
     - { role: geerlingguy.php-mysql, tags: [ 'php-mysql' ] }
     - { role: geerlingguy.adminer, tags: [ 'adminer' ] }
     - { role: geerlingguy.java }
-    - { role: geerlingguy.solr }
+    # - { role: geerlingguy.solr }
     - { role: geerlingguy.composer }
     - { role: geerlingguy.drush }
     - { role: geerlingguy.htpasswd, tags: [ 'htpasswd' ]}
-    - { role: geerlingguy.php-xdebug }
+    # - { role: geerlingguy.php-xdebug }
 
 # @TODO: add zend_extension=/usr/lib/php/20170718/xdebug.so
 # to /etc/php/7.2/apache2/php.ini
