@@ -80,30 +80,7 @@
     - debug: var=out.stdout_lines
       tags: [apt_phpjson]
 
-# Set swp file:
-# Reference: https://bogdancornianu.com/change-swap-size-in-ubuntu/
-# sudo swapoff -a
-## For 8 GB:
-# sudo dd if=/dev/zero of=/swapfile bs=1G count=8
-# sudo chmod 600 /swapfile
-# sudo mkswap /swapfile
-# sudo swapon /swapfile
-## Edit /etc/fstab and add the new swapfile if it isn’t already there
-# /swapfile none swap sw 0 0
-## Check result:
-# grep SwapTotal /proc/meminfo
-
   pre_tasks:
-    # - name: Copy proxy settings
-    #   shell: cp -ar /vagrant_data/assets/environment /etc/
-    #   become: true      
-    #   register: out
-    #   args:
-    #     chdir: /
-    #   tags: sapi
-
-    # - debug: var=out.stdout_lines
-    #   tags: proxy
     - name: sudo apt update
       become: true
       apt:
@@ -212,7 +189,7 @@
     - { role: geerlingguy.composer }
     - { role: geerlingguy.drush }
     - { role: geerlingguy.htpasswd, tags: [ 'htpasswd' ]}
-    # - { role: geerlingguy.php-xdebug }
+    - { role: geerlingguy.php-xdebug }
 
 # @TODO: add zend_extension=/usr/lib/php/20170718/xdebug.so
 # to /etc/php/7.2/apache2/php.ini
