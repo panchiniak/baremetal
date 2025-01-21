@@ -15,8 +15,8 @@ Vagrant.configure("2") do |config|
   # Get current user for /home/<current user>/.ssh/known_hosts
   # https://www.digitalocean.com/community/tutorials/how-to-allow-remote-access-to-mysql
 
-  memory = 4000
-  cpus = 2
+  memory = 8000
+  cpus = 3
 
   host_port_22 = 2222
   host_port_22_string = "2222"
@@ -37,6 +37,7 @@ Vagrant.configure("2") do |config|
   legacy_host_port_9001 = 9005
   legacy_host_port_8983 = 9292
   legacy_host_port_3306 = 3307
+  legacy_host_port_8443 = 8444
 
   public_network_bridge = "wlp0s20f3"
   # @TODO: Define username on install.
@@ -170,6 +171,9 @@ Vagrant.configure("2") do |config|
     default.vm.network "forwarded_port", guest: 9003, host: host_port_9001, host_ip: "0.0.0.0"
     # Solr by default stays at 8983:
     default.vm.network "forwarded_port", guest: 8983, host: host_port_8983, host_ip: "0.0.0.0"
+    # Gitlab by default stays at 8443:
+    default.vm.network "forwarded_port", guest: 8443, host: legacy_host_port_8443, host_ip: "0.0.0.0"
+
     # @TODO: do not use network name or get it from a configuration file
     default.vm.network "public_network", bridge: public_network_bridge, ip: "192.168.0.222"
     default.vm.synced_folder "data", "/vagrant_data"

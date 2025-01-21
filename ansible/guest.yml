@@ -1,5 +1,8 @@
 #################################################
 # Gest configurations
+#
+# ansible-playbook -l proc -i baremetal_hosts -u vagrant guest.yml
+#
 #################################################
 ---
 - hosts: proc
@@ -190,6 +193,7 @@
     - { role: geerlingguy.drush }
     - { role: geerlingguy.htpasswd, tags: [ 'htpasswd' ]}
     - { role: geerlingguy.php-xdebug }
+    - { role: geerlingguy.gitlab , tags: [ 'gitlab' ]}
 
 # @TODO: add zend_extension=/usr/lib/php/20170718/xdebug.so
 # to /etc/php/7.2/apache2/php.ini

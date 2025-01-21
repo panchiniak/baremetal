@@ -376,6 +376,16 @@
     - debug: var=out.stdout_lines
       tags: [ansible, xdebug]
 
+    - name: install geerlingguy geerlingguy.gitlab from galaxy
+      command: ansible-galaxy install --roles-path roles geerlingguy.gitlab
+      register: out
+      tags: [ansible, gitlab]
+      args:
+        chdir: /{{ playbook_dir }}/
+
+    - debug: var=out.stdout_lines
+      tags: [ansible, gitlab]
+
     - name: ./vagrant box update --insecure 
       shell: ./vagrant box update --insecure
       register: out

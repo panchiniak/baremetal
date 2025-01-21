@@ -40,3 +40,6 @@ php_xdebug_cli_disable: false
 # Custom settings:
 # @todo: define baremetal_host_username on install.sh 
 baremetal_host_username: rodrigo
+
+gitlab_external_url: "http://127.0.0.1:8443/"
+gitlab_redirect_http_to_https: false
