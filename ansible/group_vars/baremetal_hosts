@@ -24,7 +24,7 @@ adminer_install_dir: /var/www/html/adminer
 adminer_install_filename: index.php
 # xdebug:
 workspace: /vagrant_data
-php_xdebug_version: 2.9.6
+php_xdebug_version: 3.4.1
 php_xdebug_default_enable: 1
 php_xdebug_coverage_enable: 1
 php_xdebug_module_path: /usr/lib/php/20170718
