@@ -143,24 +143,29 @@ Vagrant.configure("2") do |config|
 
 
   config.vm.define "legacy", autostart: false do |default|
-    default.vm.box = "ubuntu/focal64"
-    # default.vm.box = "ubuntu/jammy64"
+    # default.vm.box = "ubuntu/focal64"
+    default.vm.box = "ubuntu/jammy64"
     # @TODO: make the disk size configurable:
     default.disksize.size = '100GB'
     # SSH:
-    default.vm.network "forwarded_port", guest: 22, host: legacy_host_port_22
+    default.vm.network "forwarded_port", guest: 22, host: host_port_22
     # Apache from guest in SSL to any IP in host for allowing redirection:
-    default.vm.network "forwarded_port", guest: 443, host: legacy_host_port_443, host_ip: "0.0.0.0"
+    default.vm.network "forwarded_port", guest: 443, host: host_port_443, host_ip: "0.0.0.0"
     # Docker from guest in SSL to any IP in host for allowing redirection:
-    default.vm.network "forwarded_port", guest: 8080, host: legacy_host_port_8080, host_ip: "0.0.0.0"    
-    # Redirection for xdebug:
-    default.vm.network "forwarded_port", guest: 9003, host: legacy_host_port_9001, host_ip: "0.0.0.0"
-    # Solr by default stays at 8983:
-    default.vm.network "forwarded_port", guest: 8983, host: legacy_host_port_8983, host_ip: "127.0.0.1"
-    # @TODO: do not use network name or get it from a configuration file
-    # Mysql 3306:
-    default.vm.network "forwarded_port", guest: 3306, host: legacy_host_port_3306, host_ip: "0.0.0.0"
+    default.vm.network "forwarded_port", guest: 8080, host: host_port_8080, host_ip: "0.0.0.0"
 
+    # Docker from guest in SSL to any IP in host for allowing redirection:
+    default.vm.network "forwarded_port", guest: 8081, host: host_port_8081, host_ip: "0.0.0.0"
+
+    # Redirection for Virtuoso:
+    default.vm.network "forwarded_port", guest: 8890, host: host_port_8890, host_ip: "0.0.0.0"
+    # Redirection for PHPMYADMIN from docker:
+    default.vm.network "forwarded_port", guest: 8585, host: host_port_8585, host_ip: "0.0.0.0"
+    # Redirection for xdebug:
+    default.vm.network "forwarded_port", guest: 9003, host: host_port_9001, host_ip: "0.0.0.0"
+    # Solr by default stays at 8983:
+    default.vm.network "forwarded_port", guest: 8983, host: host_port_8983, host_ip: "0.0.0.0"
+    # @TODO: do not use network name or get it from a configuration file
     default.vm.network "public_network", bridge: public_network_bridge, ip: "192.168.0.222"
     default.vm.synced_folder "data", "/vagrant_data"
     default.vm.provider "virtualbox" do |vb|
