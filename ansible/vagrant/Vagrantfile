@@ -28,6 +28,7 @@ Vagrant.configure("2") do |config|
   host_port_8983 = 9191
   host_port_8890 = 8890
   host_port_8585 = 8585
+  host_port_8443 = 8444
 
 
   legacy_host_port_22 = 2225
@@ -71,6 +72,8 @@ Vagrant.configure("2") do |config|
 
     # Docker from guest in SSL to any IP in host for allowing redirection:
     default.vm.network "forwarded_port", guest: 8081, host: host_port_8081, host_ip: "0.0.0.0"
+    # Gitlab by default stays at 8443:
+    default.vm.network "forwarded_port", guest: 8443, host: host_port_8443, host_ip: "0.0.0.0"
 
     # Redirection for Virtuoso:
     default.vm.network "forwarded_port", guest: 8890, host: host_port_8890, host_ip: "0.0.0.0"
