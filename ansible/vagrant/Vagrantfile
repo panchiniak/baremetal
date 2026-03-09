@@ -15,8 +15,8 @@ Vagrant.configure("2") do |config|
   # Get current user for /home/<current user>/.ssh/known_hosts
   # https://www.digitalocean.com/community/tutorials/how-to-allow-remote-access-to-mysql
 
-  memory = 8000
-  cpus = 3
+  memory = 12000
+  cpus = 4
 
   host_port_22 = 2222
   host_port_22_string = "2222"
@@ -40,7 +40,8 @@ Vagrant.configure("2") do |config|
   legacy_host_port_3306 = 3307
   legacy_host_port_8443 = 8444
 
-  public_network_bridge = "wlp0s20f3"
+  # @TODO: Automatically get the network name for the public network or get it from a configuration file.
+  public_network_bridge = "enp2s0"
   # @TODO: Define username on install.
   host_user_name = "rodrigo"
 
@@ -163,6 +164,8 @@ Vagrant.configure("2") do |config|
     # Docker from guest in SSL to any IP in host for allowing redirection:
     default.vm.network "forwarded_port", guest: 8080, host: host_port_8080, host_ip: "0.0.0.0"
 
+    default.vm.network "forwarded_port", guest: 80, host: 8111, host_ip: "0.0.0.0"
+
     # Docker from guest in SSL to any IP in host for allowing redirection:
     default.vm.network "forwarded_port", guest: 8081, host: host_port_8081, host_ip: "0.0.0.0"
 
@@ -197,6 +200,16 @@ Vagrant.configure("2") do |config|
     end
     ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
     default.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys", privileged: false
+      # Configure swap memory via shell provisioner
+    config.vm.provision "shell", inline: <<-SHELL
+      # Create a 1GB swap file (adjust count for desired size)
+      sudo dd if=/dev/zero of=/swapfile bs=1M count=1024 status=progress
+      sudo chmod 600 /swapfile
+      sudo mkswap /swapfile
+      sudo swapon /swapfile
+      # Make swap permanent (persist across reboots)
+      echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+    SHELL
   end
 
 
