@@ -1,0 +1,16 @@
+---
+roles:
+  - src: geerlingguy.adminer
+  - src: geerlingguy.apache
+  - src: geerlingguy.certbot
+  - src: geerlingguy.composer
+  - src: geerlingguy.drush
+  - src: geerlingguy.gitlab
+  - src: geerlingguy.htpasswd
+  - src: geerlingguy.java
+  - src: geerlingguy.mysql
+  - src: geerlingguy.php
+  - src: geerlingguy.php-mysql
+  - src: geerlingguy.php-versions
+  - src: geerlingguy.php-xdebug
+  - src: geerlingguy.solr
