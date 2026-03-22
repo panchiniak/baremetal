@@ -463,6 +463,6 @@
     #     ProxyPass / http://localhost:8181/
     #     ProxyPassReverse / http://localhost:8181/
     #RewriteEngine on
-    #RewriteCond %{SERVER_NAME} =procbox.me
+    #RewriteCond %{SERVER_NAME} =guestbox.me
     #RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]
     # </VirtualHost>

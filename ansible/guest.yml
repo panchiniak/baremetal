@@ -1,11 +1,11 @@
 #################################################
 # Gest configurations
 #
-# ansible-playbook -l proc -i baremetal_hosts -u vagrant guest.yml
+# ansible-playbook -l guest -i baremetal_hosts -u vagrant guest.yml
 #
 #################################################
 ---
-- hosts: proc
+- hosts: guest
   become: yes
   vars_files:
     - group_vars/baremetal_hosts
@@ -225,7 +225,7 @@
     - debug: var=out.stdout_lines
 
 # @TODO: add baremetal.conf to /etc/apache2/sites-available
-# <Directory /var/www/html/proclab/web/>
+# <Directory /var/www/html/guestlab/web/>
 #         Options Indexes FollowSymLinks
 #         AllowOverride All
 #         Require all granted
