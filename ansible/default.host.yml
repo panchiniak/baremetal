@@ -52,6 +52,12 @@
             'gdm3' not in ansible_facts.packages
           )
 
+    - name: Install headers
+      become: true
+      apt:
+        name: linux-headers-generic
+        state: present
+
     - name: Install virtualbox-dkms if needed
       become: true
       apt:
@@ -59,14 +65,33 @@
         update_cache: yes
         state: present
 
-    - name: dpkg-reconfigure virtualbox-dkms 
+    - name: Reconfigure virtualbox-dkms (allow non-running kernel failures)
       command: dpkg-reconfigure virtualbox-dkms
       become: true
-      register: out
+      register: vbox_dkms_reconfigure
+      failed_when: false
       args:
         chdir: /{{ playbook_dir }}/vagrant/
 
-    - debug: var=out.stdout_lines
+    - debug: var=vbox_dkms_reconfigure.stdout_lines
+
+    - name: Check VirtualBox DKMS status
+      command: dkms status virtualbox
+      become: true
+      register: vbox_dkms_status
+      changed_when: false
+
+    - name: Ensure VirtualBox DKMS is available for the running kernel
+      assert:
+        that:
+          - >-
+            (vbox_dkms_status.stdout_lines
+            | select('search', ', ' ~ ansible_facts['kernel'] ~ ', .*(installed|built)')
+            | list
+            | length) > 0
+        fail_msg: >-
+          virtualbox-dkms was not built for running kernel {{ ansible_facts['kernel'] }}.
+          See /var/lib/dkms/virtualbox/7.0.16/build/make.log and task output for details.
 
     - name: dpkg-reconfigure virtualbox 
       command: dpkg-reconfigure virtualbox
@@ -77,11 +102,6 @@
 
     - debug: var=out.stdout_lines
 
-    - name: Install headers
-      become: true
-      apt:
-        name: linux-headers-generic
-        state: present
 
     - name: Install git
       become: true
