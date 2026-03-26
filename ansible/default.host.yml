@@ -421,7 +421,6 @@
       register: out
       become: true
       ignore_errors: true
-      tags: chown
       args:
         chdir: /{{ playbook_dir }}/
       tags: [code-directory]
