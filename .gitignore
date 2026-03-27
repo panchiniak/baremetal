@@ -1,3 +1,4 @@
+ansible/lib
 ansible/vagrant/vagrant
 ansible/vagrant/.vagrant
 ansible/roles/

@@ -67,4 +67,13 @@ if [ -f /home/$USERNAME/.ssh/authorized_keys ]; then
   cat /home/$USERNAME/.ssh/id_rsa.pub >> /home/$USERNAME/.ssh/authorized_keys
 fi
 
+# Add baremetal_host_username to baremetal_hosts if not already set:
+HOSTS_FILE="$(dirname "$0")/ansible/baremetal_hosts"
+if grep -q "^baremetal_host_username=" "$HOSTS_FILE"; then
+  echo "### baremetal_host_username already set in $HOSTS_FILE. Skipping."
+else
+  echo "### Adding baremetal_host_username=$USERNAME to $HOSTS_FILE."
+  echo "baremetal_host_username=$USERNAME" >> "$HOSTS_FILE"
+fi
+
 # @todo: run root host.yml on install.
