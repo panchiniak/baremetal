@@ -8,7 +8,7 @@
 - hosts: guest
   become: yes
   vars_files:
-    - group_vars/baremetal_hosts
+    - group_vars/baremetal_vars
 
   tasks:
     - name: Install unzip - it will be used by drush make

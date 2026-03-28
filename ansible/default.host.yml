@@ -7,7 +7,7 @@
 - hosts: host
   become: yes
   vars_files:
-    - group_vars/baremetal_hosts
+    - group_vars/baremetal_vars
 
   pre_tasks:
     - name: Gather installed package facts

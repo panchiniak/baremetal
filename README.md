@@ -25,7 +25,7 @@ This will be used for allowing Ansible to access the host machine with no need o
 
 ## Custom variables
 
-After installation you can copy `ansible/group_vars/baremetal_hosts` as `ansible/group_vars/my_app_hosts` for adding your custom variables. 
+After installation you can copy `ansible/group_vars/defualt.baremetal_vars` as `ansible/group_vars/baremetal_vars` for adding your custom variables. 
 
 ## Usage
 
@@ -44,7 +44,5 @@ Replace `<host>` by the host you want to run the playbook against. Use -K for be
 Warning: for safety constrains please read and understand `playbook.yml` file before running it.
 
 ## Roadmap
-
-Generate baremetal_host_username on install, based on the current user name.
 
 Generate port numbers at Vagrantfile based on available ports.

@@ -16,5 +16,6 @@ vagrant_zip_file=vagrant_2.4.1_linux_amd64.zip
 vagrant_zip_file_checksum=sha256:73a3dacf3f36fb4af8ef514aeff245833d086430614f0c183be7e263553dd7c2
 baremetal_guest_username=vagrant
 remote_user=vagrant
-# @TODO: Define username on install.
-private_key_file=/home/rodrigo/.ssh/id_rsa
+# @TODO: Define <username> on install.
+# private_key_file=/home/<username>/.ssh/id_rsa
+# baremetal_host_username=<username>

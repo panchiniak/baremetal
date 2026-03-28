@@ -27,24 +27,8 @@ mysql_users:
 solr_version: "7.7.2"
 adminer_install_dir: /var/www/html/adminer
 adminer_install_filename: index.php
-# xdebug:
 workspace: /vagrant_data
-php_xdebug_version: 3.4.1
-php_xdebug_default_enable: 1
-php_xdebug_coverage_enable: 1
-php_xdebug_module_path: /usr/lib/php/20170718
-php_xdebug_remote_enable: "true"
-php_xdebug_remote_connect_back: "true"
-php_xdebug_remote_host: localhost
-php_xdebug_remote_port: "9000"
-php_xdebug_remote_log: /vagrant_data/xdebug.log
-php_xdebug_idekey: sublime.xdebug
-php_xdebug_max_nesting_level: 256
-php_xdebug_cli_disable: false
 
 # Custom settings:
-# @todo: define baremetal_host_username on install.sh 
-baremetal_host_username: rodrigo
-
-gitlab_external_url: "http://192.168.1.40:8443/"
-gitlab_redirect_http_to_https: false
+# @todo: define baremetal_host_username as <username> on install.sh
+# baremetal_host_username: <username>
