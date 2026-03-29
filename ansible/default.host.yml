@@ -14,6 +14,17 @@
       package_facts:
         manager: auto
 
+    - name: Detect Ubuntu desktop host
+      set_fact:
+        xws_is_ubuntu_desktop_host: >-
+          {{
+            ansible_facts['distribution'] == 'Ubuntu' and (
+              'ubuntu-desktop' in ansible_facts.packages or
+              'ubuntu-desktop-minimal' in ansible_facts.packages or
+              'gdm3' in ansible_facts.packages
+            )
+          }}
+
   tasks:
     - name: Install virtualbox if needed
       become: true
@@ -22,35 +33,30 @@
         update_cache: yes
         state: present
 
-    - name: Install FUSE
+    - name: Remove legacy fuse package (prevents GDM breakage on Ubuntu desktop)
       become: true
       apt:
         name: fuse
-        update_cache: yes
-        state: present
+        state: absent
+        purge: yes
+      when: ansible_facts['distribution'] == 'Ubuntu'
 
-    # Commanding the installation of FUSE, even if it is already installed, triggers a bug that freezes the
-    # boot at "starting gdm.service". Keep the ubuntu-desktop workaround enabled for Ubuntu Server hosts
-    # (and for Ubuntu hosts where no desktop packages are detected), but skip it on machines that already
-    # have Ubuntu Desktop components installed.
-
-    - name: Install ubuntu-desktop on Ubuntu Server hosts
+    - name: Install FUSE3 runtime
       become: true
       apt:
-        name: ubuntu-desktop
+        name:
+          - fuse3
+          - libfuse3-3
         update_cache: yes
         state: present
+
+    # If a previous run installed legacy fuse, ensure desktop packages are healthy.
+    - name: Repair Ubuntu desktop packages after fuse migration
+      become: true
+      command: apt-get install --reinstall -y ubuntu-desktop gdm3
       when:
-        - ansible_facts['distribution'] == 'Ubuntu'
-        - >-
-          'ubuntu-server' in ansible_facts.packages or
-          'ubuntu-server-minimal' in ansible_facts.packages or
-          (
-            'ubuntu-desktop' not in ansible_facts.packages and
-            'ubuntu-desktop-minimal' not in ansible_facts.packages and
-            'ubuntu-session' not in ansible_facts.packages and
-            'gdm3' not in ansible_facts.packages
-          )
+        - xws_is_ubuntu_desktop_host
+        - "'fuse' in ansible_facts.packages"
 
     - name: Install headers
       become: true
