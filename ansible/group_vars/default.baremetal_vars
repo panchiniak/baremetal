@@ -1,5 +1,4 @@
 ---
-# Example settings. 
 php_memory_limit: "4000M"
 php_max_execution_time: "90"
 php_upload_max_filesize: "256M"
