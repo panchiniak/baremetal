@@ -1,7 +1,7 @@
 #################################################
 # Gest configurations
 #
-# ansible-playbook -l guest -i baremetal_hosts -u vagrant guest.yml
+# ansible-playbook -l guest -i baremetal_hosts -u vagrant default.guest.yml
 #
 #################################################
 ---
