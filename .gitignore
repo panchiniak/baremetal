@@ -9,3 +9,4 @@ code
 .vscode/
 *.box
 .idea
+ansible/vagrant/.env

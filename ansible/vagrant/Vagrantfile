@@ -1,25 +1,14 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# ssh vagrant@127.0.0.1 -p 2222
-# cat /etc/environment
-
 Vagrant.configure("2") do |config|
-
   config.vm.network "private_network", type: "dhcp"
-
-  # For accessing it from the host machine:
-  # ssh vagrant@127.0.0.1 -p <host_port_22>
-  # https://www.digitalocean.com/community/tutorials/how-to-allow-remote-access-to-mysql
-
   memory = 12000
   cpus = 4
-
   host_port_22 = 2222
   host_port_22_string = "2222"
   host_port_443 = 8484
   host_port_8080 = 8282
-  # PHPmyadmin from docker composer at 8081:80
   host_port_8081 = 8383
   host_port_9001 = 9004
   host_port_8983 = 9191
@@ -36,18 +25,31 @@ Vagrant.configure("2") do |config|
   legacy_host_port_3306 = 3307
   legacy_host_port_8443 = 8444
 
+  env_file_path = File.expand_path(".env", __dir__)
+  env_values = {}
+
+  if File.exist?(env_file_path)
+    File.foreach(env_file_path) do |line|
+      next if line.strip.empty? || line.lstrip.start_with?("#")
+
+      key, value = line.split("=", 2)
+      next if key.nil? || value.nil?
+
+      parsed_value = value.strip.gsub(/\A["']|["']\z/, "")
+      next if parsed_value.empty?
+
+      env_values[key.strip] = parsed_value
+    end
+  end
+
   # @TODO: Automatically get the network name for the public network or get it from a configuration file.
-  public_network_bridge = "enp2s0"
+  public_network_bridge = env_values["PUBLIC_NETWORK_BRIDGE"] || "enp2s0"
   # @TODO: Define username on install.
-  host_user_name = "rodrigo"
+  host_user_name = env_values["HOST_USER_NAME"] || "root"
 
   config.trigger.after :up do |trigger|
     trigger.name = "ssh-keygen"
     trigger.run = {inline: 'ssh-keygen -f "/home/' << host_user_name << '/.ssh/known_hosts" -R "[127.0.0.1]:' << host_port_22_string << '"'}  
-    # trigger.info = "Mounting the code folder."    
-    # trigger.run = {inline: 'sshfs -p '<< host_port_22 << ' vagrant@127.0.0.1:/var/www/html /home/'<< host_user_name <<'/baremetal/ansible/code'}
-    # trigger.run = {inline: 'sshfs -p 2224 vagrant@127.0.0.1:/var/www/html /home/rodrigo/baremetal/ansible/code'}
-    # fusermount -u /folder/for/unmounting
   end
 
   config.vm.define "default", autostart: false do |default|
@@ -162,8 +164,4 @@ Vagrant.configure("2") do |config|
       echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
     SHELL
   end
-
 end
-
-# For opening connection to xdebug:
-# ssh -R 9003:127.0.0.1:9003 vagrant@127.0.0.1

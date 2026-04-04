@@ -17,7 +17,7 @@ if [ -z "$USERNAME" ]; then
 fi
 
 if [ -f /usr/bin/ansible ]; then
-  echo "### Ansible already installed. Skipping instalation."
+  echo "### Ansible already installed. Skipping installation."
 fi
 
 # Install Ansible:
@@ -29,7 +29,7 @@ if [ ! -f /usr/bin/ansible ]; then
 fi  
 
 if service_exists ssh; then
-  echo "### openssh-server is already installed. Skipping instalation."
+  echo "### openssh-server is already installed. Skipping installation."
 else
   echo "### Installing openssh-server by running: apt -y install openssh-server."
   apt -y install openssh-server
@@ -76,4 +76,15 @@ else
   echo "baremetal_host_username=$USERNAME" >> "$HOSTS_FILE"
 fi
 
-# @todo: run root host.yml on install.
+# Ensure vagrant .env exists and contains HOST_USER_NAME.
+ENV_FILE="$(dirname "$0")/ansible/vagrant/.env"
+mkdir -p "$(dirname "$ENV_FILE")"
+touch "$ENV_FILE"
+
+if grep -q "^HOST_USER_NAME=" "$ENV_FILE"; then
+  echo "### Updating HOST_USER_NAME in $ENV_FILE."
+  sed -i "s|^HOST_USER_NAME=.*$|HOST_USER_NAME=$USERNAME|" "$ENV_FILE"
+else
+  echo "### Adding HOST_USER_NAME=$USERNAME to $ENV_FILE."
+  echo "HOST_USER_NAME=$USERNAME" >> "$ENV_FILE"
+fi

@@ -5,7 +5,7 @@ BH helps you to setup a web infrastructure for multiple purposes and multiple ma
 
 ## Philosophy
 
-This program is guided by Automation, Freedom, Independence and Control as values. 
+This program is guided by automation, freedom, independence and control as values. 
 
 ## OS Requirement
 
@@ -42,6 +42,11 @@ Replace `<host>` by the host you want to run the playbook against. Use -K for be
 `ansible-playbook -l app -i app_hosts -u vagrant project-app.yml`
 
 Warning: for safety constrains please read and understand `playbook.yml` file before running it.
+
+## SSH access
+
+`ssh vagrant@127.0.0.1 -p 2222`
+
 
 ## Roadmap
 
