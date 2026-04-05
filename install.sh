@@ -11,6 +11,40 @@ service_exists() {
     fi
 }
 
+detect_active_network_interface() {
+    local detected_interface
+
+    if ! command -v ip >/dev/null 2>&1; then
+        return 1
+    fi
+
+    detected_interface=$(ip route show default 2>/dev/null | awk '/default/ {print $5; exit}')
+
+    if [ -z "$detected_interface" ]; then
+        detected_interface=$(ip -o link show up 2>/dev/null | awk -F': ' '$2 != "lo" {print $2; exit}')
+    fi
+
+    if [ -z "$detected_interface" ] || [ "$detected_interface" = "lo" ]; then
+        return 1
+    fi
+
+    echo "$detected_interface"
+}
+
+upsert_env_var() {
+    local env_file=$1
+    local key=$2
+    local value=$3
+
+    if grep -q "^${key}=" "$env_file"; then
+        echo "### Updating ${key} in $env_file."
+        sed -i "s|^${key}=.*$|${key}=${value}|" "$env_file"
+    else
+        echo "### Adding ${key}=${value} to $env_file."
+        echo "${key}=${value}" >> "$env_file"
+    fi
+}
+
 if [ -z "$USERNAME" ]; then
   echo "### Username is required. See README.md for further instructions."
   exit 1
@@ -81,10 +115,12 @@ ENV_FILE="$(dirname "$0")/ansible/vagrant/.env"
 mkdir -p "$(dirname "$ENV_FILE")"
 touch "$ENV_FILE"
 
-if grep -q "^HOST_USER_NAME=" "$ENV_FILE"; then
-  echo "### Updating HOST_USER_NAME in $ENV_FILE."
-  sed -i "s|^HOST_USER_NAME=.*$|HOST_USER_NAME=$USERNAME|" "$ENV_FILE"
-else
-  echo "### Adding HOST_USER_NAME=$USERNAME to $ENV_FILE."
-  echo "HOST_USER_NAME=$USERNAME" >> "$ENV_FILE"
+PUBLIC_NETWORK_BRIDGE=$(detect_active_network_interface)
+if [ -z "$PUBLIC_NETWORK_BRIDGE" ]; then
+  echo "### Unable to detect the active network interface automatically."
+  echo "### Please ensure the host has an active network connection and the 'ip' command is available."
+  exit 1
 fi
+
+upsert_env_var "$ENV_FILE" "HOST_USER_NAME" "$USERNAME"
+upsert_env_var "$ENV_FILE" "PUBLIC_NETWORK_BRIDGE" "$PUBLIC_NETWORK_BRIDGE"
