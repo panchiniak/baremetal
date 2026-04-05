@@ -482,6 +482,8 @@
         chdir: /{{ playbook_dir }}/vagrant/
       register: vagrant_default_status
       changed_when: false
+      become: false
+      tags: vagrant-status-default
 
     - name: Extract Vagrant default machine state
       set_fact:
@@ -492,12 +494,15 @@
             | last
             | default('unknown'))
           }}
+      tags: vagrant-status-default
 
     - name: Start Vagrant default machine when not running
       command: ./vagrant up default
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       when: vagrant_default_state != 'running'
+      become: false
+      tags: vagrant-up-default
 
     - name: Report Vagrant default machine state
       debug:
