@@ -1,6 +1,17 @@
 #!/bin/bash
 USERNAME=$1
 
+# Load default configuration.
+SCRIPT_DIR="$(dirname "$0")"
+CONFIG_FILE="$SCRIPT_DIR/config"
+if [ -f "$CONFIG_FILE" ]; then
+  # shellcheck source=config
+  source "$CONFIG_FILE"
+else
+  echo "### WARNING: config file not found at $CONFIG_FILE. Using built-in defaults."
+  VM_BOX="ubuntu/jammy64"
+fi
+
 # Function copied from https://stackoverflow.com/questions/24398242/check-if-service-exists-in-bash-centos-and-ubuntu
 service_exists() {
     local n=$1
@@ -101,17 +112,13 @@ if [ -f /home/$USERNAME/.ssh/authorized_keys ]; then
   cat /home/$USERNAME/.ssh/id_rsa.pub >> /home/$USERNAME/.ssh/authorized_keys
 fi
 
-# Add baremetal_host_username to baremetal_hosts if not already set:
-HOSTS_FILE="$(dirname "$0")/ansible/baremetal_hosts"
-if grep -q "^baremetal_host_username=" "$HOSTS_FILE"; then
-  echo "### baremetal_host_username already set in $HOSTS_FILE. Skipping."
-else
-  echo "### Adding baremetal_host_username=$USERNAME to $HOSTS_FILE."
-  echo "baremetal_host_username=$USERNAME" >> "$HOSTS_FILE"
-fi
+# Add baremetal_host_username and default_box to baremetal_hosts.
+HOSTS_FILE="$SCRIPT_DIR/ansible/baremetal_hosts"
+upsert_env_var "$HOSTS_FILE" "baremetal_host_username" "$USERNAME"
+upsert_env_var "$HOSTS_FILE" "default_box" "$VM_BOX"
 
 # Ensure vagrant .env exists and contains HOST_USER_NAME.
-ENV_FILE="$(dirname "$0")/ansible/vagrant/.env"
+ENV_FILE="$SCRIPT_DIR/ansible/vagrant/.env"
 mkdir -p "$(dirname "$ENV_FILE")"
 touch "$ENV_FILE"
 
@@ -124,3 +131,12 @@ fi
 
 upsert_env_var "$ENV_FILE" "HOST_USER_NAME" "$USERNAME"
 upsert_env_var "$ENV_FILE" "PUBLIC_NETWORK_BRIDGE" "$PUBLIC_NETWORK_BRIDGE"
+
+# Add VM_BOX default only if not already set (user may have customised it).
+if ! grep -q "^VM_BOX=" "$ENV_FILE"; then
+  echo "### Adding VM_BOX=${VM_BOX} to $ENV_FILE."
+  echo "VM_BOX=${VM_BOX}" >> "$ENV_FILE"
+else
+  echo "### VM_BOX already set in $ENV_FILE. Skipping."
+fi
+

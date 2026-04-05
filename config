@@ -1,0 +1,7 @@
+# Baremetal default configuration.
+# Values here are used as defaults by install.sh.
+# Override them by editing ansible/vagrant/.env after running install.sh.
+
+# Also consider using: "hashicorp-education/ubuntu-24-04"
+VM_BOX=ubuntu/jammy64
+

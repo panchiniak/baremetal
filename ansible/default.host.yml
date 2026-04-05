@@ -229,9 +229,9 @@
     # @todo: ./vagrant box add {{ default_box }}
 
     - name: add box if needed
-      shell: "./vagrant box add ubuntu/focal64 --insecure"
+      shell: "./vagrant box add {{ default_box }} --insecure"
       register: out
-      ignore_errors: true      
+      ignore_errors: true
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       become: false
