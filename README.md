@@ -25,29 +25,25 @@ This will be used for allowing Ansible to access the host machine with no need o
 
 ## Custom variables
 
-After installation you can copy `ansible/group_vars/defualt.baremetal_vars` as `ansible/group_vars/baremetal_vars` for adding your custom variables. 
+After installation you can copy `ansible/group_vars/defualt.baremetal_vars` as `ansible/group_vars/baremetal_vars` for adding your custom variables.
 
-## Usage
+### Dynamic VM sizing
 
-Replace `<host>` by the host you want to run the playbook against. Use -K for being asked a password:
+During `install.sh`, VM resource values are written to `ansible/vagrant/.env`.
 
-`cd ansible`
+If `VM_DISK_SIZE`, `VM_MEMORY`, or `VM_CPUS` are not defined in `config`, they are computed automatically from host resources:
 
-`ansible-playbook -l host -i app_hosts -u $(whoami) host.yml --extra-vars "ansible_sudo_pass=yourPassword"`
+- `VM_DISK_SIZE`: 1/5 of host disk (rounded up), written with `GB` suffix (example: `80GB`).
+- `VM_MEMORY`: 1/10 of host memory in MB (rounded up).
+- `VM_CPUS`: 1/3 of host CPUs (rounded up).
 
-`ansible-playbook -l host -i app_hosts -u $(whoami) host.yml -K`
+You can override these defaults by setting values in `config` before running `install.sh`:
 
-`ansible-playbook -l app -i app_hosts -u vagrant guest.yml`
+```bash
+VM_BOX=ubuntu/jammy64
+VM_DISK_SIZE=100GB
+VM_MEMORY=1200
+VM_CPUS=4
+```
 
-`ansible-playbook -l app -i app_hosts -u vagrant project-app.yml`
-
-Warning: for safety constrains please read and understand `playbook.yml` file before running it.
-
-## SSH access
-
-`ssh vagrant@127.0.0.1 -p 2222`
-
-
-## Roadmap
-
-Generate port numbers at Vagrantfile based on available ports.
+If keys are present in `config`, those values are used instead of auto-detection.

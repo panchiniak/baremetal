@@ -4,4 +4,6 @@
 
 # Also consider using: "hashicorp-education/ubuntu-24-04"
 VM_BOX=ubuntu/jammy64
-
+VM_DISK_SIZE=100GB
+VM_MEMORY=1200
+VM_CPUS=4

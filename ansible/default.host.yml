@@ -438,6 +438,7 @@
       ignore_errors: true
       args:
         chdir: /{{ playbook_dir }}/vagrant/
+      become: false
 
       tags: host_authoized_key_purge
 

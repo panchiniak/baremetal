@@ -56,6 +56,31 @@ upsert_env_var() {
     fi
 }
 
+# Function to detect available disk space (in GB) and return 1/5
+detect_vm_disk_size() {
+    local total_disk_gb
+    total_disk_gb=$(df / | awk 'NR==2 {print int($2 / 1024 / 1024)}')
+    # Calculate 1/5 of disk and round up
+    awk -v disk="$total_disk_gb" 'BEGIN { printf "%.0f\n", disk / 6 + 0.5 }'
+}
+
+# Function to detect available memory (in MB) and return 1/10
+detect_vm_memory() {
+    local total_mem_kb
+    total_mem_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+    local total_mem_mb=$((total_mem_kb / 1024))
+    # Calculate 1/10 of memory and round up
+    awk -v mem="$total_mem_mb" 'BEGIN { printf "%.0f\n", mem / 10 + 0.5 }'
+}
+
+# Function to detect available CPUs and return 1/3
+detect_vm_cpus() {
+    local total_cpus
+    total_cpus=$(nproc 2>/dev/null || echo 1)
+    # Calculate 1/3 of CPUs and round up
+    awk -v cpus="$total_cpus" 'BEGIN { printf "%.0f\n", cpus / 3 + 0.5 }'
+}
+
 if [ -z "$USERNAME" ]; then
   echo "### Username is required. See README.md for further instructions."
   exit 1
@@ -140,3 +165,23 @@ else
   echo "### VM_BOX already set in $ENV_FILE. Skipping."
 fi
 
+# Handle VM_DISK_SIZE: use config value if defined, otherwise auto-detect.
+if [ -z "$VM_DISK_SIZE" ]; then
+  VM_DISK_SIZE=$(detect_vm_disk_size)
+  echo "### Auto-detected VM_DISK_SIZE=${VM_DISK_SIZE} GB (1/6 of available disk)."
+fi
+upsert_env_var "$ENV_FILE" "VM_DISK_SIZE" "${VM_DISK_SIZE}GB"
+
+# Handle VM_MEMORY: use config value if defined, otherwise auto-detect.
+if [ -z "$VM_MEMORY" ]; then
+  VM_MEMORY=$(detect_vm_memory)
+  echo "### Auto-detected VM_MEMORY=${VM_MEMORY} MB (1/10 of available memory)."
+fi
+upsert_env_var "$ENV_FILE" "VM_MEMORY" "$VM_MEMORY"
+
+# Handle VM_CPUS: use config value if defined, otherwise auto-detect.
+if [ -z "$VM_CPUS" ]; then
+  VM_CPUS=$(detect_vm_cpus)
+  echo "### Auto-detected VM_CPUS=${VM_CPUS} (1/3 of available CPUs)."
+fi
+upsert_env_var "$ENV_FILE" "VM_CPUS" "$VM_CPUS"
