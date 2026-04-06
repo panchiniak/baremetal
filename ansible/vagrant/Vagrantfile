@@ -35,9 +35,12 @@ Vagrant.configure("2") do |config|
   public_network_bridge = env_values["PUBLIC_NETWORK_BRIDGE"]
   host_user_name = env_values["HOST_USER_NAME"] || "root"
   vm_box = env_values["VM_BOX"]
-  vm_disk_size = env_values["VM_DISK_SIZE"]
-  vm_memory = env_values["VM_MEMORY"]
-  vm_cpus = 4
+  vm_disk_size = env_values["VM_DISK_SIZE"] || "100GB"
+  vm_memory = (env_values["VM_MEMORY"] || "1200").to_i
+  vm_cpus = (env_values["VM_CPUS"] || "4").to_i
+
+  vm_memory = 1200 if vm_memory <= 0
+  vm_cpus = 1 if vm_cpus <= 0
 
 
   if public_network_bridge.to_s.strip.empty?
@@ -86,7 +89,7 @@ Vagrant.configure("2") do |config|
       vb.gui = false
       # Customize the amount of memory on the VM:
       vb.memory = vm_memory
-      vb.cpus = cpus
+      vb.cpus = vm_cpus
       vb.customize ['modifyvm', :id, '--hwvirtex', 'on']
       vb.customize ['modifyvm', :id, '--nested-hw-virt', 'on']
       vb.customize ['modifyvm', :id, '--nestedpaging', 'on']
