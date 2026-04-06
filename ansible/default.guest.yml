@@ -117,17 +117,26 @@
       shell: sysctl -w net.ipv6.conf.lo.disable_ipv6=1
       tags: [ipv6]
 
-    - name: sudo add-apt-repository ppa:ondrej/php -y
+    - name: Add ondrej PHP PPA (retry on Launchpad timeout)
       become: true
-      apt_repository:
+      ansible.builtin.apt_repository:
         repo: ppa:ondrej/php
         state: present
+        codename: jammy
+      register: ondrej_ppa
+      retries: 6
+      delay: 20
+      until: ondrej_ppa is succeeded
       tags: [apt]
 
-    - name: sudo apt update
+    - name: Refresh apt cache after ondrej PPA (retry)
       become: true
       apt:
         update_cache: yes
+      register: apt_update_after_ppa
+      retries: 6
+      delay: 15
+      until: apt_update_after_ppa is succeeded
       tags: [apt]
 
     - name: sudo apt upgrade
@@ -135,30 +144,6 @@
       apt:
         upgrade: dist
       tags: [apt]
-
-    - name: Update apt cache.
-      apt: update_cache=yes cache_valid_time=86400
-
-    - name: APT Update
-      shell: "apt-get update -y"
-      become: true
-      register: out
-
-    - debug: var=out.stdout_lines
-
-    - name: APT Update
-      shell: "apt-get update -y"
-      become: true
-      register: out
-
-    - debug: var=out.stdout_lines
-
-    - name: APT Update
-      shell: "apt-get update -y"
-      become: true
-      register: out
-
-    - debug: var=out.stdout_lines
 
     - name: APT install php-dev
       shell: "apt-get install -y php-dev"
