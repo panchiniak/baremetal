@@ -139,12 +139,6 @@
       until: apt_update_after_ppa is succeeded
       tags: [apt]
 
-    - name: sudo apt upgrade
-      become: true
-      apt:
-        upgrade: dist
-      tags: [apt]
-
     - name: APT install php-dev
       shell: "apt-get install -y php-dev"
       become: true
