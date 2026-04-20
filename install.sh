@@ -124,6 +124,46 @@ ensure_ssh_access_for_user() {
     fi
 }
 
+ensure_known_host_for_user() {
+    local username=$1
+    local user_home=$2
+    local host_target=$3
+    local ssh_port=${4:-22}
+    local user_group
+    local ssh_dir
+    local known_hosts
+    local known_host_entry
+    local scanned_keys
+
+    user_group=$(id -gn "$username") || return 1
+    ssh_dir="$user_home/.ssh"
+    known_hosts="$ssh_dir/known_hosts"
+    known_host_entry="$host_target"
+
+    if [ "$ssh_port" != "22" ]; then
+        known_host_entry="[$host_target]:$ssh_port"
+    fi
+
+    install -d -m 700 -o "$username" -g "$user_group" "$ssh_dir"
+    touch "$known_hosts"
+    chown "$username:$user_group" "$known_hosts"
+    chmod 600 "$known_hosts"
+
+    echo "### Seeding SSH known_hosts entry for $known_host_entry."
+    ssh-keygen -R "$known_host_entry" -f "$known_hosts" >/dev/null 2>&1 || true
+
+    scanned_keys=$(ssh-keyscan -H -T 10 -p "$ssh_port" "$host_target" 2>/dev/null)
+
+    if [ -z "$scanned_keys" ]; then
+        echo "### Unable to collect SSH host key for $known_host_entry."
+        return 1
+    fi
+
+    printf '%s\n' "$scanned_keys" >> "$known_hosts"
+    chown "$username:$user_group" "$known_hosts"
+    chmod 600 "$known_hosts"
+}
+
 # Function to detect available disk space (in GB) and return 1/5
 detect_vm_disk_size() {
     local total_disk_gb
@@ -184,6 +224,8 @@ else
 fi
 
 ensure_ssh_access_for_user "$USERNAME" "$USER_HOME"
+ensure_known_host_for_user "$USERNAME" "$USER_HOME" "127.0.0.1"
+ensure_known_host_for_user "$USERNAME" "$USER_HOME" "localhost"
 
 # Add baremetal_host_username and default_box to baremetal_hosts.
 HOSTS_FILE="$SCRIPT_DIR/ansible/baremetal_hosts"
