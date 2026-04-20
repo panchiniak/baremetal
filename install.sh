@@ -56,6 +56,74 @@ upsert_env_var() {
     fi
 }
 
+get_user_home() {
+    local username=$1
+    local user_home
+
+    user_home=$(getent passwd "$username" | cut -d: -f6)
+
+    if [ -z "$user_home" ]; then
+        echo "### User '$username' does not exist on this machine."
+        return 1
+    fi
+
+    echo "$user_home"
+}
+
+run_as_user() {
+    local username=$1
+    shift
+
+    if command -v runuser >/dev/null 2>&1; then
+        runuser -u "$username" -- "$@"
+    else
+        su - "$username" -c "$(printf '%q ' "$@")"
+    fi
+}
+
+ensure_ssh_access_for_user() {
+    local username=$1
+    local user_home=$2
+    local user_group
+    local ssh_dir
+    local private_key
+    local public_key
+    local authorized_keys
+
+    user_group=$(id -gn "$username") || return 1
+    ssh_dir="$user_home/.ssh"
+    private_key="$ssh_dir/id_rsa"
+    public_key="$ssh_dir/id_rsa.pub"
+    authorized_keys="$ssh_dir/authorized_keys"
+
+    install -d -m 700 -o "$username" -g "$user_group" "$ssh_dir"
+
+    if [ ! -f "$private_key" ]; then
+        echo "### Generating SSH key pair for $username."
+        rm -f "$public_key"
+        run_as_user "$username" ssh-keygen -q -t rsa -b 4096 -N "" -f "$private_key"
+    elif [ ! -f "$public_key" ]; then
+        echo "### Rebuilding missing public SSH key for $username."
+        ssh-keygen -y -f "$private_key" > "$public_key"
+        chown "$username:$user_group" "$public_key"
+        chmod 644 "$public_key"
+    else
+        echo "### SSH keys already created. Skipping creation."
+    fi
+
+    touch "$authorized_keys"
+    chown "$username:$user_group" "$authorized_keys"
+    chmod 600 "$authorized_keys"
+
+    if ! grep -qxF "$(cat "$public_key")" "$authorized_keys"; then
+        echo "### Authorizing self key for self ssh session."
+        cat "$public_key" >> "$authorized_keys"
+        chown "$username:$user_group" "$authorized_keys"
+    else
+        echo "### SSH public key already authorized. Skipping update."
+    fi
+}
+
 # Function to detect available disk space (in GB) and return 1/5
 detect_vm_disk_size() {
     local total_disk_gb
@@ -86,6 +154,8 @@ if [ -z "$USERNAME" ]; then
   exit 1
 fi
 
+USER_HOME=$(get_user_home "$USERNAME") || exit 1
+
 if [ -f /usr/bin/ansible ]; then
   echo "### Ansible already installed. Skipping installation."
 fi
@@ -113,29 +183,7 @@ else
   echo "### Folder ansible/vagrant/data already created. Skipping creation."
 fi
 
-# Create ssh keys if needed:
-if [ ! -f /home/$USERNAME/.ssh/id_rsa.pub ]; then
-  echo "### Becoming initial user and generating ssh keys."
-  su $USERNAME
-  ssh-keygen -q -b 4096 -t rsa -N '' <<< $'\ny' >/dev/null 2>&1
-else
-  echo "### SSH keys already created. Skipping creation."
-fi
-
-# Enable access without password:
-# If authorized_keys file does not exist:
-if [ ! -f /home/$USERNAME/.ssh/authorized_keys ]; then
-  echo "### Authorizing self key for self ssh session."
-  # Create authorized_keys file
-  cp /home/$USERNAME/.ssh/id_rsa.pub /home/$USERNAME/.ssh/authorized_keys
-fi
-
-# If authorized_keys file already exists:
-if [ -f /home/$USERNAME/.ssh/authorized_keys ]; then
-  echo "### Concatenating self key at the end of authorized keys file for self ssh session."
-  # Concatenate pubkey in the end of file:
-  cat /home/$USERNAME/.ssh/id_rsa.pub >> /home/$USERNAME/.ssh/authorized_keys
-fi
+ensure_ssh_access_for_user "$USERNAME" "$USER_HOME"
 
 # Add baremetal_host_username and default_box to baremetal_hosts.
 HOSTS_FILE="$SCRIPT_DIR/ansible/baremetal_hosts"
