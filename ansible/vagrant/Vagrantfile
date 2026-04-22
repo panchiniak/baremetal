@@ -2,7 +2,55 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.network "private_network", type: "dhcp"
+  # Detect if running in nested virtualization
+  require "open3"
+
+  def cmd_output(cmd)
+    stdout, status = Open3.capture2(cmd)
+    status.success? ? stdout.strip : ""
+  rescue
+    ""
+  end
+
+  def file_contains_any?(path, needles)
+    return false unless File.exist?(path)
+    content = File.read(path).downcase
+    needles.any? { |n| content.include?(n) }
+  rescue
+    false
+  end
+
+  virt_type = cmd_output("systemd-detect-virt")
+  virtual_markers = %w[virtualbox oracle kvm qemu vmware xen hyper-v]
+
+  is_nested_virtualbox =
+    virtual_markers.include?(virt_type.downcase) ||
+    file_contains_any?("/sys/class/dmi/id/product_name", %w[virtualbox kvm qemu vmware]) ||
+    file_contains_any?("/sys/class/dmi/id/sys_vendor", %w[innotek oracle qemu vmware])
+
+  # Optional explicit override from .env for NESTED_MODE (true/false)
+  env_file_path_early = File.expand_path(".env", __dir__)
+  if File.exist?(env_file_path_early)
+    File.foreach(env_file_path_early) do |line|
+      next if line.strip.empty? || line.lstrip.start_with?("#")
+      key, value = line.split("=", 2)
+      next if key.nil? || value.nil?
+      if key.strip == "NESTED_MODE"
+        is_nested_virtualbox = value.strip.downcase == "true"
+      end
+    end
+  end
+
+  # Configure private network based on nesting detection
+  private_network_ip_nested = "172.29.250.10"
+  network_mode = is_nested_virtualbox ? "nested-static (#{private_network_ip_nested})" : "regular-dhcp"
+  puts "[Vagrant] Network mode: #{network_mode}"
+
+  if is_nested_virtualbox
+    config.vm.network "private_network", ip: private_network_ip_nested
+  else
+    config.vm.network "private_network", type: "dhcp"
+  end
 
   host_port_22 = 2222
   host_port_22_string = "2222"
