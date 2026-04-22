@@ -185,6 +185,45 @@
 
     - debug: var=out.stdout_lines
 
+    - name: Validate minimum Ubuntu version for AppImage FUSE support
+      assert:
+        that:
+          - ansible_facts['distribution_version'] is version('22.04', '>=')
+        fail_msg: >-
+          Ubuntu {{ ansible_facts['distribution_version'] }} is not supported. Minimum supported version is 22.04.
+      when: ansible_facts['distribution'] == 'Ubuntu'
+
+    - name: Ensure Ubuntu universe repository is enabled for AppImage FUSE packages
+      become: true
+      apt_repository:
+        repo: "deb http://archive.ubuntu.com/ubuntu {{ ansible_facts['distribution_release'] }} universe"
+        state: present
+        update_cache: true
+      when:
+        - ansible_facts['distribution'] == 'Ubuntu'
+        - ansible_facts['distribution_version'] is version('22.04', '>=')
+
+    - name: Install AppImage FUSE compatibility package on Ubuntu 22.04-23.10
+      become: true
+      apt:
+        name: libfuse2
+        state: present
+        update_cache: true
+      when:
+        - ansible_facts['distribution'] == 'Ubuntu'
+        - ansible_facts['distribution_version'] is version('22.04', '>=')
+        - ansible_facts['distribution_version'] is version('24.04', '<')
+
+    - name: Install AppImage FUSE compatibility package on Ubuntu 24.04+
+      become: true
+      apt:
+        name: libfuse2t64
+        state: present
+        update_cache: true
+      when:
+        - ansible_facts['distribution'] == 'Ubuntu'
+        - ansible_facts['distribution_version'] is version('24.04', '>=')
+
     - name: install guest additions
       command: ./vagrant plugin install vagrant-vbguest
       register: out
