@@ -31,6 +31,7 @@
       apt:
         name: virtualbox
         update_cache: yes
+        cache_valid_time: 3600
         state: present
 
     - name: Remove legacy fuse package (prevents GDM breakage on Ubuntu desktop)
@@ -48,6 +49,7 @@
           - fuse3
           - libfuse3-3
         update_cache: yes
+        cache_valid_time: 3600
         state: present
 
     # If a previous run installed legacy fuse, ensure desktop packages are healthy.
@@ -69,6 +71,7 @@
       apt:
         name: virtualbox-dkms
         update_cache: yes
+        cache_valid_time: 3600
         state: present
 
     - name: Reconfigure virtualbox-dkms (allow non-running kernel failures)
@@ -152,6 +155,7 @@
       apt:
         name: unzip
         update_cache: yes
+        cache_valid_time: 3600
         state: present
 
     - name: Unzip vagrant zip if available and keep it
@@ -199,6 +203,7 @@
         repo: "deb http://archive.ubuntu.com/ubuntu {{ ansible_facts['distribution_release'] }} universe"
         state: present
         update_cache: true
+        cache_valid_time: 3600
       when:
         - ansible_facts['distribution'] == 'Ubuntu'
         - ansible_facts['distribution_version'] is version('22.04', '>=')
@@ -209,6 +214,7 @@
         name: libfuse2
         state: present
         update_cache: true
+        cache_valid_time: 3600
       when:
         - ansible_facts['distribution'] == 'Ubuntu'
         - ansible_facts['distribution_version'] is version('22.04', '>=')
@@ -220,6 +226,7 @@
         name: libfuse2t64
         state: present
         update_cache: true
+        cache_valid_time: 3600
       when:
         - ansible_facts['distribution'] == 'Ubuntu'
         - ansible_facts['distribution_version'] is version('24.04', '>=')
