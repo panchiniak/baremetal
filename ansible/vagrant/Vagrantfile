@@ -31,18 +31,28 @@ Vagrant.configure("2") do |config|
   # Optional explicit override from .env for NESTED_MODE (true/false)
   env_file_path_early = File.expand_path(".env", __dir__)
   nested_ip_override = nil
+  public_network_bridge_early = nil
   if File.exist?(env_file_path_early)
     File.foreach(env_file_path_early) do |line|
       next if line.strip.empty? || line.lstrip.start_with?("#")
       key, value = line.split("=", 2)
       next if key.nil? || value.nil?
+      parsed_value = value.strip.gsub(/\A["']|["']\z/, "")
       if key.strip == "NESTED_MODE"
-        is_nested_virtualbox = value.strip.downcase == "true"
+        is_nested_virtualbox = parsed_value.downcase == "true"
       elsif key.strip == "PRIVATE_NETWORK_IP_NESTED"
-        nested_ip_override = value.strip
+        nested_ip_override = parsed_value
+      elsif key.strip == "PUBLIC_NETWORK_BRIDGE"
+        public_network_bridge_early = parsed_value
       end
     end
   end
+
+  # Some nested hosts do not expose reliable virtualization facts.
+  # Bridge names like enp0s3/eth0 are typical inside nested VMs.
+  nested_bridge_names = %w[enp0s3 eth0]
+  bridge_looks_nested = nested_bridge_names.include?(public_network_bridge_early.to_s.strip)
+  is_nested_virtualbox = true if bridge_looks_nested
 
   # Configure private network based on nesting detection
   # VirtualBox often restricts host-only ranges to 192.168.56.0/21.
@@ -107,9 +117,10 @@ Vagrant.configure("2") do |config|
 
   vm_memory = 1200 if vm_memory <= 0
   vm_cpus = 1 if vm_cpus <= 0
+  vm_cpus = 1 if is_nested_virtualbox
 
 
-  if public_network_bridge.to_s.strip.empty?
+  if !is_nested_virtualbox && public_network_bridge.to_s.strip.empty?
     abort("ERROR: PUBLIC_NETWORK_BRIDGE is empty. Set it in #{env_file_path} (example: PUBLIC_NETWORK_BRIDGE=enp2s0).")
   end
 
@@ -148,7 +159,11 @@ Vagrant.configure("2") do |config|
     default.vm.network "forwarded_port", guest: 9003, host: host_port_9001, host_ip: "0.0.0.0"
     # Solr by default stays at 8983:
     default.vm.network "forwarded_port", guest: 8983, host: host_port_8983, host_ip: "0.0.0.0"
-    default.vm.network "public_network", bridge: public_network_bridge, ip: "192.168.0.222"
+    if is_nested_virtualbox
+      puts "[Vagrant] Nested mode: skipping public_network bridge"
+    else
+      default.vm.network "public_network", bridge: public_network_bridge, ip: "192.168.0.222"
+    end
     default.vm.synced_folder "data", "/vagrant_data"
     default.vm.provider "virtualbox" do |vb|
       # Dont display the VirtualBox GUI when booting the machine
@@ -156,14 +171,20 @@ Vagrant.configure("2") do |config|
       # Customize the amount of memory on the VM:
       vb.memory = vm_memory
       vb.cpus = vm_cpus
-      vb.customize ['modifyvm', :id, '--hwvirtex', 'on']
-      vb.customize ['modifyvm', :id, '--nested-hw-virt', 'on']
-      vb.customize ['modifyvm', :id, '--nestedpaging', 'on']
-      vb.customize ['modifyvm', :id, '--largepages', 'on']
-      vb.customize ['modifyvm', :id, '--vtxux', 'on']
-      vb.customize ['modifyvm', :id, '--vtxvpid', 'on']
       vb.customize ['modifyvm', :id, '--graphicscontroller', 'vmsvga']
-      vb.customize ['modifyvm', :id, '--paravirtprovider', 'kvm']
+
+      if is_nested_virtualbox
+        # Nested environments can fail to boot when forcing low-level HW virt flags.
+        vb.customize ['modifyvm', :id, '--paravirtprovider', 'default']
+      else
+        vb.customize ['modifyvm', :id, '--hwvirtex', 'on']
+        vb.customize ['modifyvm', :id, '--nested-hw-virt', 'on']
+        vb.customize ['modifyvm', :id, '--nestedpaging', 'on']
+        vb.customize ['modifyvm', :id, '--largepages', 'on']
+        vb.customize ['modifyvm', :id, '--vtxux', 'on']
+        vb.customize ['modifyvm', :id, '--vtxvpid', 'on']
+        vb.customize ['modifyvm', :id, '--paravirtprovider', 'kvm']
+      end
     end
     ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
     default.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys", privileged: false
