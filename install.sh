@@ -1,5 +1,44 @@
 #!/bin/bash
-USERNAME=$1
+
+USERNAME=""
+CLEAR_TMP_BAREMETAL_CACHE=false
+TMP_BAREMETAL_DIR="/tmp/baremetal"
+
+print_usage() {
+  cat <<'EOF'
+Usage: ./install.sh [options] <username>
+
+Options:
+  --clear-tmp-baremetal-cache  Remove /tmp/baremetal before running install steps.
+  -h, --help                   Show this help message.
+EOF
+}
+
+for arg in "$@"; do
+  case "$arg" in
+    --clear-tmp-baremetal-cache)
+      CLEAR_TMP_BAREMETAL_CACHE=true
+      ;;
+    -h|--help)
+      print_usage
+      exit 0
+      ;;
+    -* )
+      echo "### Unknown option: $arg"
+      print_usage
+      exit 1
+      ;;
+    *)
+      if [ -z "$USERNAME" ]; then
+        USERNAME="$arg"
+      else
+        echo "### Unexpected extra argument: $arg"
+        print_usage
+        exit 1
+      fi
+      ;;
+  esac
+done
 
 # Load default configuration.
 SCRIPT_DIR="$(dirname "$0")"
@@ -53,6 +92,41 @@ upsert_env_var() {
     else
         echo "### Adding ${key}=${value} to $env_file."
         echo "${key}=${value}" >> "$env_file"
+    fi
+}
+
+clear_tmp_baremetal_cache_if_requested() {
+    if [ "$CLEAR_TMP_BAREMETAL_CACHE" = true ]; then
+        echo "### Removing temporary cache directory: $TMP_BAREMETAL_DIR"
+        rm -rf "$TMP_BAREMETAL_DIR"
+    fi
+}
+
+restore_cached_vagrant_binary() {
+    local target_vagrant="$SCRIPT_DIR/ansible/vagrant/vagrant"
+    local cached_vagrant="$TMP_BAREMETAL_DIR/vagrant"
+
+    if [ -x "$target_vagrant" ]; then
+        return 0
+    fi
+
+    if [ -x "$cached_vagrant" ]; then
+        echo "### Restoring cached vagrant binary from $cached_vagrant"
+        mkdir -p "$(dirname "$target_vagrant")"
+        cp "$cached_vagrant" "$target_vagrant"
+        chmod +x "$target_vagrant"
+    fi
+}
+
+cache_vagrant_binary_if_available() {
+    local target_vagrant="$SCRIPT_DIR/ansible/vagrant/vagrant"
+    local cached_vagrant="$TMP_BAREMETAL_DIR/vagrant"
+
+    if [ -x "$target_vagrant" ]; then
+        mkdir -p "$TMP_BAREMETAL_DIR"
+        cp "$target_vagrant" "$cached_vagrant"
+        chmod +x "$cached_vagrant"
+        echo "### Cached vagrant binary at $cached_vagrant"
     fi
 }
 
@@ -191,8 +265,12 @@ detect_vm_cpus() {
 
 if [ -z "$USERNAME" ]; then
   echo "### Username is required. See README.md for further instructions."
+  print_usage
   exit 1
 fi
+
+clear_tmp_baremetal_cache_if_requested
+restore_cached_vagrant_binary
 
 USER_HOME=$(get_user_home "$USERNAME") || exit 1
 
@@ -275,3 +353,6 @@ if [ -z "$VM_CPUS" ]; then
   echo "### Auto-detected VM_CPUS=${VM_CPUS} (1/3 of available CPUs)."
 fi
 upsert_env_var "$ENV_FILE" "VM_CPUS" "$VM_CPUS"
+
+cache_vagrant_binary_if_available
+

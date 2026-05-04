@@ -23,6 +23,19 @@ Run `install.sh` passing your user name as argument:
 
 This will be used for allowing Ansible to access the host machine with no need of typing your password. 
 
+### Reusing cached Vagrant binary
+
+To speed up repeated installs, `install.sh` now reuses a cached Vagrant binary from `/tmp/baremetal/vagrant` when available.
+
+- If the cache exists, it is copied into `ansible/vagrant/vagrant` and download/unzip can be skipped.
+- After installation, the current `ansible/vagrant/vagrant` binary is saved back to `/tmp/baremetal/vagrant`.
+
+If you want a clean install without cache reuse, clear it first with:
+
+```bash
+sudo ./install.sh --clear-tmp-baremetal-cache "$(whoami)"
+```
+
 ## Custom variables
 
 After installation you can copy `ansible/group_vars/defualt.baremetal_vars` as `ansible/group_vars/baremetal_vars` for adding your custom variables.

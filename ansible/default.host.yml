@@ -153,6 +153,29 @@
       register: zipped_vagrant_exists
       tags: vagrant
 
+    - name: Check installed vagrant binary in project directory
+      stat:
+        path: /{{ playbook_dir }}/vagrant/vagrant
+      register: installed_vagrant_binary
+      tags: vagrant
+
+    - name: Check cached vagrant binary in /tmp/baremetal
+      stat:
+        path: /tmp/baremetal/vagrant
+      register: cached_vagrant_binary
+      tags: vagrant
+
+    - name: Restore vagrant binary from /tmp/baremetal cache
+      copy:
+        src: /tmp/baremetal/vagrant
+        dest: /{{ playbook_dir }}/vagrant/vagrant
+        remote_src: true
+        mode: '0755'
+      when:
+        - cached_vagrant_binary.stat.exists
+        - not installed_vagrant_binary.stat.exists
+      tags: vagrant
+
     - name: Install sshfs
       become: true
       apt:
@@ -183,7 +206,9 @@
         checksum: "{{ vagrant_zip_file_checksum }}"
         force: no
       register: get_vagrant
-      when: zipped_vagrant_exists.stat.exists == False
+      when:
+        - zipped_vagrant_exists.stat.exists == False
+        - not installed_vagrant_binary.stat.exists
       retries: "{{ network_retries }}"
       delay: "{{ network_delay }}"
       until: get_vagrant is succeeded
@@ -210,6 +235,29 @@
         creates: /{{ playbook_dir }}/vagrant/vagrant
       tags: [vagrant, unzip]
 
+    - name: Check vagrant binary after setup
+      stat:
+        path: /{{ playbook_dir }}/vagrant/vagrant
+      register: vagrant_binary_after_setup
+      tags: vagrant
+
+    - name: Ensure /tmp/baremetal exists for vagrant cache
+      file:
+        path: /tmp/baremetal
+        state: directory
+        mode: '0755'
+      when: vagrant_binary_after_setup.stat.exists
+      tags: vagrant
+
+    - name: Cache vagrant binary in /tmp/baremetal
+      copy:
+        src: /{{ playbook_dir }}/vagrant/vagrant
+        dest: /tmp/baremetal/vagrant
+        remote_src: true
+        mode: '0755'
+      when: vagrant_binary_after_setup.stat.exists
+      tags: vagrant
+
     - name: Ensure Vagrant local state directory exists
       ansible.builtin.file:
         path: /{{ playbook_dir }}/vagrant/.vagrant/machines
@@ -224,8 +272,6 @@
       ansible.builtin.command: chmod -R u+rwX /{{ playbook_dir }}/vagrant/.vagrant
       become: true
       changed_when: false
-
-    # cp id_rsa.pub from user to /root/ssh
 
     - name: Remove vagrant zip source
       file:
