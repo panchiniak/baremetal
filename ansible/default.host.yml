@@ -8,6 +8,11 @@
   become: yes
   vars_files:
     - group_vars/baremetal_vars
+  vars:
+    network_retries: 5
+    network_delay: 20
+    command_retries: 3
+    command_delay: 10
 
   pre_tasks:
     - name: Gather installed package facts
@@ -33,6 +38,10 @@
         update_cache: yes
         cache_valid_time: 3600
         state: present
+      register: virtualbox_install
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: virtualbox_install is succeeded
 
     - name: Remove legacy fuse package (prevents GDM breakage on Ubuntu desktop)
       become: true
@@ -51,6 +60,10 @@
         update_cache: yes
         cache_valid_time: 3600
         state: present
+      register: fuse3_install
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: fuse3_install is succeeded
 
     # If a previous run installed legacy fuse, ensure desktop packages are healthy.
     - name: Repair Ubuntu desktop packages after fuse migration
@@ -65,6 +78,10 @@
       apt:
         name: linux-headers-generic
         state: present
+      register: headers_install
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: headers_install is succeeded
 
     - name: Install virtualbox-dkms if needed
       become: true
@@ -73,6 +90,10 @@
         update_cache: yes
         cache_valid_time: 3600
         state: present
+      register: virtualbox_dkms_install
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: virtualbox_dkms_install is succeeded
 
     - name: Reconfigure virtualbox-dkms (allow non-running kernel failures)
       command: dpkg-reconfigure virtualbox-dkms
@@ -117,6 +138,10 @@
       apt:
         name: git
         state: present
+      register: git_install
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: git_install is succeeded
 
     - local_action: stat path=/{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
       register: zipped_vagrant_exists
@@ -127,6 +152,10 @@
       apt:
         name: sshfs
         state: present
+      register: sshfs_install
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: sshfs_install is succeeded
 
     - local_action: stat path=/{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
       register: zipped_vagrant_exists
@@ -148,6 +177,9 @@
         force: no
       register: get_vagrant
       when: zipped_vagrant_exists.stat.exists == False
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: get_vagrant is succeeded
       tags: vagrant
 
     - name: Install unzip
@@ -157,6 +189,10 @@
         update_cache: yes
         cache_valid_time: 3600
         state: present
+      register: unzip_install
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: unzip_install is succeeded
 
     - name: Unzip vagrant zip if available and keep it
       unarchive:
@@ -203,6 +239,10 @@
         repo: "deb http://archive.ubuntu.com/ubuntu {{ ansible_facts['distribution_release'] }} universe"
         state: present
         update_cache: true
+      register: ubuntu_universe_repo
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: ubuntu_universe_repo is succeeded
       when:
         - ansible_facts['distribution'] == 'Ubuntu'
         - ansible_facts['distribution_version'] is version('22.04', '>=')
@@ -214,6 +254,10 @@
         state: present
         update_cache: true
         cache_valid_time: 3600
+      register: libfuse2_install
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: libfuse2_install is succeeded
       when:
         - ansible_facts['distribution'] == 'Ubuntu'
         - ansible_facts['distribution_version'] is version('22.04', '>=')
@@ -226,6 +270,10 @@
         state: present
         update_cache: true
         cache_valid_time: 3600
+      register: libfuse2t64_install
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: libfuse2t64_install is succeeded
       when:
         - ansible_facts['distribution'] == 'Ubuntu'
         - ansible_facts['distribution_version'] is version('24.04', '>=')
@@ -233,6 +281,9 @@
     - name: install guest additions
       command: ./vagrant plugin install vagrant-vbguest
       register: out
+      retries: "{{ command_retries }}"
+      delay: "{{ command_delay }}"
+      until: out.rc == 0
       args:
         chdir: /{{ playbook_dir }}/vagrant/
 
@@ -253,6 +304,9 @@
       shell: "./vagrant plugin install vagrant-disksize"
       tags: disksize
       register: out
+      retries: "{{ command_retries }}"
+      delay: "{{ command_delay }}"
+      until: out.rc == 0
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       become: false
@@ -264,6 +318,9 @@
         chdir: /{{ playbook_dir }}/vagrant/
       tags: disksize
       register: plugin_list_output
+      retries: "{{ command_retries }}"
+      delay: "{{ command_delay }}"
+      until: plugin_list_output.rc == 0
 
     - debug:
         var: plugin_install_output.stdout
@@ -277,6 +334,9 @@
       shell: "./vagrant box add {{ default_box }} --insecure"
       register: out
       ignore_errors: true
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       become: false
@@ -291,6 +351,9 @@
     - name: install geerlingguy apache from galaxy
       command: ansible-galaxy install --roles-path roles geerlingguy.apache
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
       tags: ansible
       args:
         chdir: /{{ playbook_dir }}/
@@ -306,6 +369,9 @@
     - name: install geerlingguy php from galaxy
       command: ansible-galaxy install --roles-path roles geerlingguy.php
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
       tags: [ansible, ansible_php]
       args:
         chdir: /{{ playbook_dir }}/
@@ -321,6 +387,9 @@
     - name: install geerlingguy php-mysql from galaxy
       command: ansible-galaxy install --roles-path roles geerlingguy.php-mysql
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
       tags: [ansible, ansible_php_mysql]
       args:
         chdir: /{{ playbook_dir }}/
@@ -336,6 +405,9 @@
     - name: install geerlingguy adminer from galaxy
       command: ansible-galaxy install --roles-path roles geerlingguy.adminer
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
       tags: [ansible, ansible_adminer]
       args:
         chdir: /{{ playbook_dir }}/
@@ -351,6 +423,9 @@
     - name: install geerlingguy java from galaxy
       command: ansible-galaxy install --roles-path roles geerlingguy.java
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
       tags: [ansible, ansible_java]
       args:
         chdir: /{{ playbook_dir }}/
@@ -366,6 +441,9 @@
     - name: install geerlingguy solr from galaxy
       command: ansible-galaxy install --roles-path roles geerlingguy.solr
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
       tags: [ansible, ansible_solr]
       args:
         chdir: /{{ playbook_dir }}/
@@ -381,6 +459,9 @@
     - name: install geerlingguy mysql from galaxy
       command: ansible-galaxy install --roles-path roles geerlingguy.mysql
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
       tags: [ansible, ansible_mysql]
       args:
         chdir: /{{ playbook_dir }}/
@@ -396,6 +477,9 @@
     - name: install geerlingguy composer from galaxy
       command: ansible-galaxy install --roles-path roles geerlingguy.composer
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
       tags: [ansible, ansible_composer]
       args:
         chdir: /{{ playbook_dir }}/
@@ -411,6 +495,9 @@
     - name: install geerlingguy drush from galaxy
       command: ansible-galaxy install --roles-path roles geerlingguy.drush
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
       tags: [ansible, ansible_drush]
       args:
         chdir: /{{ playbook_dir }}/
@@ -426,6 +513,9 @@
     - name: install geerlingguy drush from galaxy
       command: ansible-galaxy install --roles-path roles geerlingguy.htpasswd
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
       tags: [ansible, ansible_htpasswd]
       args:
         chdir: /{{ playbook_dir }}/
@@ -437,6 +527,9 @@
     - name: install geerlingguy certbot from galaxy
       command: ansible-galaxy install --roles-path roles geerlingguy.certbot
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
       tags: [ansible, certbot]
       args:
         chdir: /{{ playbook_dir }}/
@@ -448,6 +541,9 @@
     - name: install geerlingguy xdebug from galaxy
       command: ansible-galaxy install --roles-path roles geerlingguy.php-xdebug
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
       tags: [ansible, xdebug]
       args:
         chdir: /{{ playbook_dir }}/
@@ -459,6 +555,9 @@
     - name: install geerlingguy php-versions from galaxy
       command: ansible-galaxy install --roles-path roles geerlingguy.php-versions
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
       tags: [ansible, xdebug]
       args:
         chdir: /{{ playbook_dir }}/
@@ -470,6 +569,9 @@
     - name: install geerlingguy geerlingguy.gitlab from galaxy
       command: ansible-galaxy install --roles-path roles geerlingguy.gitlab
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
       tags: [ansible, gitlab]
       args:
         chdir: /{{ playbook_dir }}/
@@ -481,6 +583,9 @@
       shell: ./vagrant box update --insecure
       register: out
       ignore_errors: true
+      retries: "{{ command_retries }}"
+      delay: "{{ command_delay }}"
+      until: out.rc == 0
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       become: false
@@ -527,6 +632,9 @@
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       register: vagrant_default_status
+      retries: "{{ command_retries }}"
+      delay: "{{ command_delay }}"
+      until: vagrant_default_status.rc == 0
       changed_when: false
       become: false
       tags: vagrant-status-default
@@ -546,6 +654,10 @@
       command: ./vagrant up default
       args:
         chdir: /{{ playbook_dir }}/vagrant/
+      register: vagrant_default_up
+      retries: "{{ command_retries }}"
+      delay: "{{ command_delay }}"
+      until: vagrant_default_up.rc == 0
       when: vagrant_default_state != 'running'
       become: false
       tags: vagrant-up-default

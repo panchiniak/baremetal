@@ -9,6 +9,11 @@
   become: yes
   vars_files:
     - group_vars/baremetal_vars
+  vars:
+    network_retries: 5
+    network_delay: 20
+    command_retries: 3
+    command_delay: 10
 
   tasks:
     - name: Install unzip - it will be used by drush make
@@ -19,6 +24,9 @@
         state: present
       tags: build
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out is succeeded
 
     - debug: var=out.stdout_lines
       tags: [unzip]
@@ -31,6 +39,9 @@
         state: present
       tags: build
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out is succeeded
 
     - debug: var=out.stdout_lines
       tags: [java]
@@ -43,7 +54,10 @@
         state: present
       tags: [apt_apcu]
       register: out
-    
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out is succeeded
+
     - debug: var=out.stdout_lines
       tags: [apt_apcu]
 
@@ -55,6 +69,9 @@
         state: present
       tags: [apt_mbstring]
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out is succeeded
 
     - debug: var=out.stdout_lines
       tags: [apt_apcu]
@@ -67,6 +84,9 @@
         state: present
       tags: [apt_mbstring]
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out is succeeded
 
     - debug: var=out.stdout_lines
       tags: [apt_phpjson]
@@ -79,6 +99,9 @@
         state: present
       tags: [apt_imap]
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out is succeeded
 
     - debug: var=out.stdout_lines
       tags: [apt_phpjson]
@@ -88,6 +111,10 @@
       become: true
       apt:
         update_cache: yes
+      register: apt_update_out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: apt_update_out is succeeded
       tags: [apt]
 
     - name: sudo apt install ca-certificates apt-transport-https software-properties-common lsb-release -y
@@ -100,6 +127,10 @@
         - apt-transport-https
         - software-properties-common
         - lsb-release
+      register: base_apt_packages_out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: base_apt_packages_out is succeeded
       tags: [apt]
 
     - name: sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
@@ -124,8 +155,8 @@
         state: present
         codename: jammy
       register: ondrej_ppa
-      retries: 6
-      delay: 20
+      retries: "6"
+      delay: "20"
       until: ondrej_ppa is succeeded
       tags: [apt]
 
@@ -134,8 +165,8 @@
       apt:
         update_cache: yes
       register: apt_update_after_ppa
-      retries: 6
-      delay: 15
+      retries: "6"
+      delay: "15"
       until: apt_update_after_ppa is succeeded
       tags: [apt]
 
@@ -143,12 +174,19 @@
       become: true
       apt:
         upgrade: dist
+      register: apt_upgrade_out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: apt_upgrade_out is succeeded
       tags: [apt]
 
     - name: APT install php-dev
       shell: "apt-get install -y php-dev"
       become: true
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
 
     - debug: var=out.stdout_lines
 
@@ -156,6 +194,9 @@
       shell: "apt install -y composer"
       become: true
       register: out
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: out.rc == 0
 
     - debug: var=out.stdout_lines
 
@@ -198,6 +239,9 @@
     - name: Restart apache for enabling MySQL
       command: systemctl restart apache2
       register: out
+      retries: "{{ command_retries }}"
+      delay: "{{ command_delay }}"
+      until: out.rc == 0
 
     - debug: var=out.stdout_lines
 
@@ -206,7 +250,10 @@
       command: service apache2 restart
       become: true
       register: out
-  
+      retries: "{{ command_retries }}"
+      delay: "{{ command_delay }}"
+      until: out.rc == 0
+
     - debug: var=out.stdout_lines
 
 # @TODO: add baremetal.conf to /etc/apache2/sites-available
