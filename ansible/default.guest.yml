@@ -21,7 +21,9 @@
       apt:
         name: unzip
         update_cache: yes
+        cache_valid_time: 3600
         state: present
+      ignore_errors: true
       tags: build
       register: out
       retries: "{{ network_retries }}"
@@ -36,7 +38,9 @@
       apt:
         name: default-jre
         update_cache: yes
+        cache_valid_time: 3600
         state: present
+      ignore_errors: true
       tags: build
       register: out
       retries: "{{ network_retries }}"
@@ -51,7 +55,9 @@
       apt:
         name: php-apcu
         update_cache: yes
+        cache_valid_time: 3600
         state: present
+      ignore_errors: true
       tags: [apt_apcu]
       register: out
       retries: "{{ network_retries }}"
@@ -66,7 +72,9 @@
       apt:
         name: php-mbstring
         update_cache: yes
+        cache_valid_time: 3600
         state: present
+      ignore_errors: true
       tags: [apt_mbstring]
       register: out
       retries: "{{ network_retries }}"
@@ -78,9 +86,11 @@
 
     - name: Set php json
       become: true
+      ignore_errors: true
       apt:
         name: php-json
         update_cache: yes
+        cache_valid_time: 3600
         state: present
       tags: [apt_mbstring]
       register: out
@@ -96,7 +106,9 @@
       apt:
         name: "php{{ php_version }}-imap"
         update_cache: yes
+        cache_valid_time: 3600
         state: present
+      ignore_errors: true
       tags: [apt_imap]
       register: out
       retries: "{{ network_retries }}"
@@ -111,6 +123,8 @@
       become: true
       apt:
         update_cache: yes
+        cache_valid_time: 3600
+      ignore_errors: true
       register: apt_update_out
       retries: "{{ network_retries }}"
       delay: "{{ network_delay }}"
@@ -122,6 +136,7 @@
       apt:
         name: "{{ item }}"
         state: present
+      ignore_errors: true
       with_items:
         - ca-certificates
         - apt-transport-https
@@ -155,8 +170,8 @@
         state: present
         codename: jammy
       register: ondrej_ppa
-      retries: "6"
-      delay: "20"
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
       until: ondrej_ppa is succeeded
       tags: [apt]
 
@@ -164,9 +179,11 @@
       become: true
       apt:
         update_cache: yes
+        cache_valid_time: 3600
+      ignore_errors: true
       register: apt_update_after_ppa
-      retries: "6"
-      delay: "15"
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
       until: apt_update_after_ppa is succeeded
       tags: [apt]
 
@@ -174,6 +191,7 @@
       become: true
       apt:
         upgrade: dist
+      ignore_errors: true
       register: apt_upgrade_out
       retries: "{{ network_retries }}"
       delay: "{{ network_delay }}"
