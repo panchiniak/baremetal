@@ -334,21 +334,35 @@
     - debug:
         var: plugin_list_output.stdout
 
-    # @todo: ./vagrant box add {{ default_box }}
-
-    - name: add box if needed
-      shell: "./vagrant box add {{ default_box }} --insecure"
-      register: out
-      ignore_errors: true
-      retries: "{{ network_retries }}"
-      delay: "{{ network_delay }}"
-      until: out.rc == 0
+    - name: Check installed Vagrant boxes
+      command: ./vagrant box list
+      register: vagrant_box_list
+      retries: "{{ command_retries }}"
+      delay: "{{ command_delay }}"
+      until: vagrant_box_list.rc == 0
+      changed_when: false
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       become: false
       tags: add-box
 
-    - debug: var=out.stdout_lines
+    - name: Add box if needed
+      shell: "./vagrant box add {{ default_box }} --insecure"
+      register: add_box_result
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: add_box_result.rc == 0
+      when: vagrant_box_list.stdout is not search('(?m)^' ~ (default_box | regex_escape) ~ '\\s')
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
+      become: false
+      tags: add-box
+
+    - name: Report Vagrant box status
+      debug:
+        msg: >-
+          Box '{{ default_box }}' is {% if vagrant_box_list.stdout is search('(?m)^' ~ (default_box | regex_escape) ~ '\\s') %}already present; add skipped.{% else %}added now.{% endif %}
+      tags: add-box
 
     - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.apache
       register: geerlingguy_apache_exists
