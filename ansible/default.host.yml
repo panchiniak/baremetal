@@ -203,7 +203,6 @@
         repo: "deb http://archive.ubuntu.com/ubuntu {{ ansible_facts['distribution_release'] }} universe"
         state: present
         update_cache: true
-        cache_valid_time: 3600
       when:
         - ansible_facts['distribution'] == 'Ubuntu'
         - ansible_facts['distribution_version'] is version('22.04', '>=')
