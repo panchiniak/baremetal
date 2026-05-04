@@ -647,6 +647,57 @@
         path: /etc/ssl/private/ansible.com.pem
       tags: [crypto]
 
+    - name: List all Vagrant machines and their states
+      command: ./vagrant status --machine-readable
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
+      register: vagrant_all_status
+      retries: "{{ command_retries }}"
+      delay: "{{ command_delay }}"
+      until: vagrant_all_status.rc == 0
+      changed_when: false
+      become: false
+      tags: vagrant-status-default
+
+    - name: Extract running non-default Vagrant machines
+      set_fact:
+        running_vms: >-
+          {{
+            vagrant_all_status.stdout_lines
+            | select('search', '(?m),state,running')
+            | map('regex_search', '(?m)^(\\d+),([^,]+),state')
+            | select('defined')
+            | map('regex_replace', '(?m)^(\\d+),([^,]+),state', '\\2')
+            | select('!=', 'default')
+            | list
+          }}
+      tags: vagrant-status-default
+
+    - name: Halt other running Vagrant machines to free ports
+      command: "./vagrant halt {{ item }}"
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
+      register: vagrant_halt_result
+      retries: "{{ command_retries }}"
+      delay: "{{ command_delay }}"
+      until: vagrant_halt_result.rc == 0
+      loop: "{{ running_vms }}"
+      become: false
+      tags: vagrant-status-default
+      when: running_vms | length > 0
+
+    - name: Reload Vagrant default machine to auto-correct port conflicts
+      command: ./vagrant reload default
+      args:
+        chdir: /{{ playbook_dir }}/vagrant/
+      register: vagrant_reload_result
+      retries: "{{ command_retries }}"
+      delay: "{{ command_delay }}"
+      until: vagrant_reload_result.rc == 0
+      become: false
+      tags: vagrant-up-default
+      ignore_errors: true
+
     - name: Check state of Vagrant default machine
       command: ./vagrant status default --machine-readable
       args:
