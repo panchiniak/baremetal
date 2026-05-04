@@ -202,14 +202,20 @@
         creates: /{{ playbook_dir }}/vagrant/vagrant
       tags: [vagrant, unzip]
 
-    - name: Create baremetal/ansible/vagrant/.vagrant/machines if it does not exist
-      shell: "mkdir -p .vagrant/machines; chmod a+w .vagrant/machines"
-      register: out
-      ignore_errors: true
-      args:
-        chdir: /{{ playbook_dir }}/vagrant/
+    - name: Ensure Vagrant local state directory exists
+      ansible.builtin.file:
+        path: /{{ playbook_dir }}/vagrant/.vagrant/machines
+        state: directory
+        owner: "{{ baremetal_host_username }}"
+        group: "{{ baremetal_host_username }}"
+        mode: "0775"
+        recurse: true
+      become: true
 
-    - debug: var=out.stdout_lines
+    - name: Ensure Vagrant local state directory is writable by host user
+      ansible.builtin.command: chmod -R u+rwX /{{ playbook_dir }}/vagrant/.vagrant
+      become: true
+      changed_when: false
 
     # cp id_rsa.pub from user to /root/ssh
 
