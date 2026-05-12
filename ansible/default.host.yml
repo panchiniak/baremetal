@@ -742,6 +742,35 @@
       tags: vagrant-status-default
       when: running_vms | length > 0
 
+    - name: Extract Vagrant default machine state
+      set_fact:
+        vagrant_default_state: >-
+          {{
+            (vagrant_default_status.stdout
+            | regex_findall('(?m)^\\d+,default,state,([^,\\n]+)')
+            | last
+            | default('unknown'))
+          }}
+      tags: vagrant-up-default
+
+    - name: Free Vagrant forwarded host ports before VM startup
+      become: true
+      shell: "fuser -k {{ item }}/tcp 2>/dev/null || true"
+      loop:
+        - 2222
+        - 8484
+        - 8282
+        - 8383
+        - 65535
+        - 8890
+        - 8585
+        - 9004
+        - 9191
+      ignore_errors: true
+      changed_when: false
+      when: vagrant_default_state != 'running'
+      tags: vagrant-up-default
+
     - name: Reload Vagrant default machine to auto-correct port conflicts
       command: ./vagrant reload default
       args:
@@ -764,17 +793,6 @@
       until: vagrant_default_status.rc == 0
       changed_when: false
       become: false
-      tags: vagrant-status-default
-
-    - name: Extract Vagrant default machine state
-      set_fact:
-        vagrant_default_state: >-
-          {{
-            (vagrant_default_status.stdout
-            | regex_findall('(?m)^\\d+,default,state,([^,\\n]+)')
-            | last
-            | default('unknown'))
-          }}
       tags: vagrant-status-default
 
     - name: Start Vagrant default machine when not running
