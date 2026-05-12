@@ -231,13 +231,8 @@
     - { role: geerlingguy.php-mysql, tags: [ 'php-mysql' ] }
     - { role: geerlingguy.adminer, tags: [ 'adminer' ] }
     - { role: geerlingguy.adminer, tags: [ 'adminer' ] }
-    # - { role: geerlingguy.java }
-    # - { role: geerlingguy.solr }
     - { role: geerlingguy.composer }
-    - { role: geerlingguy.drush }
     - { role: geerlingguy.htpasswd, tags: [ 'htpasswd' ]}
-    # - { role: geerlingguy.php-xdebug }
-    # - { role: geerlingguy.gitlab , tags: [ 'gitlab' ]}
 
 # @TODO: add zend_extension=/usr/lib/php/20170718/xdebug.so
 # to /etc/php/7.2/apache2/php.ini
