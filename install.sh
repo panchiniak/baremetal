@@ -24,7 +24,7 @@ for arg in "$@"; do
       exit 0
       ;;
     -* )
-      echo "### Unknown option: $arg"
+      echo "[baremetal-install] Unknown option: $arg"
       print_usage
       exit 1
       ;;
@@ -32,7 +32,7 @@ for arg in "$@"; do
       if [ -z "$USERNAME" ]; then
         USERNAME="$arg"
       else
-        echo "### Unexpected extra argument: $arg"
+        echo "[baremetal-install] Unexpected extra argument: $arg"
         print_usage
         exit 1
       fi
@@ -47,7 +47,7 @@ if [ -f "$CONFIG_FILE" ]; then
   # shellcheck source=config
   source "$CONFIG_FILE"
 else
-  echo "### WARNING: config file not found at $CONFIG_FILE. Using built-in defaults."
+  echo "[baremetal-install] WARNING: config file not found at $CONFIG_FILE. Using built-in defaults."
   VM_BOX="ubuntu/jammy64"
 fi
 
@@ -87,17 +87,17 @@ upsert_env_var() {
     local value=$3
 
     if grep -q "^${key}=" "$env_file"; then
-        echo "### Updating ${key} in $env_file."
+        echo "[baremetal-install] Updating ${key} in $env_file."
         sed -i "s|^${key}=.*$|${key}=${value}|" "$env_file"
     else
-        echo "### Adding ${key}=${value} to $env_file."
+        echo "[baremetal-install] Adding ${key}=${value} to $env_file."
         echo "${key}=${value}" >> "$env_file"
     fi
 }
 
 clear_tmp_baremetal_cache_if_requested() {
     if [ "$CLEAR_TMP_BAREMETAL_CACHE" = true ]; then
-        echo "### Removing temporary cache directory: $TMP_BAREMETAL_DIR"
+        echo "[baremetal-install] Removing temporary cache directory: $TMP_BAREMETAL_DIR"
         rm -rf "$TMP_BAREMETAL_DIR"
     fi
 }
@@ -111,7 +111,7 @@ restore_cached_vagrant_binary() {
     fi
 
     if [ -x "$cached_vagrant" ]; then
-        echo "### Restoring cached vagrant binary from $cached_vagrant"
+        echo "[baremetal-install] Restoring cached vagrant binary from $cached_vagrant"
         mkdir -p "$(dirname "$target_vagrant")"
         cp "$cached_vagrant" "$target_vagrant"
         chmod +x "$target_vagrant"
@@ -126,7 +126,7 @@ cache_vagrant_binary_if_available() {
         mkdir -p "$TMP_BAREMETAL_DIR"
         cp "$target_vagrant" "$cached_vagrant"
         chmod +x "$cached_vagrant"
-        echo "### Cached vagrant binary at $cached_vagrant"
+        echo "[baremetal-install] Cached vagrant binary at $cached_vagrant"
     fi
 }
 
@@ -137,7 +137,7 @@ get_user_home() {
     user_home=$(getent passwd "$username" | cut -d: -f6)
 
     if [ -z "$user_home" ]; then
-        echo "### User '$username' does not exist on this machine."
+        echo "[baremetal-install] User '$username' does not exist on this machine."
         return 1
     fi
 
@@ -173,16 +173,16 @@ ensure_ssh_access_for_user() {
     install -d -m 700 -o "$username" -g "$user_group" "$ssh_dir"
 
     if [ ! -f "$private_key" ]; then
-        echo "### Generating SSH key pair for $username."
+        echo "[baremetal-install] Generating SSH key pair for $username."
         rm -f "$public_key"
         run_as_user "$username" ssh-keygen -q -t rsa -b 4096 -N "" -f "$private_key"
     elif [ ! -f "$public_key" ]; then
-        echo "### Rebuilding missing public SSH key for $username."
+        echo "[baremetal-install] Rebuilding missing public SSH key for $username."
         ssh-keygen -y -f "$private_key" > "$public_key"
         chown "$username:$user_group" "$public_key"
         chmod 644 "$public_key"
     else
-        echo "### SSH keys already created. Skipping creation."
+        echo "[baremetal-install] SSH keys already created. Skipping creation."
     fi
 
     touch "$authorized_keys"
@@ -190,11 +190,11 @@ ensure_ssh_access_for_user() {
     chmod 600 "$authorized_keys"
 
     if ! grep -qxF "$(cat "$public_key")" "$authorized_keys"; then
-        echo "### Authorizing self key for self ssh session."
+        echo "[baremetal-install] Authorizing self key for self ssh session."
         cat "$public_key" >> "$authorized_keys"
         chown "$username:$user_group" "$authorized_keys"
     else
-        echo "### SSH public key already authorized. Skipping update."
+        echo "[baremetal-install] SSH public key already authorized. Skipping update."
     fi
 }
 
@@ -223,13 +223,13 @@ ensure_known_host_for_user() {
     chown "$username:$user_group" "$known_hosts"
     chmod 600 "$known_hosts"
 
-    echo "### Seeding SSH known_hosts entry for $known_host_entry."
+    echo "[baremetal-install] Seeding SSH known_hosts entry for $known_host_entry."
     ssh-keygen -R "$known_host_entry" -f "$known_hosts" >/dev/null 2>&1 || true
 
     scanned_keys=$(ssh-keyscan -H -T 10 -p "$ssh_port" "$host_target" 2>/dev/null)
 
     if [ -z "$scanned_keys" ]; then
-        echo "### Unable to collect SSH host key for $known_host_entry."
+        echo "[baremetal-install] Unable to collect SSH host key for $known_host_entry."
         return 1
     fi
 
@@ -264,7 +264,7 @@ detect_vm_cpus() {
 }
 
 if [ -z "$USERNAME" ]; then
-  echo "### Username is required. See README.md for further instructions."
+  echo "[baremetal-install] Username is required. See README.md for further instructions."
   print_usage
   exit 1
 fi
@@ -275,30 +275,30 @@ restore_cached_vagrant_binary
 USER_HOME=$(get_user_home "$USERNAME") || exit 1
 
 if [ -f /usr/bin/ansible ]; then
-  echo "### Ansible already installed. Skipping installation."
+  echo "[baremetal-install] Ansible already installed. Skipping installation."
 fi
 
 # Install Ansible:
 if [ ! -f /usr/bin/ansible ]; then
-  echo "### Installing ansible by running: apt -y install ansible."
+  echo "[baremetal-install] Installing ansible by running: apt -y install ansible."
   apt update
   apt-add-repository ppa:ansible/ansible
   apt -y install ansible
 fi  
 
 if service_exists ssh; then
-  echo "### openssh-server is already installed. Skipping installation."
+  echo "[baremetal-install] openssh-server is already installed. Skipping installation."
 else
-  echo "### Installing openssh-server by running: apt -y install openssh-server."
+  echo "[baremetal-install] Installing openssh-server by running: apt -y install openssh-server."
   apt -y install openssh-server
 fi
 
 # Create shared data directory:
 if [ ! -d ansible/vagrant/data ]; then
-  echo "### Creating ansible/vagrant/data folder."
+  echo "[baremetal-install] Creating ansible/vagrant/data folder."
   mkdir ansible/vagrant/data
 else
-  echo "### Folder ansible/vagrant/data already created. Skipping creation."
+  echo "[baremetal-install] Folder ansible/vagrant/data already created. Skipping creation."
 fi
 
 ensure_ssh_access_for_user "$USERNAME" "$USER_HOME"
@@ -317,8 +317,8 @@ touch "$ENV_FILE"
 
 PUBLIC_NETWORK_BRIDGE=$(detect_active_network_interface)
 if [ -z "$PUBLIC_NETWORK_BRIDGE" ]; then
-  echo "### Unable to detect the active network interface automatically."
-  echo "### Please ensure the host has an active network connection and the 'ip' command is available."
+  echo "[baremetal-install] Unable to detect the active network interface automatically."
+  echo "[baremetal-install] Please ensure the host has an active network connection and the 'ip' command is available."
   exit 1
 fi
 
@@ -327,30 +327,30 @@ upsert_env_var "$ENV_FILE" "PUBLIC_NETWORK_BRIDGE" "$PUBLIC_NETWORK_BRIDGE"
 
 # Add VM_BOX default only if not already set (user may have customised it).
 if ! grep -q "^VM_BOX=" "$ENV_FILE"; then
-  echo "### Adding VM_BOX=${VM_BOX} to $ENV_FILE."
+  echo "[baremetal-install] Adding VM_BOX=${VM_BOX} to $ENV_FILE."
   echo "VM_BOX=${VM_BOX}" >> "$ENV_FILE"
 else
-  echo "### VM_BOX already set in $ENV_FILE. Skipping."
+  echo "[baremetal-install] VM_BOX already set in $ENV_FILE. Skipping."
 fi
 
 # Handle VM_DISK_SIZE: use config value if defined, otherwise auto-detect.
 if [ -z "$VM_DISK_SIZE" ]; then
   VM_DISK_SIZE=$(detect_vm_disk_size)
-  echo "### Auto-detected VM_DISK_SIZE=${VM_DISK_SIZE} GB (1/6 of available disk)."
+  echo "[baremetal-install] Auto-detected VM_DISK_SIZE=${VM_DISK_SIZE} GB (1/6 of available disk)."
 fi
 upsert_env_var "$ENV_FILE" "VM_DISK_SIZE" "${VM_DISK_SIZE}GB"
 
 # Handle VM_MEMORY: use config value if defined, otherwise auto-detect.
 if [ -z "$VM_MEMORY" ]; then
   VM_MEMORY=$(detect_vm_memory)
-  echo "### Auto-detected VM_MEMORY=${VM_MEMORY} MB (1/10 of available memory)."
+  echo "[baremetal-install] Auto-detected VM_MEMORY=${VM_MEMORY} MB (1/10 of available memory)."
 fi
 upsert_env_var "$ENV_FILE" "VM_MEMORY" "$VM_MEMORY"
 
 # Handle VM_CPUS: use config value if defined, otherwise auto-detect.
 if [ -z "$VM_CPUS" ]; then
   VM_CPUS=$(detect_vm_cpus)
-  echo "### Auto-detected VM_CPUS=${VM_CPUS} (1/3 of available CPUs)."
+  echo "[baremetal-install] Auto-detected VM_CPUS=${VM_CPUS} (1/3 of available CPUs)."
 fi
 upsert_env_var "$ENV_FILE" "VM_CPUS" "$VM_CPUS"
 
