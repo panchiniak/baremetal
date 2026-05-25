@@ -223,7 +223,6 @@
     #     path: /etc/ssl/private/ansible.com.pem
     #   tags: [crypto]
 
-
   roles:
     - { role: geerlingguy.apache }
     - { role: geerlingguy.php, tags: [ 'php' ] }
@@ -233,13 +232,6 @@
     - { role: geerlingguy.adminer, tags: [ 'adminer' ] }
     - { role: geerlingguy.composer }
     - { role: geerlingguy.htpasswd, tags: [ 'htpasswd' ]}
-
-# @TODO: add zend_extension=/usr/lib/php/20170718/xdebug.so
-# to /etc/php/7.2/apache2/php.ini
-# Also add to /etc/php/7.2/apache2/php.ini
-# [XDebug]
-# xdebug.remote_enable = 1
-# xdebug.remote_autostart = 1
 
   post_tasks:
 
@@ -291,7 +283,6 @@
 # /etc/apache2/sites-enabled/000-default.conf
 # @TODO: set http password using:
 # https://github.com/geerlingguy/ansible-role-htpasswd
-
 
 # # @todo: add as a pre task, to be run in the host
 # - name: ssh-keygen
