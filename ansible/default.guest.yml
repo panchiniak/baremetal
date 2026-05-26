@@ -8,7 +8,7 @@
 - hosts: guest
   become: yes
   vars_files:
-    - group_vars/baremetal_vars
+    - group_vars/default.baremetal_vars
   vars:
     network_retries: 5
     network_delay: 20
