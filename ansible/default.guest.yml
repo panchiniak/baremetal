@@ -261,28 +261,11 @@
 
     - debug: var=out.stdout_lines
 
-# @TODO: add baremetal.conf to /etc/apache2/sites-available
-# <Directory /var/www/html/guestlab/web/>
-#         Options Indexes FollowSymLinks
-#         AllowOverride All
-#         Require all granted
-# </Directory>
-# and enable it using:
-# sudo a2enconf baremetal.conf
-
-# @TODO: add Directoy at default host for clean URL:
-# <Directory /var/www/html>
-#   Options Indexes FollowSymLinks MultiViews
-#   AllowOverride All
-#   Require all granted
-#   AuthType Basic
-#   AuthName "Apache with basic auth."
-#   AuthUserFile /etc/apache-passwdfile
-#   Require valid-user
-# </Directory>
-# /etc/apache2/sites-enabled/000-default.conf
-# @TODO: set http password using:
-# https://github.com/geerlingguy/ansible-role-htpasswd
+# Apache is configured via group_vars (apache_listen_port: 443) to match the
+# Vagrant port forwarding (443 guest => 8484 host). AllowOverride All and
+# mod_rewrite are already enabled by geerlingguy.apache role defaults.
+# HTTP password can be managed via geerlingguy.htpasswd (already in roles list).
+# See: https://github.com/geerlingguy/ansible-role-htpasswd
 
 # Configuration for Search API for Baremetal/Vagrant
 # Get at admin/config/search/search_api/server/solr_server/edit and configure:
