@@ -28,9 +28,9 @@ adminer_install_dir: /var/www/html/adminer
 adminer_install_filename: index.php
 workspace: /vagrant_data
 
-# Apache: listen on 443 so Vagrant's port forwarding (443 guest => 8484 host) is used.
-# AllowOverride All, rewrite, and ssl are already enabled by geerlingguy.apache defaults.
-apache_listen_port: 443
+# Apache: uses default port 80 (geerlingguy.apache role default).
+# Vagrant forwards guest:80 → host:8080 (HTTP, Drupal clean URLs).
+# guest:443 → host:8443 is reserved for future SSL (geerlingguy.certbot + mkcert/Let's Encrypt).
 
 # Custom settings:
 # @todo: define baremetal_host_username as <username> on install.sh

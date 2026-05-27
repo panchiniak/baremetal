@@ -82,7 +82,8 @@ Vagrant.configure("2") do |config|
 
   host_port_22 = 2222
   host_port_22_string = "2222"
-  host_port_443 = 8484
+  host_port_80 = 8080    # HTTP  → http://127.0.0.1:8080/
+  host_port_443 = 8443   # HTTPS → https://127.0.0.1:8443/ (future SSL)
   host_port_8080 = 8282
   host_port_8081 = 8383
   host_port_9001 = 9004
@@ -144,8 +145,10 @@ Vagrant.configure("2") do |config|
     default.disksize.size = vm_disk_size
     # SSH:
     default.vm.network "forwarded_port", guest: 22, host: host_port_22
-    # Apache from guest in SSL to any IP in host for allowing redirection:
-    default.vm.network "forwarded_port", guest: 443, host: host_port_443, host_ip: "0.0.0.0"
+    # Apache HTTP (Drupal, clean URLs):
+    default.vm.network "forwarded_port", guest: 80,   host: host_port_80,   host_ip: "0.0.0.0"
+    # Apache HTTPS (future SSL):
+    default.vm.network "forwarded_port", guest: 443,  host: host_port_443,  host_ip: "0.0.0.0"
     # Docker from guest in SSL to any IP in host for allowing redirection:
     default.vm.network "forwarded_port", guest: 8080, host: host_port_8080, host_ip: "0.0.0.0"
     default.vm.network "forwarded_port", guest: 8081, host: host_port_8081, host_ip: "0.0.0.0"
