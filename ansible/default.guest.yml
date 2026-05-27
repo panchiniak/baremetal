@@ -250,6 +250,15 @@
 
     - debug: var=out.stdout_lines
 
+    - name: Disable default Apache site (000-default.conf)
+      command: a2dissite 000-default.conf
+      become: true
+      register: a2dissite_out
+      ignore_errors: true
+      tags: [a2dissite]
+
+    - debug: var=a2dissite_out.stdout_lines
+
     # Restart apache:
     - name: Restart apache
       command: service apache2 restart
