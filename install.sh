@@ -110,7 +110,7 @@ install_vagrant_via_hashicorp_apt() {
 
     echo "[baremetal-install] Installing Vagrant via HashiCorp apt repository."
 
-    wget -O - https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
 
     local ubuntu_codename
     ubuntu_codename=$(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release 2>/dev/null || lsb_release -cs)

@@ -163,7 +163,7 @@
     - name: Install HashiCorp GPG key for Vagrant apt repository
       become: true
       ansible.builtin.shell: |
-        wget -O - https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+        wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
       register: hashicorp_gpg
       retries: "{{ network_retries }}"
       delay: "{{ network_delay }}"
