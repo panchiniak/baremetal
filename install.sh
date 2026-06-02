@@ -3,12 +3,19 @@
 USERNAME=""
 CLEAR_TMP_BAREMETAL_CACHE=false
 TMP_BAREMETAL_DIR="/tmp/baremetal"
+BAREMETAL_STAMINA="low"
 
 print_usage() {
   cat <<'EOF'
 Usage: ./install.sh [options] <username>
 
 Options:
+  --low-stamina                Use conservative VM resource allocation (default).
+                               Memory: 1/6 of host RAM, CPUs: 1/3, Disk: 1/6.
+                               Recommended for developer laptops running other workloads.
+  --high-stamina               Use generous VM resource allocation.
+                               Memory: 1/3 of host RAM, CPUs: 1/2, Disk: 1/3.
+                               Recommended for dedicated servers or CI machines.
   --clear-tmp-baremetal-cache  Remove /tmp/baremetal before running install steps.
   -h, --help                   Show this help message.
 EOF
@@ -16,6 +23,12 @@ EOF
 
 for arg in "$@"; do
   case "$arg" in
+    --low-stamina)
+      BAREMETAL_STAMINA="low"
+      ;;
+    --high-stamina)
+      BAREMETAL_STAMINA="high"
+      ;;
     --clear-tmp-baremetal-cache)
       CLEAR_TMP_BAREMETAL_CACHE=true
       ;;
@@ -234,29 +247,44 @@ ensure_known_host_for_user() {
     chmod 600 "$known_hosts"
 }
 
-# Function to detect available disk space (in GB) and return 1/5
+# Function to detect available disk space (in GB) based on BAREMETAL_STAMINA.
+# low  (default): 1/6 of host disk — leaves plenty of room for OS and other data.
+# high           : 1/3 of host disk — suitable for dedicated machines.
 detect_vm_disk_size() {
     local total_disk_gb
     total_disk_gb=$(df / | awk 'NR==2 {print int($2 / 1024 / 1024)}')
-    # Calculate 1/5 of disk and round up
-    awk -v disk="$total_disk_gb" 'BEGIN { printf "%.0f\n", disk / 6 + 0.5 }'
+    if [ "${BAREMETAL_STAMINA:-low}" = "high" ]; then
+        awk -v disk="$total_disk_gb" 'BEGIN { printf "%.0f\n", disk / 3 + 0.5 }'
+    else
+        awk -v disk="$total_disk_gb" 'BEGIN { printf "%.0f\n", disk / 6 + 0.5 }'
+    fi
 }
 
-# Function to detect available memory (in MB) and return 1/10
+# Function to detect available memory (in MB) based on BAREMETAL_STAMINA.
+# low  (default): 1/6 of host RAM — safe for developer laptops running other workloads.
+# high           : 1/3 of host RAM — suitable for dedicated servers or CI machines.
 detect_vm_memory() {
     local total_mem_kb
     total_mem_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
     local total_mem_mb=$((total_mem_kb / 1024))
-    # Calculate 1/10 of memory and round up
-    awk -v mem="$total_mem_mb" 'BEGIN { printf "%.0f\n", mem / 10 + 0.5 }'
+    if [ "${BAREMETAL_STAMINA:-low}" = "high" ]; then
+        awk -v mem="$total_mem_mb" 'BEGIN { printf "%.0f\n", mem / 3 + 0.5 }'
+    else
+        awk -v mem="$total_mem_mb" 'BEGIN { printf "%.0f\n", mem / 6 + 0.5 }'
+    fi
 }
 
-# Function to detect available CPUs and return 1/3
+# Function to detect available CPUs based on BAREMETAL_STAMINA.
+# low  (default): 1/3 of host CPUs — keeps the host responsive.
+# high           : 1/2 of host CPUs — suitable for dedicated machines.
 detect_vm_cpus() {
     local total_cpus
     total_cpus=$(nproc 2>/dev/null || echo 1)
-    # Calculate 1/3 of CPUs and round up
-    awk -v cpus="$total_cpus" 'BEGIN { printf "%.0f\n", cpus / 3 + 0.5 }'
+    if [ "${BAREMETAL_STAMINA:-low}" = "high" ]; then
+        awk -v cpus="$total_cpus" 'BEGIN { printf "%.0f\n", cpus / 2 + 0.5 }'
+    else
+        awk -v cpus="$total_cpus" 'BEGIN { printf "%.0f\n", cpus / 3 + 0.5 }'
+    fi
 }
 
 if [ -z "$USERNAME" ]; then
@@ -333,21 +361,21 @@ fi
 # Handle VM_DISK_SIZE: use config value if defined, otherwise auto-detect.
 if [ -z "$VM_DISK_SIZE" ]; then
   VM_DISK_SIZE=$(detect_vm_disk_size)
-  echo "[baremetal-install] Auto-detected VM_DISK_SIZE=${VM_DISK_SIZE} GB (1/6 of available disk)."
+  echo "[baremetal-install] Auto-detected VM_DISK_SIZE=${VM_DISK_SIZE} GB (stamina=${BAREMETAL_STAMINA})."
 fi
 upsert_env_var "$ENV_FILE" "VM_DISK_SIZE" "${VM_DISK_SIZE}GB"
 
 # Handle VM_MEMORY: use config value if defined, otherwise auto-detect.
 if [ -z "$VM_MEMORY" ]; then
   VM_MEMORY=$(detect_vm_memory)
-  echo "[baremetal-install] Auto-detected VM_MEMORY=${VM_MEMORY} MB (1/10 of available memory)."
+  echo "[baremetal-install] Auto-detected VM_MEMORY=${VM_MEMORY} MB (stamina=${BAREMETAL_STAMINA})."
 fi
 upsert_env_var "$ENV_FILE" "VM_MEMORY" "$VM_MEMORY"
 
 # Handle VM_CPUS: use config value if defined, otherwise auto-detect.
 if [ -z "$VM_CPUS" ]; then
   VM_CPUS=$(detect_vm_cpus)
-  echo "[baremetal-install] Auto-detected VM_CPUS=${VM_CPUS} (1/3 of available CPUs)."
+  echo "[baremetal-install] Auto-detected VM_CPUS=${VM_CPUS} (stamina=${BAREMETAL_STAMINA})."
 fi
 upsert_env_var "$ENV_FILE" "VM_CPUS" "$VM_CPUS"
 
