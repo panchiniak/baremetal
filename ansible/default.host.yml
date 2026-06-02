@@ -149,33 +149,6 @@
       delay: "{{ network_delay }}"
       until: git_install is succeeded
 
-    - local_action: stat path=/{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
-      register: zipped_vagrant_exists
-      tags: vagrant
-
-    - name: Check installed vagrant binary in project directory
-      stat:
-        path: /{{ playbook_dir }}/vagrant/vagrant
-      register: installed_vagrant_binary
-      tags: vagrant
-
-    - name: Check cached vagrant binary in /tmp/baremetal
-      stat:
-        path: /tmp/baremetal/vagrant
-      register: cached_vagrant_binary
-      tags: vagrant
-
-    - name: Restore vagrant binary from /tmp/baremetal cache
-      copy:
-        src: /tmp/baremetal/vagrant
-        dest: /{{ playbook_dir }}/vagrant/vagrant
-        remote_src: true
-        mode: '0755'
-      when:
-        - cached_vagrant_binary.stat.exists
-        - not installed_vagrant_binary.stat.exists
-      tags: vagrant
-
     - name: Install sshfs
       become: true
       apt:
@@ -187,31 +160,38 @@
       delay: "{{ network_delay }}"
       until: sshfs_install is succeeded
 
-    - local_action: stat path=/{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
-      register: zipped_vagrant_exists
-      tags: vagrant
-
-    # @todo: Replace method above by using apt-get:
-    # sudo apt update
-    # sudo apt -y install apt-transport-https ca-certificates curl software-properties-common
-    # wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
-    # echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-    # sudo apt update
-    # sudo apt install vagrant
-
-    - name: If vagrant is not available get vagrant zip source and checksum it
-      get_url:
-        url: "{{ vagrant_zip_base_path }}{{ vagrant_zip_file }}"
-        dest: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
-        checksum: "{{ vagrant_zip_file_checksum }}"
-        force: no
-      register: get_vagrant
-      when:
-        - zipped_vagrant_exists.stat.exists == False
-        - not installed_vagrant_binary.stat.exists
+    - name: Install HashiCorp GPG key for Vagrant apt repository
+      become: true
+      ansible.builtin.shell: |
+        wget -O - https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+      register: hashicorp_gpg
       retries: "{{ network_retries }}"
       delay: "{{ network_delay }}"
-      until: get_vagrant is succeeded
+      until: hashicorp_gpg.rc == 0
+      tags: vagrant
+
+    - name: Add HashiCorp apt repository
+      become: true
+      ansible.builtin.shell: |
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release || lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
+      register: hashicorp_repo
+      changed_when: true
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: hashicorp_repo.rc == 0
+      tags: vagrant
+
+    - name: Install vagrant via HashiCorp apt repository
+      become: true
+      apt:
+        name: vagrant
+        state: present
+        update_cache: yes
+        cache_valid_time: 3600
+      register: vagrant_install
+      retries: "{{ network_retries }}"
+      delay: "{{ network_delay }}"
+      until: vagrant_install is succeeded
       tags: vagrant
 
     - name: Install unzip
@@ -227,37 +207,6 @@
       delay: "{{ network_delay }}"
       until: unzip_install is succeeded
 
-    - name: Unzip vagrant zip if available and keep it
-      unarchive:
-        src: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
-        dest: /{{ playbook_dir }}/vagrant/
-        remote_src: yes
-        creates: /{{ playbook_dir }}/vagrant/vagrant
-      tags: [vagrant, unzip]
-
-    - name: Check vagrant binary after setup
-      stat:
-        path: /{{ playbook_dir }}/vagrant/vagrant
-      register: vagrant_binary_after_setup
-      tags: vagrant
-
-    - name: Ensure /tmp/baremetal exists for vagrant cache
-      file:
-        path: /tmp/baremetal
-        state: directory
-        mode: '0755'
-      when: vagrant_binary_after_setup.stat.exists
-      tags: vagrant
-
-    - name: Cache vagrant binary in /tmp/baremetal
-      copy:
-        src: /{{ playbook_dir }}/vagrant/vagrant
-        dest: /tmp/baremetal/vagrant
-        remote_src: true
-        mode: '0755'
-      when: vagrant_binary_after_setup.stat.exists
-      tags: vagrant
-
     - name: Ensure Vagrant local state directory exists
       ansible.builtin.file:
         path: /{{ playbook_dir }}/vagrant/.vagrant/machines
@@ -272,18 +221,6 @@
       ansible.builtin.command: chmod -R u+rwX /{{ playbook_dir }}/vagrant/.vagrant
       become: true
       changed_when: false
-
-    - name: Remove vagrant zip source
-      file:
-        path: /{{ playbook_dir }}/vagrant/{{ vagrant_zip_file }}
-        state: absent
-      tags: vagrant
-
-    - name: ls
-      shell: ls {{ playbook_dir }}/vagrant
-      register: out
-
-    - debug: var=out.stdout_lines
 
     - name: Validate minimum Ubuntu version for AppImage FUSE support
       assert:
@@ -341,7 +278,7 @@
         - ansible_facts['distribution_version'] is version('24.04', '>=')
 
     - name: install guest additions
-      command: ./vagrant plugin install vagrant-vbguest
+      command: vagrant plugin install vagrant-vbguest
       register: out
       retries: "{{ command_retries }}"
       delay: "{{ command_delay }}"
@@ -352,9 +289,9 @@
     - debug: var=out.stdout_lines
 
     - name: vagrant force destroy if present
-      command: ./vagrant destroy -f
+      command: vagrant destroy -f
       register: out
-      ignore_errors: true 
+      ignore_errors: true
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       become: false
@@ -363,7 +300,7 @@
     - debug: var=out.stdout_lines
 
     - name: vagrant plugin install vagrant-disksize
-      shell: "./vagrant plugin install vagrant-disksize"
+      shell: "vagrant plugin install vagrant-disksize"
       tags: disksize
       register: out
       retries: "{{ command_retries }}"
@@ -375,7 +312,7 @@
     - debug: var=out.stdout_lines
 
     - name: Check vagrant plugin list
-      shell: "./vagrant plugin list"
+      shell: "vagrant plugin list"
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       tags: disksize
@@ -391,7 +328,7 @@
         var: plugin_list_output.stdout
 
     - name: Check installed Vagrant boxes
-      command: ./vagrant box list
+      command: vagrant box list
       register: vagrant_box_list
       retries: "{{ command_retries }}"
       delay: "{{ command_delay }}"
@@ -403,7 +340,7 @@
       tags: add-box
 
     - name: Add box if needed
-      shell: "./vagrant box add {{ default_box }} --insecure"
+      shell: "vagrant box add {{ default_box }} --insecure"
       register: add_box_result
       retries: "{{ network_retries }}"
       delay: "{{ network_delay }}"
@@ -655,8 +592,8 @@
     - debug: var=out.stdout_lines
       tags: [ansible, gitlab]
 
-    - name: ./vagrant box update --insecure 
-      shell: ./vagrant box update --insecure
+    - name: vagrant box update --insecure
+      shell: vagrant box update --insecure
       register: out
       ignore_errors: true
       retries: "{{ command_retries }}"
@@ -704,7 +641,7 @@
       tags: [crypto]
 
     - name: List all Vagrant machines and their states
-      command: ./vagrant status --machine-readable
+      command: vagrant status --machine-readable
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       register: vagrant_all_status
@@ -730,7 +667,7 @@
       tags: vagrant-status-default
 
     - name: Halt other running Vagrant machines to free ports
-      command: "./vagrant halt {{ item }}"
+      command: "vagrant halt {{ item }}"
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       register: vagrant_halt_result
@@ -772,7 +709,7 @@
       tags: vagrant-up-default
 
     - name: Reload Vagrant default machine to auto-correct port conflicts
-      command: ./vagrant reload default
+      command: vagrant reload default
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       register: vagrant_reload_result
@@ -784,7 +721,7 @@
       ignore_errors: true
 
     - name: Check state of Vagrant default machine
-      command: ./vagrant status default --machine-readable
+      command: vagrant status default --machine-readable
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       register: vagrant_default_status
@@ -796,7 +733,7 @@
       tags: vagrant-status-default
 
     - name: Start Vagrant default machine when not running
-      command: ./vagrant up default
+      command: vagrant up default
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       register: vagrant_default_up
@@ -810,5 +747,4 @@
     - name: Report Vagrant default machine state
       debug:
         msg: >-
-          Vagrant machine 'default' state is '{{ vagrant_default_state }}'{% if vagrant_default_state != 'running' %}; started with './vagrant up default'.{% else %}; startup skipped.{% endif %}
-
+          Vagrant machine 'default' state is '{{ vagrant_default_state }}'{% if vagrant_default_state != 'running' %}; started with 'vagrant up default'.{% else %}; startup skipped.{% endif %}

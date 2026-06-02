@@ -102,32 +102,28 @@ clear_tmp_baremetal_cache_if_requested() {
     fi
 }
 
-restore_cached_vagrant_binary() {
-    local target_vagrant="$SCRIPT_DIR/ansible/vagrant/vagrant"
-    local cached_vagrant="$TMP_BAREMETAL_DIR/vagrant"
-
-    if [ -x "$target_vagrant" ]; then
+install_vagrant_via_hashicorp_apt() {
+    if command -v vagrant >/dev/null 2>&1; then
+        echo "[baremetal-install] Vagrant already installed at $(command -v vagrant). Skipping installation."
         return 0
     fi
 
-    if [ -x "$cached_vagrant" ]; then
-        echo "[baremetal-install] Restoring cached vagrant binary from $cached_vagrant"
-        mkdir -p "$(dirname "$target_vagrant")"
-        cp "$cached_vagrant" "$target_vagrant"
-        chmod +x "$target_vagrant"
-    fi
-}
+    echo "[baremetal-install] Installing Vagrant via HashiCorp apt repository."
 
-cache_vagrant_binary_if_available() {
-    local target_vagrant="$SCRIPT_DIR/ansible/vagrant/vagrant"
-    local cached_vagrant="$TMP_BAREMETAL_DIR/vagrant"
+    wget -O - https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
 
-    if [ -x "$target_vagrant" ]; then
-        mkdir -p "$TMP_BAREMETAL_DIR"
-        cp "$target_vagrant" "$cached_vagrant"
-        chmod +x "$cached_vagrant"
-        echo "[baremetal-install] Cached vagrant binary at $cached_vagrant"
-    fi
+    local ubuntu_codename
+    ubuntu_codename=$(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release 2>/dev/null || lsb_release -cs)
+    local arch
+    arch=$(dpkg --print-architecture)
+
+    echo "deb [arch=${arch} signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com ${ubuntu_codename} main" \
+        | tee /etc/apt/sources.list.d/hashicorp.list
+
+    apt update
+    apt install -y vagrant
+
+    echo "[baremetal-install] Vagrant installed: $(vagrant --version)"
 }
 
 get_user_home() {
@@ -270,7 +266,6 @@ if [ -z "$USERNAME" ]; then
 fi
 
 clear_tmp_baremetal_cache_if_requested
-restore_cached_vagrant_binary
 
 USER_HOME=$(get_user_home "$USERNAME") || exit 1
 
@@ -284,7 +279,9 @@ if [ ! -f /usr/bin/ansible ]; then
   apt update
   apt-add-repository ppa:ansible/ansible
   apt -y install ansible
-fi  
+fi
+
+install_vagrant_via_hashicorp_apt
 
 if service_exists ssh; then
   echo "[baremetal-install] openssh-server is already installed. Skipping installation."
@@ -353,6 +350,4 @@ if [ -z "$VM_CPUS" ]; then
   echo "[baremetal-install] Auto-detected VM_CPUS=${VM_CPUS} (1/3 of available CPUs)."
 fi
 upsert_env_var "$ENV_FILE" "VM_CPUS" "$VM_CPUS"
-
-cache_vagrant_binary_if_available
 
