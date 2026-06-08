@@ -2,6 +2,7 @@
 
 USERNAME=""
 CLEAR_TMP_BAREMETAL_CACHE=false
+SKIP_VAGRANT=false
 TMP_BAREMETAL_DIR="/tmp/baremetal"
 BAREMETAL_STAMINA="low"
 
@@ -17,6 +18,7 @@ Options:
                                Memory: 1/3 of host RAM, CPUs: 1/2, Disk: 1/3.
                                Recommended for dedicated servers or CI machines.
   --clear-tmp-baremetal-cache  Remove /tmp/baremetal before running install steps.
+  --skip-vagrant               Skip installation of Vagrant and VirtualBox.
   -h, --help                   Show this help message.
 EOF
 }
@@ -31,6 +33,9 @@ for arg in "$@"; do
       ;;
     --clear-tmp-baremetal-cache)
       CLEAR_TMP_BAREMETAL_CACHE=true
+      ;;
+    --skip-vagrant)
+      SKIP_VAGRANT=true
       ;;
     -h|--help)
       print_usage
@@ -309,7 +314,11 @@ if [ ! -f /usr/bin/ansible ]; then
   apt -y install ansible
 fi
 
-install_vagrant_via_hashicorp_apt
+if [ "$SKIP_VAGRANT" = false ]; then
+  install_vagrant_via_hashicorp_apt
+else
+  echo "[baremetal-install] Skipping Vagrant installation as requested."
+fi
 
 if service_exists ssh; then
   echo "[baremetal-install] openssh-server is already installed. Skipping installation."
