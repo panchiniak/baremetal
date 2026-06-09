@@ -43,6 +43,7 @@
       retries: "{{ network_retries }}"
       delay: "{{ network_delay }}"
       until: virtualbox_install is succeeded
+      tags: vagrant
 
     - name: Remove legacy fuse package (prevents GDM breakage on Ubuntu desktop)
       become: true
@@ -86,6 +87,7 @@
       retries: "{{ network_retries }}"
       delay: "{{ network_delay }}"
       until: headers_install is succeeded
+      tags: vagrant
 
     - name: Install virtualbox-dkms if needed
       become: true
@@ -99,6 +101,7 @@
       retries: "{{ network_retries }}"
       delay: "{{ network_delay }}"
       until: virtualbox_dkms_install is succeeded
+      tags: vagrant
 
     - name: Reconfigure virtualbox-dkms (allow non-running kernel failures)
       command: dpkg-reconfigure virtualbox-dkms
@@ -107,14 +110,17 @@
       failed_when: false
       args:
         chdir: /{{ playbook_dir }}/vagrant/
+      tags: vagrant
 
     - debug: var=vbox_dkms_reconfigure.stdout_lines
+      tags: vagrant
 
     - name: Check VirtualBox DKMS status
       command: dkms status virtualbox
       become: true
       register: vbox_dkms_status
       changed_when: false
+      tags: vagrant
 
     - name: Ensure VirtualBox DKMS is available for the running kernel
       assert:
@@ -127,6 +133,7 @@
         fail_msg: >-
           virtualbox-dkms was not built for running kernel {{ ansible_facts['kernel'] }}.
           See /var/lib/dkms/virtualbox/7.0.16/build/make.log and task output for details.
+      tags: vagrant
 
     - name: dpkg-reconfigure virtualbox 
       command: dpkg-reconfigure virtualbox
@@ -134,8 +141,10 @@
       register: out
       args:
         chdir: /{{ playbook_dir }}/vagrant/
+      tags: vagrant
 
     - debug: var=out.stdout_lines
+      tags: vagrant
 
 
     - name: Install git
@@ -216,11 +225,13 @@
         mode: "0775"
         recurse: true
       become: true
+      tags: vagrant
 
     - name: Ensure Vagrant local state directory is writable by host user
       ansible.builtin.command: chmod -R u+rwX /{{ playbook_dir }}/vagrant/.vagrant
       become: true
       changed_when: false
+      tags: vagrant
 
     - name: Validate minimum Ubuntu version for AppImage FUSE support
       assert:
@@ -285,8 +296,10 @@
       until: out.rc == 0
       args:
         chdir: /{{ playbook_dir }}/vagrant/
+      tags: vagrant
 
     - debug: var=out.stdout_lines
+      tags: vagrant
 
     - name: vagrant force destroy if present
       command: vagrant destroy -f
@@ -295,13 +308,14 @@
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       become: false
-      tags: vagrant-force-destroy
+      tags: [vagrant, vagrant-force-destroy]
 
     - debug: var=out.stdout_lines
+      tags: vagrant
 
     - name: vagrant plugin install vagrant-disksize
       shell: "vagrant plugin install vagrant-disksize"
-      tags: disksize
+      tags: [vagrant, disksize]
       register: out
       retries: "{{ command_retries }}"
       delay: "{{ command_delay }}"
@@ -310,12 +324,13 @@
         chdir: /{{ playbook_dir }}/vagrant/
       become: false
     - debug: var=out.stdout_lines
+      tags: vagrant
 
     - name: Check vagrant plugin list
       shell: "vagrant plugin list"
       args:
         chdir: /{{ playbook_dir }}/vagrant/
-      tags: disksize
+      tags: [vagrant, disksize]
       register: plugin_list_output
       retries: "{{ command_retries }}"
       delay: "{{ command_delay }}"
@@ -323,9 +338,11 @@
 
     - debug:
         var: plugin_install_output.stdout
+      tags: vagrant
 
     - debug:
         var: plugin_list_output.stdout
+      tags: vagrant
 
     - name: Check installed Vagrant boxes
       command: vagrant box list
@@ -337,7 +354,7 @@
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       become: false
-      tags: add-box
+      tags: [vagrant, add-box]
 
     - name: Add box if needed
       shell: "vagrant box add {{ default_box }} --insecure"
@@ -349,13 +366,13 @@
       args:
         chdir: /{{ playbook_dir }}/vagrant/
       become: false
-      tags: add-box
+      tags: [vagrant, add-box]
 
     - name: Report Vagrant box status
       debug:
         msg: >-
           Box '{{ default_box }}' is {% if vagrant_box_list.stdout is search('(?m)^' ~ (default_box | regex_escape) ~ '\\s') %}already present; add skipped.{% else %}added now.{% endif %}
-      tags: add-box
+      tags: [vagrant, add-box]
 
     - local_action: stat path=/{{ playbook_dir }}/roles/geerlingguy.apache
       register: geerlingguy_apache_exists
@@ -603,10 +620,10 @@
         chdir: /{{ playbook_dir }}/vagrant/
       become: false
 
-      tags: host_authoized_key_purge
+      tags: [vagrant, host_authoized_key_purge]
 
     - debug: var=out.stdout_lines
-      tags: host_authoized_key_purge
+      tags: [vagrant, host_authoized_key_purge]
 
     - name: Recursively change ownership of a directory
       shell: chown -R {{baremetal_host_username}} /{{ playbook_dir }}
@@ -650,7 +667,7 @@
       until: vagrant_all_status.rc == 0
       changed_when: false
       become: false
-      tags: vagrant-status-default
+      tags: [vagrant, vagrant-status-default]
 
     - name: Extract running non-default Vagrant machines
       set_fact:
@@ -664,7 +681,7 @@
             | select('!=', 'default')
             | list
           }}
-      tags: vagrant-status-default
+      tags: [vagrant, vagrant-status-default]
 
     - name: Halt other running Vagrant machines to free ports
       command: "vagrant halt {{ item }}"
@@ -676,7 +693,7 @@
       until: vagrant_halt_result.rc == 0
       loop: "{{ running_vms }}"
       become: false
-      tags: vagrant-status-default
+      tags: [vagrant, vagrant-status-default]
       when: running_vms | length > 0
 
     - name: Extract Vagrant default machine state
@@ -688,7 +705,7 @@
             | last
             | default('unknown'))
           }}
-      tags: vagrant-up-default
+      tags: [vagrant, vagrant-up-default]
 
     - name: Free Vagrant forwarded host ports before VM startup
       become: true
@@ -706,7 +723,7 @@
       ignore_errors: true
       changed_when: false
       when: vagrant_default_state != 'running'
-      tags: vagrant-up-default
+      tags: [vagrant, vagrant-up-default]
 
     - name: Reload Vagrant default machine to auto-correct port conflicts
       command: vagrant reload default
@@ -717,7 +734,7 @@
       delay: "{{ command_delay }}"
       until: vagrant_reload_result.rc == 0
       become: false
-      tags: vagrant-up-default
+      tags: [vagrant, vagrant-up-default]
       ignore_errors: true
 
     - name: Check state of Vagrant default machine
@@ -730,7 +747,7 @@
       until: vagrant_default_status.rc == 0
       changed_when: false
       become: false
-      tags: vagrant-status-default
+      tags: [vagrant, vagrant-status-default]
 
     - name: Start Vagrant default machine when not running
       command: vagrant up default
@@ -742,9 +759,10 @@
       until: vagrant_default_up.rc == 0
       when: vagrant_default_state != 'running'
       become: false
-      tags: vagrant-up-default
+      tags: [vagrant, vagrant-up-default]
 
     - name: Report Vagrant default machine state
       debug:
         msg: >-
           Vagrant machine 'default' state is '{{ vagrant_default_state }}'{% if vagrant_default_state != 'running' %}; started with 'vagrant up default'.{% else %}; startup skipped.{% endif %}
+      tags: vagrant
