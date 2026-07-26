@@ -4,7 +4,7 @@ USERNAME=""
 CLEAR_TMP_BAREMETAL_CACHE=false
 SKIP_VAGRANT=false
 TMP_BAREMETAL_DIR="/tmp/baremetal"
-BAREMETAL_STAMINA="low"
+BAREMETAL_STAMINA="high"
 
 print_usage() {
   cat <<'EOF'

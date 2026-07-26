@@ -4,6 +4,7 @@
 Vagrant.configure("2") do |config|
   # Detect if running in nested virtualization
   require "open3"
+  require "yaml"
 
   def cmd_output(cmd)
     stdout, status = Open3.capture2(cmd)
@@ -104,6 +105,25 @@ Vagrant.configure("2") do |config|
   host_port_8585 = 8585
   host_port_8443 = 65535
 
+  # ── Multi‑machine support via .baremetal-machines.yml ────────────────────
+  machines_yml_path = File.expand_path(".baremetal-machines.yml", __dir__)
+  machines_data = nil
+  if File.exist?(machines_yml_path)
+    begin
+      machines_data = YAML.load_file(machines_yml_path)
+    rescue => e
+      puts "[Vagrant] WARNING: Could not parse #{machines_yml_path}: #{e.message}"
+      machines_data = nil
+    end
+  end
+  registered_machines = machines_data.is_a?(Hash) ? (machines_data["machines"] || {}) : {}
+
+  # Helper: get port for a machine, falling back to defaults.
+  def machine_port(cfg, key, default)
+    return default if cfg.nil? || !cfg.key?(key)
+    cfg[key].to_i
+  end
+
   env_file_path = File.expand_path(".env", __dir__)
   env_values = {}
 
@@ -141,69 +161,146 @@ Vagrant.configure("2") do |config|
     abort("ERROR: VM_BOX is empty. Set it in #{env_file_path} (example: VM_BOX=ubuntu/jammy64).")
   end
 
-  config.trigger.after :up do |trigger|
-    trigger.name = "ssh-keygen"
-    trigger.run = {inline: 'ssh-keygen -f "/home/' << host_user_name << '/.ssh/known_hosts" -R "[127.0.0.1]:' << host_port_22_string << '"'}  
-  end
+  # ── Define machines ─────────────────────────────────────────────────────
 
-  config.vm.define "default", autostart: false do |default|
-    if Vagrant.has_plugin? "vagrant-vbguest"
-      config.vbguest.no_install  = true
-    end
+  if registered_machines.any?
+    # Multi‑machine mode: define each registered machine with its stored ports.
+    puts "[Vagrant] Multi‑machine mode: #{registered_machines.size} machine(s) registered."
 
-    # Consider using: cloud-image/ubuntu-24.04
-    default.vm.box = vm_box
-    # @TODO: make the disk size configurable:
-    default.disksize.size = vm_disk_size
-    # SSH:
-    default.vm.network "forwarded_port", guest: 22, host: host_port_22
-    # Apache HTTP (Drupal, clean URLs):
-    default.vm.network "forwarded_port", guest: 80,   host: host_port_80,   host_ip: "0.0.0.0"
-    # Apache HTTPS (future SSL):
-    default.vm.network "forwarded_port", guest: 443,  host: host_port_443,  host_ip: "0.0.0.0"
-    # Docker from guest in SSL to any IP in host for allowing redirection:
-    default.vm.network "forwarded_port", guest: 8080, host: host_port_8080, host_ip: "0.0.0.0"
-    default.vm.network "forwarded_port", guest: 8081, host: host_port_8081, host_ip: "0.0.0.0"
-    # Gitlab by default stays at 8443:
-    default.vm.network "forwarded_port", guest: 8443, host: host_port_8443, host_ip: "0.0.0.0"
-    # Redirection for Virtuoso:
-    default.vm.network "forwarded_port", guest: 8890, host: host_port_8890, host_ip: "0.0.0.0"
-    # Redirection for PHPMYADMIN from docker:
-    default.vm.network "forwarded_port", guest: 8585, host: host_port_8585, host_ip: "0.0.0.0"
-    # Redirection for xdebug:
-    default.vm.network "forwarded_port", guest: 9003, host: host_port_9001, host_ip: "0.0.0.0"
-    # Solr by default stays at 8983:
-    default.vm.network "forwarded_port", guest: 8983, host: host_port_8983, host_ip: "0.0.0.0"
-    if is_nested_virtualbox
-      puts "[Vagrant] Nested mode: skipping public_network bridge"
-    else
-      default.vm.network "public_network", bridge: public_network_bridge, ip: "192.168.0.222"
-    end
-    default.vm.synced_folder "data", "/vagrant_data"
-    default.vm.provider "virtualbox" do |vb|
-      # Dont display the VirtualBox GUI when booting the machine
-      vb.gui = false
-      # Customize the amount of memory on the VM:
-      vb.memory = vm_memory
-      vb.cpus = vm_cpus
-      vb.customize ['modifyvm', :id, '--graphicscontroller', 'vmsvga']
+    registered_machines.each do |machine_name, machine_cfg|
+      ssh_p  = machine_port(machine_cfg, "ssh_port",       2222)
+      p80    = machine_port(machine_cfg, "host_port_80",   80)
+      p443   = machine_port(machine_cfg, "host_port_443",  443)
+      p8080  = machine_port(machine_cfg, "host_port_8080", 8282)
+      p8081  = machine_port(machine_cfg, "host_port_8081", 8383)
+      p9001  = machine_port(machine_cfg, "host_port_9001", 9004)
+      p8983  = machine_port(machine_cfg, "host_port_8983", 9191)
+      p8890  = machine_port(machine_cfg, "host_port_8890", 8890)
+      p8585  = machine_port(machine_cfg, "host_port_8585", 8585)
+      p8443  = machine_port(machine_cfg, "host_port_8443", 65535)
+      ssh_p_s = ssh_p.to_s
 
-      if is_nested_virtualbox
-        # Nested environments can fail to boot when forcing low-level HW virt flags.
-        vb.customize ['modifyvm', :id, '--paravirtprovider', 'default']
-      else
-        vb.customize ['modifyvm', :id, '--hwvirtex', 'on']
-        vb.customize ['modifyvm', :id, '--nested-hw-virt', 'on']
-        vb.customize ['modifyvm', :id, '--nestedpaging', 'on']
-        vb.customize ['modifyvm', :id, '--largepages', 'on']
-        vb.customize ['modifyvm', :id, '--vtxux', 'on']
-        vb.customize ['modifyvm', :id, '--vtxvpid', 'on']
-        vb.customize ['modifyvm', :id, '--paravirtprovider', 'kvm']
+      config.trigger.after :up do |trigger|
+        trigger.name = "ssh-keygen-#{machine_name}"
+        trigger.run = {inline: 'ssh-keygen -f "/home/' << host_user_name << '/.ssh/known_hosts" -R "[127.0.0.1]:' << ssh_p_s << '"'}
+      end
+
+      config.vm.define machine_name, autostart: false do |vm|
+        if Vagrant.has_plugin? "vagrant-vbguest"
+          config.vbguest.no_install = true
+        end
+
+        vm.vm.box = vm_box
+        vm.disksize.size = vm_disk_size
+
+        vm.vm.network "forwarded_port", guest: 22,   host: ssh_p
+        vm.vm.network "forwarded_port", guest: 80,   host: p80,    host_ip: "0.0.0.0"
+        vm.vm.network "forwarded_port", guest: 443,  host: p443,   host_ip: "0.0.0.0"
+        vm.vm.network "forwarded_port", guest: 8080, host: p8080,  host_ip: "0.0.0.0"
+        vm.vm.network "forwarded_port", guest: 8081, host: p8081,  host_ip: "0.0.0.0"
+        vm.vm.network "forwarded_port", guest: 8443, host: p8443,  host_ip: "0.0.0.0"
+        vm.vm.network "forwarded_port", guest: 8890, host: p8890,  host_ip: "0.0.0.0"
+        vm.vm.network "forwarded_port", guest: 8585, host: p8585,  host_ip: "0.0.0.0"
+        vm.vm.network "forwarded_port", guest: 9003, host: p9001,  host_ip: "0.0.0.0"
+        vm.vm.network "forwarded_port", guest: 8983, host: p8983,  host_ip: "0.0.0.0"
+
+        if is_nested_virtualbox
+          puts "[Vagrant] Nested mode: skipping public_network bridge for #{machine_name}"
+        else
+          vm.vm.network "public_network", bridge: public_network_bridge, ip: "192.168.0.222"
+        end
+
+        ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
+        vm.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys", privileged: false
+
+        vm.vm.provider "virtualbox" do |vb|
+          vb.gui = false
+          vb.memory = vm_memory
+          vb.cpus = vm_cpus
+          vb.customize ['modifyvm', :id, '--graphicscontroller', 'vmsvga']
+
+          if is_nested_virtualbox
+            vb.customize ['modifyvm', :id, '--paravirtprovider', 'default']
+          else
+            vb.customize ['modifyvm', :id, '--hwvirtex', 'on']
+            vb.customize ['modifyvm', :id, '--nested-hw-virt', 'on']
+            vb.customize ['modifyvm', :id, '--nestedpaging', 'on']
+            vb.customize ['modifyvm', :id, '--largepages', 'on']
+            vb.customize ['modifyvm', :id, '--vtxux', 'on']
+            vb.customize ['modifyvm', :id, '--vtxvpid', 'on']
+            vb.customize ['modifyvm', :id, '--paravirtprovider', 'kvm']
+          end
+        end
       end
     end
-    ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
-    default.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys", privileged: false
-    # Configure swap memory via shell provisioner
+
+    # Swap provisioning (once, for all VMs — Vagrant will apply per machine).
+    config.vm.provision "shell", inline: <<-SHELL
+      # Create a 1GB swap file (adjust count for desired size)
+      sudo dd if=/dev/zero of=/swapfile bs=1M count=1024 status=progress
+      sudo chmod 600 /swapfile
+      sudo mkswap /swapfile
+      # Make swap permanent (persist across reboots)
+      echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+    SHELL
+
+  else
+    # ── Legacy mode: single "default" machine (no YAML registry) ───────────
+    puts "[Vagrant] Legacy mode: single 'default' machine."
+
+    config.trigger.after :up do |trigger|
+      trigger.name = "ssh-keygen"
+      trigger.run = {inline: 'ssh-keygen -f "/home/' << host_user_name << '/.ssh/known_hosts" -R "[127.0.0.1]:' << host_port_22_string << '"'}
+    end
+
+    config.vm.define "default", autostart: false do |default|
+      if Vagrant.has_plugin? "vagrant-vbguest"
+        config.vbguest.no_install = true
+      end
+
+      default.vm.box = vm_box
+      default.disksize.size = vm_disk_size
+
+      default.vm.network "forwarded_port", guest: 22,   host: host_port_22
+      default.vm.network "forwarded_port", guest: 80,   host: host_port_80,   host_ip: "0.0.0.0"
+      default.vm.network "forwarded_port", guest: 443,  host: host_port_443,  host_ip: "0.0.0.0"
+      default.vm.network "forwarded_port", guest: 8080, host: host_port_8080, host_ip: "0.0.0.0"
+      default.vm.network "forwarded_port", guest: 8081, host: host_port_8081, host_ip: "0.0.0.0"
+      default.vm.network "forwarded_port", guest: 8443, host: host_port_8443, host_ip: "0.0.0.0"
+      default.vm.network "forwarded_port", guest: 8890, host: host_port_8890, host_ip: "0.0.0.0"
+      default.vm.network "forwarded_port", guest: 8585, host: host_port_8585, host_ip: "0.0.0.0"
+      default.vm.network "forwarded_port", guest: 9003, host: host_port_9001, host_ip: "0.0.0.0"
+      default.vm.network "forwarded_port", guest: 8983, host: host_port_8983, host_ip: "0.0.0.0"
+
+      if is_nested_virtualbox
+        puts "[Vagrant] Nested mode: skipping public_network bridge"
+      else
+        default.vm.network "public_network", bridge: public_network_bridge, ip: "192.168.0.222"
+      end
+
+      ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
+      default.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys", privileged: false
+
+      default.vm.provider "virtualbox" do |vb|
+        vb.gui = false
+        vb.memory = vm_memory
+        vb.cpus = vm_cpus
+        vb.customize ['modifyvm', :id, '--graphicscontroller', 'vmsvga']
+
+        if is_nested_virtualbox
+          vb.customize ['modifyvm', :id, '--paravirtprovider', 'default']
+        else
+          vb.customize ['modifyvm', :id, '--hwvirtex', 'on']
+          vb.customize ['modifyvm', :id, '--nested-hw-virt', 'on']
+          vb.customize ['modifyvm', :id, '--nestedpaging', 'on']
+          vb.customize ['modifyvm', :id, '--largepages', 'on']
+          vb.customize ['modifyvm', :id, '--vtxux', 'on']
+          vb.customize ['modifyvm', :id, '--vtxvpid', 'on']
+          vb.customize ['modifyvm', :id, '--paravirtprovider', 'kvm']
+        end
+      end
+    end
+
     config.vm.provision "shell", inline: <<-SHELL
       # Create a 1GB swap file (adjust count for desired size)
       sudo dd if=/dev/zero of=/swapfile bs=1M count=1024 status=progress
