@@ -87,7 +87,7 @@ baremetal_yaml_all_ports() {
     machines = data["machines"] || {}
     machines.each do |name, cfg|
       cfg.each do |key, val|
-        puts val if key.end_with?("_port") || key == "ssh_port"
+        puts val if key.include?("_port")
       end
     end
   ' "$MACHINES_YML" 2>/dev/null
@@ -186,18 +186,31 @@ baremetal_port_used() {
   return 1
 }
 
-# Allocate the next free host port starting from the given base.
+# Allocate the next free host port starting from candidate.
+# If candidate > 65535 the search wraps downward from 65534.
 baremetal_next_free_port() {
-  local base="$1"
-  local port="$base"
-  while baremetal_port_used "$port"; do
-    port=$((port + 1))
-    # Safety ceiling
-    if [ "$port" -gt 65535 ]; then
-      baremetal_log "ERROR: No free ports available above $base"
+  local candidate="$1"
+  local port="$candidate"
+
+  if [ "$port" -gt 65535 ]; then
+    # Overflow: search downward from 65534.
+    port=65534
+    while [ "$port" -ge 1024 ] && baremetal_port_used "$port"; do
+      port=$((port - 1))
+    done
+    if [ "$port" -lt 1024 ]; then
+      baremetal_log "ERROR: No free ports available (searched 1024–65534)"
       exit 1
     fi
-  done
+  else
+    while baremetal_port_used "$port"; do
+      port=$((port + 1))
+      if [ "$port" -gt 65535 ]; then
+        baremetal_log "ERROR: No free ports available above $candidate"
+        exit 1
+      fi
+    done
+  fi
   echo "$port"
 }
 
@@ -247,27 +260,17 @@ baremetal_allocate_ports() {
     done <<< "$(baremetal_yaml_list_names)"
   fi
 
-  # Helper: pick the next port, clamping sentinel 65535 ("disabled") as-is.
-  _next_or_sentinel() {
-    local max="$1"
-    if [ "$max" -ge 65535 ]; then
-      echo "65535"
-    else
-      baremetal_next_free_port "$((max + 1))"
-    fi
-  }
-
   local n_ssh n_80 n_443 n_8080 n_8081 n_9001 n_8983 n_8890 n_8585 n_8443
-  n_ssh=$(_next_or_sentinel "$max_ssh")
-  n_80=$(_next_or_sentinel "$max_80")
-  n_443=$(_next_or_sentinel "$max_443")
-  n_8080=$(_next_or_sentinel "$max_8080")
-  n_8081=$(_next_or_sentinel "$max_8081")
-  n_9001=$(_next_or_sentinel "$max_9001")
-  n_8983=$(_next_or_sentinel "$max_8983")
-  n_8890=$(_next_or_sentinel "$max_8890")
-  n_8585=$(_next_or_sentinel "$max_8585")
-  n_8443=$(_next_or_sentinel "$max_8443")
+  n_ssh=$(baremetal_next_free_port "$((max_ssh + 1))")
+  n_80=$(baremetal_next_free_port "$((max_80 + 1))")
+  n_443=$(baremetal_next_free_port "$((max_443 + 1))")
+  n_8080=$(baremetal_next_free_port "$((max_8080 + 1))")
+  n_8081=$(baremetal_next_free_port "$((max_8081 + 1))")
+  n_9001=$(baremetal_next_free_port "$((max_9001 + 1))")
+  n_8983=$(baremetal_next_free_port "$((max_8983 + 1))")
+  n_8890=$(baremetal_next_free_port "$((max_8890 + 1))")
+  n_8585=$(baremetal_next_free_port "$((max_8585 + 1))")
+  n_8443=$(baremetal_next_free_port "$((max_8443 + 1))")
 
   echo "$n_ssh $n_80 $n_443 $n_8080 $n_8081 $n_9001 $n_8983 $n_8890 $n_8585 $n_8443"
 }
