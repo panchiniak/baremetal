@@ -542,7 +542,7 @@ baremetal_run_list() {
 
   printf '\n'
   printf '  %-20s %-10s %-8s %s\n' 'NAME' 'STATE' 'SSH' 'PORTS'
-  printf '  %-20s %-10s %-8s %s\n' '────' '─────' '───' '─────'
+  printf '  %-28s %-20s %-14s %s\n' '────' '─────' '───' '─────'
 
   while IFS= read -r name; do
     [ -z "$name" ] && continue
