@@ -314,6 +314,14 @@ if [ ! -f /usr/bin/ansible ]; then
   apt -y install ansible
 fi
 
+# Install Ruby (needed by baremetal CLI for YAML helpers):
+if command -v ruby >/dev/null 2>&1; then
+  echo "[baremetal-install] Ruby already installed. Skipping installation."
+else
+  echo "[baremetal-install] Installing ruby by running: apt -y install ruby."
+  apt -y install ruby
+fi
+
 if [ "$SKIP_VAGRANT" = false ]; then
   install_vagrant_via_hashicorp_apt
 else
