@@ -700,7 +700,7 @@
       set_fact:
         vagrant_default_state: >-
           {{
-            (vagrant_default_status.stdout
+            (vagrant_all_status.stdout
             | regex_findall('(?m)^\\d+,default,state,([^,\\n]+)')
             | last
             | default('unknown'))
