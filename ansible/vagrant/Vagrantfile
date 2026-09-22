@@ -104,6 +104,7 @@ Vagrant.configure("2") do |config|
   host_port_8890 = 8890
   host_port_8585 = 8585
   host_port_8443 = 65535
+  host_port_5000 = 5000
 
   # ── Multi‑machine support via .baremetal-machines.yml ────────────────────
   machines_yml_path = File.expand_path(".baremetal-machines.yml", __dir__)
@@ -192,6 +193,7 @@ Vagrant.configure("2") do |config|
       p8890  = machine_port(machine_cfg, "host_port_8890", 8890)
       p8585  = machine_port(machine_cfg, "host_port_8585", 8585)
       p8443  = machine_port(machine_cfg, "host_port_8443", 65535)
+      p5000  = machine_port(machine_cfg, "host_port_5000", 5000)
       ssh_p_s = ssh_p.to_s
 
       config.trigger.after :up do |trigger|
@@ -217,6 +219,10 @@ Vagrant.configure("2") do |config|
         vm.vm.network "forwarded_port", guest: 8585, host: p8585,  host_ip: "0.0.0.0"
         vm.vm.network "forwarded_port", guest: 9003, host: p9001,  host_ip: "0.0.0.0"
         vm.vm.network "forwarded_port", guest: 8983, host: p8983,  host_ip: "0.0.0.0"
+        # LibreTranslate. Host side intentionally bound to loopback only:
+        # the service sets CORS * and has no auth, so it must not listen on
+        # LAN interfaces.
+        vm.vm.network "forwarded_port", guest: 5000, host: p5000
 
         if is_nested_virtualbox
           puts "[Vagrant] Nested mode: skipping public_network bridge for #{machine_name}"
@@ -287,6 +293,8 @@ Vagrant.configure("2") do |config|
       default.vm.network "forwarded_port", guest: 8585, host: host_port_8585, host_ip: "0.0.0.0"
       default.vm.network "forwarded_port", guest: 9003, host: host_port_9001, host_ip: "0.0.0.0"
       default.vm.network "forwarded_port", guest: 8983, host: host_port_8983, host_ip: "0.0.0.0"
+      # LibreTranslate. Host side intentionally bound to loopback only.
+      default.vm.network "forwarded_port", guest: 5000, host: host_port_5000
 
       if is_nested_virtualbox
         puts "[Vagrant] Nested mode: skipping public_network bridge"

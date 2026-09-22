@@ -123,6 +123,7 @@ baremetal_yaml_put_machine() {
   local host_port_8890="$9"
   local host_port_8585="${10}"
   local host_port_8443="${11}"
+  local host_port_5000="${12}"
 
   baremetal_yaml_init
 
@@ -140,13 +141,14 @@ baremetal_yaml_put_machine() {
       "host_port_8890" => ARGV[9].to_i,
       "host_port_8585" => ARGV[10].to_i,
       "host_port_8443" => ARGV[11].to_i,
+      "host_port_5000" => ARGV[12].to_i,
     }
     File.write(ARGV[0], YAML.dump(data))
   ' "$MACHINES_YML" "$name" \
     "$ssh_port" "$host_port_80" "$host_port_443" \
     "$host_port_8080" "$host_port_8081" "$host_port_9001" \
     "$host_port_8983" "$host_port_8890" "$host_port_8585" \
-    "$host_port_8443"
+    "$host_port_8443" "$host_port_5000"
 }
 
 # Remove a machine from the YAML file.
@@ -171,9 +173,9 @@ baremetal_yaml_remove_machine() {
 baremetal_base_ports() {
   local web_std="${1:-true}"
   if [ "$web_std" = "true" ]; then
-    echo "2222 80 443 8282 8383 9004 9191 8890 8585 65535"
+    echo "2222 80 443 8282 8383 9004 9191 8890 8585 65535 5000"
   else
-    echo "2222 8080 8443 8282 8383 9004 9191 8890 8585 65535"
+    echo "2222 8080 8443 8282 8383 9004 9191 8890 8585 65535 5000"
   fi
 }
 
@@ -226,9 +228,10 @@ baremetal_allocate_ports() {
   fi
 
   # Find the max used port for each port type and add 1.
-  local max_ssh max_80 max_443 max_8080 max_8081 max_9001 max_8983 max_8890 max_8585 max_8443
+  local max_ssh max_80 max_443 max_8080 max_8081 max_9001 max_8983 max_8890 max_8585 max_8443 max_5000
   max_ssh=2222; max_80=80; max_443=443; max_8080=8282; max_8081=8383
   max_9001=9004; max_8983=9191; max_8890=8890; max_8585=8585; max_8443=65535
+  max_5000=5000
 
   # Read all existing ports to find max per guest-port mapping.
   # Since we store them with semantic keys, we can iterate machines.
@@ -247,6 +250,7 @@ baremetal_allocate_ports() {
       local p8890; p8890=$(echo "$cfg" | grep '^host_port_8890:' | awk '{print $2}')
       local p8585; p8585=$(echo "$cfg" | grep '^host_port_8585:' | awk '{print $2}')
       local p8443; p8443=$(echo "$cfg" | grep '^host_port_8443:' | awk '{print $2}')
+      local p5000; p5000=$(echo "$cfg" | grep '^host_port_5000:' | awk '{print $2}')
       [ -n "$ssh_p" ] && [ "$ssh_p" -gt "$max_ssh" ] && max_ssh="$ssh_p"
       [ -n "$p80" ] && [ "$p80" -gt "$max_80" ] && max_80="$p80"
       [ -n "$p443" ] && [ "$p443" -gt "$max_443" ] && max_443="$p443"
@@ -257,10 +261,11 @@ baremetal_allocate_ports() {
       [ -n "$p8890" ] && [ "$p8890" -gt "$max_8890" ] && max_8890="$p8890"
       [ -n "$p8585" ] && [ "$p8585" -gt "$max_8585" ] && max_8585="$p8585"
       [ -n "$p8443" ] && [ "$p8443" -gt "$max_8443" ] && max_8443="$p8443"
+      [ -n "$p5000" ] && [ "$p5000" -gt "$max_5000" ] && max_5000="$p5000"
     done <<< "$(baremetal_yaml_list_names)"
   fi
 
-  local n_ssh n_80 n_443 n_8080 n_8081 n_9001 n_8983 n_8890 n_8585 n_8443
+  local n_ssh n_80 n_443 n_8080 n_8081 n_9001 n_8983 n_8890 n_8585 n_8443 n_5000
   n_ssh=$(baremetal_next_free_port "$((max_ssh + 1))")
   n_80=$(baremetal_next_free_port "$((max_80 + 1))")
   n_443=$(baremetal_next_free_port "$((max_443 + 1))")
@@ -271,8 +276,9 @@ baremetal_allocate_ports() {
   n_8890=$(baremetal_next_free_port "$((max_8890 + 1))")
   n_8585=$(baremetal_next_free_port "$((max_8585 + 1))")
   n_8443=$(baremetal_next_free_port "$((max_8443 + 1))")
+  n_5000=$(baremetal_next_free_port "$((max_5000 + 1))")
 
-  echo "$n_ssh $n_80 $n_443 $n_8080 $n_8081 $n_9001 $n_8983 $n_8890 $n_8585 $n_8443"
+  echo "$n_ssh $n_80 $n_443 $n_8080 $n_8081 $n_9001 $n_8983 $n_8890 $n_8585 $n_8443 $n_5000"
 }
 
 # ─── Vagrant helpers ──────────────────────────────────────────────────────────
@@ -330,6 +336,7 @@ baremetal_run_up() {
 
   local ssh_port host_port_80 host_port_443 host_port_8080 host_port_8081
   local host_port_9001 host_port_8983 host_port_8890 host_port_8585 host_port_8443
+  local host_port_5000
 
   if baremetal_yaml_machine_exists "$name"; then
     baremetal_log "Machine '$name' found in registry. Loading configuration..."
@@ -345,6 +352,7 @@ baremetal_run_up() {
     host_port_8890=$(echo "$cfg" | grep '^host_port_8890:' | awk '{print $2}')
     host_port_8585=$(echo "$cfg" | grep '^host_port_8585:' | awk '{print $2}')
     host_port_8443=$(echo "$cfg" | grep '^host_port_8443:' | awk '{print $2}')
+    host_port_5000=$(echo "$cfg" | grep '^host_port_5000:' | awk '{print $2}')
   else
     baremetal_log "Machine '$name' is new. Allocating ports..."
     # Detect WEB_STANDARD_PORTS from .env for the first machine.
@@ -361,7 +369,7 @@ baremetal_run_up() {
     ports="$(baremetal_allocate_ports "$web_std")"
     read -r ssh_port host_port_80 host_port_443 host_port_8080 host_port_8081 \
          host_port_9001 host_port_8983 host_port_8890 host_port_8585 host_port_8443 \
-         <<< "$ports"
+         host_port_5000 <<< "$ports"
 
     baremetal_log "  SSH port:       $ssh_port"
     baremetal_log "  HTTP (80):      $host_port_80"
@@ -373,12 +381,13 @@ baremetal_run_up() {
     baremetal_log "  Virtuoso (8890):$host_port_8890"
     baremetal_log "  PhpMyAdmin (8585):$host_port_8585"
     baremetal_log "  GitLab (8443):  $host_port_8443"
+    baremetal_log "  LibreTranslate (5000): $host_port_5000"
 
     baremetal_yaml_put_machine "$name" \
       "$ssh_port" "$host_port_80" "$host_port_443" \
       "$host_port_8080" "$host_port_8081" "$host_port_9001" \
       "$host_port_8983" "$host_port_8890" "$host_port_8585" \
-      "$host_port_8443"
+      "$host_port_8443" "$host_port_5000"
     baremetal_log "Machine '$name' registered in $MACHINES_YML"
   fi
 
@@ -606,6 +615,7 @@ baremetal_run_info() {
       host_port_8890) guest_port="8890" ;;
       host_port_8585) guest_port="8585" ;;
       host_port_8443) guest_port="8443" ;;
+      host_port_5000) guest_port="5000" ;;
       *) continue ;;
     esac
     printf "    %-6s → %-6s (host %s)\n" "$guest_port" "$(echo "$val" | xargs)" "$(echo "$key" | xargs)"
@@ -658,6 +668,7 @@ baremetal_run_sync() {
   #       ...
   local ssh_port host_port_80 host_port_443 host_port_8080 host_port_8081
   local host_port_9001 host_port_8983 host_port_8890 host_port_8585 host_port_8443
+  local host_port_5000
 
   # Use leading-space-anchored patterns to avoid 80 matching 8080, etc.
   ssh_port=$(echo "$port_output" | grep -E '[[:space:]]+22 \(guest\)' | sed -n 's/.*=> \([0-9]*\).*/\1/p' | head -1)
@@ -670,6 +681,7 @@ baremetal_run_sync() {
   host_port_8890=$(echo "$port_output" | grep -E '[[:space:]]+8890 \(guest\)' | sed -n 's/.*=> \([0-9]*\).*/\1/p' | head -1)
   host_port_8585=$(echo "$port_output" | grep -E '[[:space:]]+8585 \(guest\)' | sed -n 's/.*=> \([0-9]*\).*/\1/p' | head -1)
   host_port_8443=$(echo "$port_output" | grep -E '[[:space:]]+8443 \(guest\)' | sed -n 's/.*=> \([0-9]*\).*/\1/p' | head -1)
+  host_port_5000=$(echo "$port_output" | grep -E '[[:space:]]+5000 \(guest\)' | sed -n 's/.*=> \([0-9]*\).*/\1/p' | head -1)
 
   # Fall back to defaults for any missing ports.
   ssh_port="${ssh_port:-2222}"
@@ -682,6 +694,7 @@ baremetal_run_sync() {
   host_port_8890="${host_port_8890:-8890}"
   host_port_8585="${host_port_8585:-8585}"
   host_port_8443="${host_port_8443:-65535}"
+  host_port_5000="${host_port_5000:-5000}"
 
   baremetal_log "Synced ports from 'default' VM:"
   baremetal_log "  SSH port:       $ssh_port"
@@ -694,12 +707,13 @@ baremetal_run_sync() {
   baremetal_log "  Virtuoso (8890):$host_port_8890"
   baremetal_log "  PhpMyAdmin (8585): $host_port_8585"
   baremetal_log "  GitLab (8443):  $host_port_8443"
+  baremetal_log "  LibreTranslate (5000): $host_port_5000"
 
   baremetal_yaml_put_machine "$name" \
     "$ssh_port" "$host_port_80" "$host_port_443" \
     "$host_port_8080" "$host_port_8081" "$host_port_9001" \
     "$host_port_8983" "$host_port_8890" "$host_port_8585" \
-    "$host_port_8443"
+    "$host_port_8443" "$host_port_5000"
 
   baremetal_log "Machine '$name' synced and registered in $MACHINES_YML"
   baremetal_log "You can now manage it with: baremetal <up|down|ssh|destroy> $name"
