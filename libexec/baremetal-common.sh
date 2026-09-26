@@ -77,6 +77,57 @@ baremetal_yaml_machine_exists() {
   [ "$found" = "yes" ]
 }
 
+# Get the fixed_ip for a machine (empty if none).
+baremetal_yaml_get_fixed_ip() {
+  local name="$1"
+  if ! baremetal_yaml_exists; then
+    return 0
+  fi
+  ruby -ryaml -e '
+    data = YAML.load_file(ARGV[0])
+    machines = data["machines"] || {}
+    cfg = machines[ARGV[1]]
+    if cfg && cfg["fixed_ip"]
+      puts cfg["fixed_ip"]
+    end
+  ' "$MACHINES_YML" "$name" 2>/dev/null
+}
+
+# Get all fixed IPs used across all machines (one per line).
+baremetal_yaml_all_fixed_ips() {
+  if ! baremetal_yaml_exists; then
+    return 0
+  fi
+  ruby -ryaml -e '
+    data = YAML.load_file(ARGV[0])
+    machines = data["machines"] || {}
+    machines.each do |name, cfg|
+      puts cfg["fixed_ip"] if cfg["fixed_ip"]
+    end
+  ' "$MACHINES_YML" 2>/dev/null
+}
+
+# Set (or clear) the fixed_ip field for a machine.
+baremetal_yaml_set_fixed_ip() {
+  local name="$1"
+  local ip="$2"
+  if ! baremetal_yaml_exists; then
+    return 1
+  fi
+  ruby -ryaml -e '
+    data = YAML.load_file(ARGV[0])
+    machines = data["machines"] || {}
+    cfg = machines[ARGV[1]]
+    exit 1 if cfg.nil?
+    if ARGV[2].to_s.empty?
+      cfg.delete("fixed_ip")
+    else
+      cfg["fixed_ip"] = ARGV[2]
+    end
+    File.write(ARGV[0], YAML.dump(data))
+  ' "$MACHINES_YML" "$name" "$ip" 2>/dev/null
+}
+
 # Get all ports used across all machines (one port per line).
 baremetal_yaml_all_ports() {
   if ! baremetal_yaml_exists; then
@@ -281,6 +332,34 @@ baremetal_allocate_ports() {
   echo "$n_ssh $n_80 $n_443 $n_8080 $n_8081 $n_9001 $n_8983 $n_8890 $n_8585 $n_8443 $n_5000"
 }
 
+# ─── Fixed IP allocation ──────────────────────────────────────────────────────
+
+# VirtualBox host-only adapters default to 192.168.56.0/21 (192.168.56.0 –
+# 192.168.63.255).  Within each /24 the .1 address is the host adapter,
+# and .0 / .255 are network/broadcast.  We allocate guest IPs starting at
+# 192.168.56.10, incrementing through the entire /21 range, skipping
+# addresses already in the registry.
+
+baremetal_allocate_fixed_ip() {
+  local used_ips
+  used_ips="$(baremetal_yaml_all_fixed_ips)"
+
+  # Iterate 192.168.56.10 → 192.168.63.254, skipping .0, .1, .255.
+  local subnet host_part ip
+  for subnet in 56 57 58 59 60 61 62 63; do
+    for host_part in $(seq 10 254); do
+      ip="192.168.${subnet}.${host_part}"
+      if ! echo "$used_ips" | grep -qxF "$ip"; then
+        echo "$ip"
+        return 0
+      fi
+    done
+  done
+
+  baremetal_log "ERROR: No free IPs available in 192.168.56.0/21 range."
+  exit 1
+}
+
 # ─── Vagrant helpers ──────────────────────────────────────────────────────────
 
 baremetal_vagrant_status() {
@@ -313,11 +392,37 @@ baremetal_vagrant_ssh_config() {
 # ─── Commands ─────────────────────────────────────────────────────────────────
 
 baremetal_run_up() {
-  local name="${1:-}"
+  local name=""
+  local use_fixed_ip=false
+
+  # Parse arguments: name and optional --fixed-ip flag.
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --fixed-ip)
+        use_fixed_ip=true
+        shift
+        ;;
+      -*)
+        baremetal_log "Unknown option: $1"
+        exit 1
+        ;;
+      *)
+        if [ -z "$name" ]; then
+          name="$1"
+        else
+          baremetal_log "Unexpected argument: $1"
+          exit 1
+        fi
+        shift
+        ;;
+    esac
+  done
 
   if [ -z "$name" ]; then
-    baremetal_log "Usage: baremetal up <name>"
-    baremetal_log "  <name>  Machine name (e.g. 'default', 'dev1', 'staging')"
+    baremetal_log "Usage: baremetal up <name> [--fixed-ip]"
+    baremetal_log "  <name>      Machine name (e.g. 'default', 'dev1', 'staging')"
+    baremetal_log "  --fixed-ip  Assign a static private-network IP (192.168.56.0/21)"
+    baremetal_log "              for direct VM-to-VM communication."
     exit 1
   fi
 
@@ -389,6 +494,29 @@ baremetal_run_up() {
       "$host_port_8983" "$host_port_8890" "$host_port_8585" \
       "$host_port_8443" "$host_port_5000"
     baremetal_log "Machine '$name' registered in $MACHINES_YML"
+
+    # Assign a fixed IP if requested.
+    if [ "$use_fixed_ip" = true ]; then
+      local fixed_ip
+      fixed_ip="$(baremetal_allocate_fixed_ip)"
+      baremetal_yaml_set_fixed_ip "$name" "$fixed_ip"
+      baremetal_log "  Fixed IP:       $fixed_ip (private_network)"
+    fi
+  fi
+
+  # If --fixed-ip was passed for an existing machine that has no IP yet,
+  # allocate one now.
+  if [ "$use_fixed_ip" = true ]; then
+    local existing_ip
+    existing_ip="$(baremetal_yaml_get_fixed_ip "$name")"
+    if [ -z "$existing_ip" ]; then
+      local fixed_ip
+      fixed_ip="$(baremetal_allocate_fixed_ip)"
+      baremetal_yaml_set_fixed_ip "$name" "$fixed_ip"
+      baremetal_log "Assigned fixed IP $fixed_ip to existing machine '$name'."
+    else
+      baremetal_log "Machine '$name' already has fixed IP: $existing_ip"
+    fi
   fi
 
   # Check if the machine is already running.
@@ -550,8 +678,8 @@ baremetal_run_list() {
   fi
 
   printf '\n'
-  printf '  %-20s %-10s %-8s %s\n' 'NAME' 'STATE' 'SSH' 'PORTS'
-  printf '  %-28s %-20s %-14s %s\n' '────' '─────' '───' '─────'
+  printf '  %-20s %-10s %-8s %-18s %s\n' 'NAME' 'STATE' 'SSH' 'FIXED IP' 'PORTS'
+  printf '  %-28s %-20s %-14s %-24s %s\n' '────' '─────' '───' '────────' '─────'
 
   while IFS= read -r name; do
     [ -z "$name" ] && continue
@@ -565,8 +693,11 @@ baremetal_run_list() {
     ssh_port=$(echo "$cfg" | grep '^ssh_port:' | awk '{print $2}')
     host_port_80=$(echo "$cfg" | grep '^host_port_80:' | awk '{print $2}')
     host_port_443=$(echo "$cfg" | grep '^host_port_443:' | awk '{print $2}')
+    local fixed_ip
+    fixed_ip="$(baremetal_yaml_get_fixed_ip "$name")"
+    fixed_ip="${fixed_ip:--}"
     local ports_info="${host_port_80}:80, ${host_port_443}:443, ..."
-    printf '  %-20s %-10s %-8s %s\n' "$name" "${state:-unknown}" "${ssh_port:-?}" "$ports_info"
+    printf '  %-20s %-10s %-8s %-18s %s\n' "$name" "${state:-unknown}" "${ssh_port:-?}" "$fixed_ip" "$ports_info"
   done <<< "$(baremetal_yaml_list_names)"
 
   printf '\n'
@@ -600,6 +731,13 @@ baremetal_run_info() {
   echo ""
   echo "  Machine: $name"
   echo "  State:   ${state:-unknown}"
+
+  local fixed_ip
+  fixed_ip="$(baremetal_yaml_get_fixed_ip "$name")"
+  if [ -n "$fixed_ip" ]; then
+    echo "  Fixed IP: $fixed_ip (private_network)"
+  fi
+
   echo ""
   echo "  Port mappings (host → guest):"
   echo "$cfg" | while IFS=: read -r key val; do
@@ -721,13 +859,16 @@ baremetal_run_sync() {
 
 baremetal_run_help() {
   cat <<'EOF'
-baremetal — Manage multiple Vagrant VMs for the Baremetal development environment.
+baremetal — Manage multiple Vagrant VMs for with the Baremetal hypervisor.
 
 Usage:
   baremetal <command> [options]
 
 Commands:
-  up       <name>   Bring up a VM (creates and registers it if new).
+  up       <name> [--fixed-ip]
+                    Bring up a VM (creates and registers it if new).
+                    --fixed-ip assigns a static IP in 192.168.56.0/21 so
+                    VMs can reach each other directly over a private network.
   down     <name>   Halt a running VM.
   ssh      <name>   Open an SSH session to the VM.
   destroy  <name>   Destroy a VM and remove it from the registry.
@@ -738,13 +879,29 @@ Commands:
                     into the registry under <name>.
 
 Examples:
-  baremetal up dev1          Create and start a VM named 'dev1'.
-  baremetal up default       Start the default VM (legacy port mappings).
-  baremetal ssh dev1         SSH into dev1.
-  baremetal down dev1        Halt dev1.
-  baremetal destroy dev1     Destroy dev1 permanently.
-  baremetal list             Show all registered VMs.
-  baremetal sync legacy1     Import the running 'default' VM as 'legacy1'.
+  baremetal up dev1              Create and start a VM named 'dev1'.
+  baremetal up dev1 --fixed-ip   Same, but with a static private IP.
+  baremetal up default           Start the default VM (legacy port mappings).
+  baremetal ssh dev1             SSH into dev1.
+  baremetal down dev1            Halt dev1.
+  baremetal destroy dev1         Destroy dev1 permanently.
+  baremetal list                 Show all registered VMs.
+  baremetal sync legacy1         Import the running 'default' VM as 'legacy1'.
+
+Fixed IP (VM-to-VM networking):
+  When --fixed-ip is used, the machine gets a static IP on a VirtualBox
+  host-only network (192.168.56.0/21).  This allows direct SSH between VMs:
+
+    baremetal up vm1 --fixed-ip      # gets e.g. 192.168.56.10
+    baremetal up vm2 --fixed-ip      # gets e.g. 192.168.56.11
+    # From inside vm1:
+    ssh vagrant@192.168.56.11       # reaches vm2 directly
+
+  You can also add --fixed-ip to an existing machine:
+
+    baremetal up default --fixed-ip  # allocates IP for existing 'default'
+
+  Use 'baremetal info <name>' to see the assigned IP.
 
 Files:
   Machine registry:  ansible/vagrant/.baremetal-machines.yml

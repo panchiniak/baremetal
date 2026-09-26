@@ -55,24 +55,27 @@ ln -s "$(pwd)/baremetal" ~/.local/bin/baremetal
 | Command | Description |
 |---|---|
 | `baremetal up <name>` | Create (if new) and start a VM.  New machines get unique host-port allocations. |
+| `baremetal up <name> --fixed-ip` | Same as `up`, but also assigns a static private IP for VM-to-VM networking. |
 | `baremetal down <name>` | Halt a running VM. |
 | `baremetal ssh <name>` | Open an SSH session to the VM. |
 | `baremetal destroy <name>` | Destroy the VM **and** remove its metadata from the registry. |
-| `baremetal list` / `baremetal status` | List all registered VMs with state and port summary. |
-| `baremetal info <name>` | Show detailed host → guest port mappings for one machine. |
+| `baremetal list` / `baremetal status` | List all registered VMs with state, fixed IP, and port summary. |
+| `baremetal info <name>` | Show detailed host → guest port mappings and fixed IP for one machine. |
 | `baremetal sync <name>` | Import a running legacy `default` VM into the registry under `<name>`. |
 | `baremetal help` | Print usage reference. |
 
 ### Examples
 
 ```bash
-baremetal up dev1           # create & start a sibling VM
-baremetal up default        # start the original default VM (legacy ports)
-baremetal ssh dev1          # SSH into dev1
-baremetal down dev1         # halt dev1
-baremetal destroy dev1      # permanently destroy dev1
-baremetal list              # see all registered VMs
-baremetal sync legacy1      # import the running 'default' VM as 'legacy1'
+baremetal up dev1               # create & start a sibling VM
+baremetal up dev1 --fixed-ip    # create with a static private IP
+baremetal up default            # start the original default VM (legacy ports)
+baremetal up default --fixed-ip # add a fixed IP to an existing VM
+baremetal ssh dev1              # SSH into dev1
+baremetal down dev1             # halt dev1
+baremetal destroy dev1          # permanently destroy dev1
+baremetal list                  # see all registered VMs
+baremetal sync legacy1          # import the running 'default' VM as 'legacy1'
 ```
 
 ### How it works
@@ -96,6 +99,70 @@ baremetal sync legacy1      # import the running 'default' VM as 'legacy1'
    before the `baremetal` command existed, `baremetal sync <name>` reads
    its port mappings from `vagrant port` and writes them into the registry
    so you can manage it alongside newer sibling VMs.
+
+---
+
+## Fixed IP — VM-to-VM networking
+
+By default, VMs can only be reached from the host via port-forwarded
+connections (e.g. `ssh -p 2222 127.0.0.1`).  The `--fixed-ip` flag adds a
+**static IP on a VirtualBox host-only network** so VMs can communicate
+directly with each other.
+
+### How it works
+
+When `--fixed-ip` is passed to `baremetal up`:
+
+1. An available IP is auto-allocated from the VirtualBox host-only range
+   `192.168.56.0/21` (192.168.56.10 – 192.168.63.254), skipping addresses
+   already assigned to other machines.
+2. The IP is stored in `.baremetal-machines.yml` under a `fixed_ip` key.
+3. The Vagrantfile reads the stored IP and configures a `private_network`
+   adapter with that static address.
+
+Machines without `--fixed-ip` continue to use the default DHCP or
+nested-static private network — no existing workflow is affected.
+
+### Usage
+
+```bash
+# Create two VMs with fixed IPs:
+baremetal up vm1 --fixed-ip      # → e.g. 192.168.56.10
+baremetal up vm2 --fixed-ip      # → e.g. 192.168.56.11
+
+# From inside vm1, reach vm2 directly:
+ssh vagrant@192.168.56.11
+
+# Add a fixed IP to an existing machine:
+baremetal up default --fixed-ip  # allocates an IP, then starts the VM
+
+# Check assigned IPs:
+baremetal list                   # FIXED IP column
+baremetal info vm1               # detailed view
+```
+
+### Registry format
+
+The `fixed_ip` field is optional.  Existing machines that were created
+without `--fixed-ip` simply omit it:
+
+```yaml
+machines:
+  default:
+    ssh_port: 2222
+    host_port_80: 80
+    # … other ports …
+  vm1:
+    ssh_port: 2223
+    host_port_80: 81
+    # … other ports …
+    fixed_ip: 192.168.56.10
+  vm2:
+    ssh_port: 2224
+    host_port_80: 82
+    # … other ports …
+    fixed_ip: 192.168.56.11
+```
 
 ---
 
