@@ -62,6 +62,7 @@ ln -s "$(pwd)/baremetal" ~/.local/bin/baremetal
 | `baremetal list` / `baremetal status` | List all registered VMs with state, fixed IP, and port summary. |
 | `baremetal info <name>` | Show detailed host → guest port mappings and fixed IP for one machine. |
 | `baremetal sync <name>` | Import a running legacy `default` VM into the registry under `<name>`. |
+| `baremetal connect <origin-ip> <target-ip> [--sudo]` | Set up SSH key auth from one VM to another; `--sudo` enables passwordless sudo on the target. |
 | `baremetal help` | Print usage reference. |
 
 ### Examples
@@ -166,6 +167,68 @@ machines:
 
 ---
 
+## VM-to-VM SSH and passwordless sudo
+
+Once two (or more) VMs have fixed IPs, you often need one to SSH directly
+into the other — for example, to run deployments, sync files, or execute
+remote commands.  The `baremetal connect` command automates everything from
+the host (it delegates to `setup-vm-ssh.sh` under the hood):
+
+1. **Generates an SSH key** on the origin VM (ed25519, if one does not
+   already exist).
+2. **Authorises that key** on the target VM's `authorized_keys`.
+3. **Pre-populates `known_hosts`** on the origin so the first connection
+   does not prompt.
+4. **Verifies** end-to-end SSH from origin → target.
+5. *(Optional)* **Enables passwordless `sudo`** for the `vagrant` user on
+   the target.
+
+### Quick start
+
+```bash
+# SSH key setup only (origin → target):
+baremetal connect 192.168.56.10 192.168.56.11
+
+# SSH key setup + passwordless sudo on target:
+baremetal connect 192.168.56.10 192.168.56.11 --sudo
+```
+
+After running the command, from inside the **origin** VM:
+
+```bash
+ssh vagrant@192.168.56.11          # no password prompt
+```
+
+And on the **target** VM (when `--sudo` was used):
+
+```bash
+sudo apt update                    # no password prompt
+```
+
+### How it works
+
+| Step | What happens |
+|---|---|
+| Key generation | `ssh-keygen -t ed25519` runs inside origin (skipped if key exists). |
+| Key authorisation | Origin's public key is appended to target's `~/.ssh/authorized_keys`. |
+| Known hosts | `ssh-keyscan` adds target's host key to origin's `~/.ssh/known_hosts`. |
+| Verification | The script SSHs from origin → target and checks for `SSH_OK`. |
+| Passwordless sudo | A `/etc/sudoers.d/vagrant-nopasswd` file is created on target with `vagrant ALL=(ALL) NOPASSWD:ALL`, validated by `visudo -c`. |
+
+### Prerequisites
+
+* Both VMs must be running (`baremetal up origin --fixed-ip`,
+  `baremetal up target --fixed-ip`).
+* The host must be able to SSH into both VMs as `vagrant` (this is set up
+  automatically by the Vagrantfile).
+
+### Re-running the command
+
+The command is idempotent.  Running it again skips steps that are already
+done (key exists, key already authorised, sudoers already configured).
+
+---
+
 ## Custom variables
 
 After installation, copy the default vars file and edit it to suit your
@@ -231,6 +294,7 @@ VM_CPUS=4
 |---|---|
 | `baremetal` | CLI entry point for multi-VM management. |
 | `libexec/baremetal-common.sh` | Shared library (context init, YAML helpers, port allocator, commands). |
+| `setup-vm-ssh.sh` | Configures VM-to-VM SSH key auth and optional passwordless sudo. |
 | `install.sh` | Host bootstrap: Vagrant, VirtualBox, `.env` generation. |
 | `config` | Default values read by `install.sh` (`VM_BOX`, …). |
 | `ansible/vagrant/Vagrantfile` | VM definition — supports both legacy `default` and multi-machine mode. |

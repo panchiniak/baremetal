@@ -857,6 +857,31 @@ baremetal_run_sync() {
   baremetal_log "You can now manage it with: baremetal <up|down|ssh|destroy> $name"
 }
 
+baremetal_run_connect() {
+  local setup_script="$BAREMETAL_ROOT/setup-vm-ssh.sh"
+
+  if [ ! -x "$setup_script" ]; then
+    baremetal_log "setup-vm-ssh.sh not found or not executable at: $setup_script"
+    exit 1
+  fi
+
+  if [ "$#" -lt 2 ]; then
+    baremetal_log "Usage: baremetal connect <origin-ip> <target-ip> [--sudo]"
+    baremetal_log ""
+    baremetal_log "  Sets up SSH key-based access from origin VM to target VM."
+    baremetal_log "  Use the fixed IPs shown in 'baremetal list'."
+    baremetal_log ""
+    baremetal_log "  --sudo   Also enable passwordless sudo for vagrant on the target."
+    baremetal_log ""
+    baremetal_log "Examples:"
+    baremetal_log "  baremetal connect 192.168.56.10 192.168.56.11"
+    baremetal_log "  baremetal connect 192.168.56.10 192.168.56.11 --sudo"
+    exit 1
+  fi
+
+  exec "$setup_script" "$@"
+}
+
 baremetal_run_help() {
   cat <<'EOF'
 baremetal — Manage multiple Vagrant VMs for with the Baremetal hypervisor.
@@ -877,6 +902,9 @@ Commands:
   info     <name>   Show detailed information about a machine.
   sync     <name>   Sync metadata from a running legacy 'default' VM
                     into the registry under <name>.
+  connect  <origin-ip> <target-ip> [--sudo]
+                    Set up SSH key auth from origin VM to target VM.
+                    --sudo also enables passwordless sudo on the target.
 
 Examples:
   baremetal up dev1              Create and start a VM named 'dev1'.
@@ -887,6 +915,10 @@ Examples:
   baremetal destroy dev1         Destroy dev1 permanently.
   baremetal list                 Show all registered VMs.
   baremetal sync legacy1         Import the running 'default' VM as 'legacy1'.
+  baremetal connect 192.168.56.10 192.168.56.11
+                                 Set up SSH from origin to target VM.
+  baremetal connect 192.168.56.10 192.168.56.11 --sudo
+                                 Same, plus passwordless sudo on target.
 
 Fixed IP (VM-to-VM networking):
   When --fixed-ip is used, the machine gets a static IP on a VirtualBox
@@ -939,6 +971,9 @@ baremetal_main() {
       ;;
     sync)
       baremetal_run_sync "$@"
+      ;;
+    connect)
+      baremetal_run_connect "$@"
       ;;
     help|-h|--help)
       baremetal_run_help
