@@ -128,6 +128,71 @@ baremetal_yaml_set_fixed_ip() {
   ' "$MACHINES_YML" "$name" "$ip" 2>/dev/null
 }
 
+# Get the fixed_ip_public for a machine (empty if none).
+baremetal_yaml_get_fixed_ip_public() {
+  local name="$1"
+  if ! baremetal_yaml_exists; then
+    return 0
+  fi
+  ruby -ryaml -e '
+    data = YAML.load_file(ARGV[0])
+    machines = data["machines"] || {}
+    cfg = machines[ARGV[1]]
+    if cfg && cfg["fixed_ip_public"]
+      puts cfg["fixed_ip_public"]
+    end
+  ' "$MACHINES_YML" "$name" 2>/dev/null
+}
+
+# List "name ip" pairs for every machine with a static public IP
+# (DHCP entries are excluded: they can never conflict).
+baremetal_yaml_all_fixed_ip_publics() {
+  if ! baremetal_yaml_exists; then
+    return 0
+  fi
+  ruby -ryaml -e '
+    data = YAML.load_file(ARGV[0])
+    machines = data["machines"] || {}
+    machines.each do |name, cfg|
+      ip = cfg["fixed_ip_public"]
+      puts "#{name} #{ip}" if ip && ip != "dhcp"
+    end
+  ' "$MACHINES_YML" 2>/dev/null
+}
+
+# Set (or clear) the fixed_ip_public field for a machine.
+# The value is either "dhcp" or a static IPv4 address.
+baremetal_yaml_set_fixed_ip_public() {
+  local name="$1"
+  local ip="$2"
+  if ! baremetal_yaml_exists; then
+    return 1
+  fi
+  ruby -ryaml -e '
+    data = YAML.load_file(ARGV[0])
+    machines = data["machines"] || {}
+    cfg = machines[ARGV[1]]
+    exit 1 if cfg.nil?
+    if ARGV[2].to_s.empty?
+      cfg.delete("fixed_ip_public")
+    else
+      cfg["fixed_ip_public"] = ARGV[2]
+    end
+    File.write(ARGV[0], YAML.dump(data))
+  ' "$MACHINES_YML" "$name" "$ip" 2>/dev/null
+}
+
+# Validate an IPv4 address (exactly four octets, each 0-255).
+baremetal_validate_ipv4() {
+  echo "$1" | awk -F. '
+    NF == 4 && $0 ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ {
+      ok = 1
+      for (i = 1; i <= 4; i++) if ($i < 0 || $i > 255) ok = 0
+      if (ok) exit 0
+    }
+    { exit 1 }'
+}
+
 # Get all ports used across all machines (one port per line).
 baremetal_yaml_all_ports() {
   if ! baremetal_yaml_exists; then
@@ -394,12 +459,24 @@ baremetal_vagrant_ssh_config() {
 baremetal_run_up() {
   local name=""
   local use_fixed_ip=false
+  local use_fixed_ip_public=""
+  local fixed_ip_public_requested=false
 
-  # Parse arguments: name and optional --fixed-ip flag.
+  # Parse arguments: name and optional --fixed-ip / --fixed-ip-public flags.
   while [ "$#" -gt 0 ]; do
     case "$1" in
       --fixed-ip)
         use_fixed_ip=true
+        shift
+        ;;
+      --fixed-ip-public)
+        use_fixed_ip_public="dhcp"
+        fixed_ip_public_requested=true
+        shift
+        ;;
+      --fixed-ip-public=*)
+        use_fixed_ip_public="${1#*=}"
+        fixed_ip_public_requested=true
         shift
         ;;
       -*)
@@ -419,11 +496,32 @@ baremetal_run_up() {
   done
 
   if [ -z "$name" ]; then
-    baremetal_log "Usage: baremetal up <name> [--fixed-ip]"
+    baremetal_log "Usage: baremetal up <name> [--fixed-ip] [--fixed-ip-public[=<ip>]]"
     baremetal_log "  <name>      Machine name (e.g. 'default', 'dev1', 'staging')"
     baremetal_log "  --fixed-ip  Assign a static private-network IP (192.168.56.0/21)"
     baremetal_log "              for direct VM-to-VM communication."
+    baremetal_log "  --fixed-ip-public"
+    baremetal_log "              Bridge the VM onto your LAN with an IP assigned by"
+    baremetal_log "              your router's DHCP."
+    baremetal_log "  --fixed-ip-public=<ip>"
+    baremetal_log "              Bridge the VM onto your LAN with a static IP"
+    baremetal_log "              (e.g. --fixed-ip-public=192.168.129.60)."
     exit 1
+  fi
+
+  # Normalise and validate --fixed-ip-public.
+  if [ "$fixed_ip_public_requested" = true ]; then
+    case "$use_fixed_ip_public" in
+      ""|dhcp|auto) use_fixed_ip_public="dhcp" ;;
+      *)
+        if ! baremetal_validate_ipv4 "$use_fixed_ip_public"; then
+          baremetal_log "Invalid public IP: '$use_fixed_ip_public'"
+          baremetal_log "Use --fixed-ip-public (DHCP from your router) or"
+          baremetal_log "--fixed-ip-public=<IPv4> (e.g. --fixed-ip-public=192.168.129.60)."
+          exit 1
+        fi
+        ;;
+    esac
   fi
 
   if ! baremetal_detect_vagrant >/dev/null 2>&1; then
@@ -438,6 +536,17 @@ baremetal_run_up() {
   fi
 
   baremetal_yaml_init
+
+  # Static public IPs must be unique across machines.  Check this before
+  # any registry writes so a rejected run leaves no half-registered machine.
+  if [ "$fixed_ip_public_requested" = true ] && [ "$use_fixed_ip_public" != "dhcp" ]; then
+    local public_ip_owner
+    public_ip_owner="$(baremetal_yaml_all_fixed_ip_publics | awk -v ip="$use_fixed_ip_public" -v me="$name" '$2 == ip && $1 != me { print $1; exit }')"
+    if [ -n "$public_ip_owner" ]; then
+      baremetal_log "ERROR: Public IP $use_fixed_ip_public is already assigned to machine '$public_ip_owner'."
+      exit 1
+    fi
+  fi
 
   local ssh_port host_port_80 host_port_443 host_port_8080 host_port_8081
   local host_port_9001 host_port_8983 host_port_8890 host_port_8585 host_port_8443
@@ -519,11 +628,40 @@ baremetal_run_up() {
     fi
   fi
 
+  # Handle --fixed-ip-public for new and existing machines.
+  local network_changed=false
+  if [ "$fixed_ip_public_requested" = true ]; then
+    local existing_public_ip
+    existing_public_ip="$(baremetal_yaml_get_fixed_ip_public "$name")"
+    if [ "$use_fixed_ip_public" = "dhcp" ]; then
+      if [ "$existing_public_ip" != "dhcp" ]; then
+        baremetal_yaml_set_fixed_ip_public "$name" "dhcp"
+        network_changed=true
+        baremetal_log "  Public IP:      DHCP (public_network — assigned by your router)"
+      else
+        baremetal_log "Machine '$name' already uses DHCP for its public network."
+      fi
+    else
+      if [ "$existing_public_ip" != "$use_fixed_ip_public" ]; then
+        baremetal_yaml_set_fixed_ip_public "$name" "$use_fixed_ip_public"
+        network_changed=true
+        baremetal_log "  Public IP:      $use_fixed_ip_public (public_network bridge)"
+        baremetal_log "                  Make sure this IP is free on your LAN and outside"
+        baremetal_log "                  your router's DHCP pool."
+      else
+        baremetal_log "Machine '$name' already has public IP: $use_fixed_ip_public"
+      fi
+    fi
+  fi
+
   # Check if the machine is already running.
   local state
   state="$(baremetal_vagrant_status "$name")"
   if [ "$state" = "running" ]; then
     baremetal_log "Machine '$name' is already running."
+    if [ "$network_changed" = true ]; then
+      baremetal_log "Network settings changed: run 'vagrant reload $name' inside $VAGRANT_DIR to apply them."
+    fi
     baremetal_log "SSH: vagrant ssh $name  (or: baremetal ssh $name)"
     return 0
   fi
@@ -678,8 +816,8 @@ baremetal_run_list() {
   fi
 
   printf '\n'
-  printf '  %-20s %-10s %-8s %-18s %s\n' 'NAME' 'STATE' 'SSH' 'FIXED IP' 'PORTS'
-  printf '  %-28s %-20s %-14s %-24s %s\n' '────' '─────' '───' '────────' '─────'
+  printf '  %-20s %-10s %-8s %-18s %-18s %s\n' 'NAME' 'STATE' 'SSH' 'FIXED IP' 'PUBLIC IP' 'PORTS'
+  printf '  %-28s %-20s %-14s %-24s %-24s %s\n' '────' '─────' '───' '────────' '─────────' '─────'
 
   while IFS= read -r name; do
     [ -z "$name" ] && continue
@@ -696,8 +834,11 @@ baremetal_run_list() {
     local fixed_ip
     fixed_ip="$(baremetal_yaml_get_fixed_ip "$name")"
     fixed_ip="${fixed_ip:--}"
+    local fixed_ip_public
+    fixed_ip_public="$(baremetal_yaml_get_fixed_ip_public "$name")"
+    fixed_ip_public="${fixed_ip_public:--}"
     local ports_info="${host_port_80}:80, ${host_port_443}:443, ..."
-    printf '  %-20s %-10s %-8s %-18s %s\n' "$name" "${state:-unknown}" "${ssh_port:-?}" "$fixed_ip" "$ports_info"
+    printf '  %-20s %-10s %-8s %-18s %-18s %s\n' "$name" "${state:-unknown}" "${ssh_port:-?}" "$fixed_ip" "$fixed_ip_public" "$ports_info"
   done <<< "$(baremetal_yaml_list_names)"
 
   printf '\n'
@@ -736,6 +877,14 @@ baremetal_run_info() {
   fixed_ip="$(baremetal_yaml_get_fixed_ip "$name")"
   if [ -n "$fixed_ip" ]; then
     echo "  Fixed IP: $fixed_ip (private_network)"
+  fi
+
+  local fixed_ip_public
+  fixed_ip_public="$(baremetal_yaml_get_fixed_ip_public "$name")"
+  if [ "$fixed_ip_public" = "dhcp" ]; then
+    echo "  Public IP: DHCP (public_network — assigned by your router)"
+  elif [ -n "$fixed_ip_public" ]; then
+    echo "  Public IP: $fixed_ip_public (public_network)"
   fi
 
   echo ""
@@ -890,10 +1039,13 @@ Usage:
   baremetal <command> [options]
 
 Commands:
-  up       <name> [--fixed-ip]
+  up       <name> [--fixed-ip] [--fixed-ip-public[=<ip>]]
                     Bring up a VM (creates and registers it if new).
                     --fixed-ip assigns a static IP in 192.168.56.0/21 so
                     VMs can reach each other directly over a private network.
+                    --fixed-ip-public bridges the VM onto your LAN: DHCP
+                    (router-assigned IP) by default, or a static LAN IP when
+                    given as --fixed-ip-public=<ip>.
   down     <name>   Halt a running VM.
   ssh      <name>   Open an SSH session to the VM.
   destroy  <name>   Destroy a VM and remove it from the registry.
@@ -909,6 +1061,10 @@ Commands:
 Examples:
   baremetal up dev1              Create and start a VM named 'dev1'.
   baremetal up dev1 --fixed-ip   Same, but with a static private IP.
+  baremetal up dev1 --fixed-ip-public
+                                 Bridge dev1 onto your LAN (DHCP IP).
+  baremetal up dev1 --fixed-ip-public=192.168.129.60
+                                 Bridge dev1 onto your LAN with a static IP.
   baremetal up default           Start the default VM (legacy port mappings).
   baremetal ssh dev1             SSH into dev1.
   baremetal down dev1            Halt dev1.
@@ -934,6 +1090,25 @@ Fixed IP (VM-to-VM networking):
     baremetal up default --fixed-ip  # allocates IP for existing 'default'
 
   Use 'baremetal info <name>' to see the assigned IP.
+
+Public IP (LAN networking):
+  --fixed-ip-public attaches an extra bridged (public_network) adapter,
+  so the VM appears on your LAN like a physical device: it is reachable
+  from every device on the LAN and shows up in your router's client list.
+
+    baremetal up vm1 --fixed-ip-public
+        # bridged adapter, IP assigned automatically by the router's DHCP
+    baremetal up vm1 --fixed-ip-public=192.168.129.60
+        # bridged adapter with a static LAN IP
+
+  Static IPs must be free on the LAN and outside the router's DHCP pool
+  (or reserved for the VM in the router).  The netmask used for static
+  public IPs comes from PUBLIC_NETWORK_NETMASK in ansible/vagrant/.env
+  (default 255.255.255.0).  Bridging over Wi-Fi works for outgoing traffic,
+  but other LAN devices reaching into the VM can be unreliable; an
+  Ethernet bridge is the most dependable setup.
+
+  Machines without --fixed-ip-public default to DHCP on the bridge.
 
 Files:
   Machine registry:  ansible/vagrant/.baremetal-machines.yml

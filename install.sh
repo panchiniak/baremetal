@@ -99,6 +99,29 @@ detect_active_network_interface() {
     echo "$detected_interface"
 }
 
+# Detect the netmask of an interface (e.g. "255.255.254.0") from its
+# IPv4 prefix.  Used as the netmask for static public-network IPs.
+detect_active_network_netmask() {
+    local iface=$1
+    local prefix mask
+
+    if ! command -v ip >/dev/null 2>&1; then
+        return 1
+    fi
+
+    prefix=$(ip -o -4 addr show dev "$iface" 2>/dev/null | awk '{print $4}' | cut -d/ -f2 | head -n1)
+    if [ -z "$prefix" ] || [ "$prefix" -lt 1 ] || [ "$prefix" -gt 32 ]; then
+        return 1
+    fi
+
+    mask=$(( 0xFFFFFFFF << (32 - prefix) ))
+    printf '%d.%d.%d.%d\n' \
+        $(( (mask >> 24) & 255 )) \
+        $(( (mask >> 16) & 255 )) \
+        $(( (mask >> 8)  & 255 )) \
+        $(( mask & 255 ))
+}
+
 upsert_env_var() {
     local env_file=$1
     local key=$2
@@ -366,6 +389,16 @@ fi
 
 upsert_env_var "$ENV_FILE" "HOST_USER_NAME" "$USERNAME"
 upsert_env_var "$ENV_FILE" "PUBLIC_NETWORK_BRIDGE" "$PUBLIC_NETWORK_BRIDGE"
+
+# Add PUBLIC_NETWORK_NETMASK only if not already set (auto-detected from the
+# active interface; static public-network IPs use this netmask).
+if ! grep -q "^PUBLIC_NETWORK_NETMASK=" "$ENV_FILE"; then
+    PUBLIC_NETWORK_NETMASK=$(detect_active_network_netmask "$PUBLIC_NETWORK_BRIDGE")
+    if [ -n "$PUBLIC_NETWORK_NETMASK" ]; then
+        echo "[baremetal-install] Adding PUBLIC_NETWORK_NETMASK=${PUBLIC_NETWORK_NETMASK} to $ENV_FILE."
+        echo "PUBLIC_NETWORK_NETMASK=${PUBLIC_NETWORK_NETMASK}" >> "$ENV_FILE"
+    fi
+fi
 
 # Add VM_BOX default only if not already set (user may have customised it).
 if ! grep -q "^VM_BOX=" "$ENV_FILE"; then

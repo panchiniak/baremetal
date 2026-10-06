@@ -141,6 +141,8 @@ Vagrant.configure("2") do |config|
   end
 
   public_network_bridge = env_values["PUBLIC_NETWORK_BRIDGE"]
+  public_network_netmask = env_values["PUBLIC_NETWORK_NETMASK"].to_s.strip
+  public_network_netmask = "255.255.255.0" if public_network_netmask.empty?
   host_user_name = env_values["HOST_USER_NAME"] || "root"
   vm_box = env_values["VM_BOX"]
   vm_disk_size = env_values["VM_DISK_SIZE"] || "100GB"
@@ -193,6 +195,7 @@ Vagrant.configure("2") do |config|
       p8443  = machine_port(machine_cfg, "host_port_8443", 65535)
       p5000  = machine_port(machine_cfg, "host_port_5000", 5000)
       fixed_ip = machine_cfg.is_a?(Hash) ? machine_cfg["fixed_ip"] : nil
+      fixed_ip_public = machine_cfg.is_a?(Hash) ? machine_cfg["fixed_ip_public"] : nil
       ssh_p_s = ssh_p.to_s
 
       config.trigger.after :up do |trigger|
@@ -237,8 +240,19 @@ Vagrant.configure("2") do |config|
 
         if is_nested_virtualbox
           puts "[Vagrant] Nested mode: skipping public_network bridge for #{machine_name}"
+        elsif fixed_ip_public.to_s == "dhcp"
+          # Bridged (LAN) adapter with the IP assigned by the router's DHCP.
+          vm.vm.network "public_network", bridge: public_network_bridge
+          puts "[Vagrant] #{machine_name}: public network via DHCP (bridge #{public_network_bridge})"
+        elsif fixed_ip_public.to_s =~ /\A(\d{1,3}\.){3}\d{1,3}\z/
+          # Bridged (LAN) adapter with a fixed LAN IP.
+          vm.vm.network "public_network", bridge: public_network_bridge,
+                        ip: fixed_ip_public.to_s, netmask: public_network_netmask
+          puts "[Vagrant] #{machine_name}: fixed public IP #{fixed_ip_public} (bridge #{public_network_bridge})"
         else
-          vm.vm.network "public_network", bridge: public_network_bridge, ip: "192.168.0.222"
+          # No explicit public IP requested: bridge with DHCP by default.
+          vm.vm.network "public_network", bridge: public_network_bridge
+          puts "[Vagrant] #{machine_name}: public network via DHCP (bridge #{public_network_bridge})"
         end
 
         ["#{Dir.home}/.ssh/id_rsa.pub", "#{Dir.home}/.ssh/id_ed25519.pub"].select { |f| File.exist?(f) }.each do |pub_file|
@@ -317,7 +331,8 @@ Vagrant.configure("2") do |config|
       if is_nested_virtualbox
         puts "[Vagrant] Nested mode: skipping public_network bridge"
       else
-        default.vm.network "public_network", bridge: public_network_bridge, ip: "192.168.0.222"
+        default.vm.network "public_network", bridge: public_network_bridge
+        puts "[Vagrant] Legacy default machine: public network via DHCP (bridge #{public_network_bridge})"
       end
 
       ["#{Dir.home}/.ssh/id_rsa.pub", "#{Dir.home}/.ssh/id_ed25519.pub"].select { |f| File.exist?(f) }.each do |pub_file|
