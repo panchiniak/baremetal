@@ -892,8 +892,9 @@ baremetal_run_list() {
   fi
 
   printf '\n'
-  printf '  %-20s %-10s %-8s %-18s %-18s %s\n' 'NAME' 'STATE' 'SSH' 'FIXED IP' 'PUBLIC IP' 'PORTS'
-  printf '  %-28s %-20s %-14s %-24s %-24s %s\n' '────' '─────' '───' '────────' '─────────' '─────'
+  printf '  %-20s %-10s %-8s %-18s %-18s %-8s %s\n' 'NAME' 'STATE' 'SSH' 'FIXED IP' 'PUBLIC IP' 'STAMINA' 'PORTS'
+  printf '  %-20s %-10s %-8s %-18s %-18s %-8s %s\n' \
+    '────────────────────' '──────────' '────────' '──────────────────' '──────────────────' '────────' '─────'
 
   while IFS= read -r name; do
     [ -z "$name" ] && continue
@@ -913,8 +914,11 @@ baremetal_run_list() {
     local fixed_ip_public
     fixed_ip_public="$(baremetal_yaml_get_fixed_ip_public "$name")"
     fixed_ip_public="${fixed_ip_public:--}"
+    local stamina
+    stamina="$(baremetal_yaml_get_stamina "$name")"
+    stamina="${stamina:-global}"
     local ports_info="${host_port_80}:80, ${host_port_443}:443, ..."
-    printf '  %-20s %-10s %-8s %-18s %-18s %s\n' "$name" "${state:-unknown}" "${ssh_port:-?}" "$fixed_ip" "$fixed_ip_public" "$ports_info"
+    printf '  %-20s %-10s %-8s %-18s %-18s %-8s %s\n' "$name" "${state:-unknown}" "${ssh_port:-?}" "$fixed_ip" "$fixed_ip_public" "$stamina" "$ports_info"
   done <<< "$(baremetal_yaml_list_names)"
 
   printf '\n'

@@ -61,7 +61,7 @@ ln -s "$(pwd)/baremetal" ~/.local/bin/baremetal
 | `baremetal down <name>` | Halt a running VM. |
 | `baremetal ssh <name>` | Open an SSH session to the VM. |
 | `baremetal destroy <name>` | Destroy the VM **and** remove its metadata from the registry. |
-| `baremetal list` / `baremetal status` | List all registered VMs with state, fixed IP, and port summary. |
+| `baremetal list` / `baremetal status` | List all registered VMs with state, fixed IP, stamina, and port summary. |
 | `baremetal info <name>` | Show detailed host → guest port mappings and fixed IP for one machine. |
 | `baremetal sync <name>` | Import a running legacy `default` VM into the registry under `<name>`. |
 | `baremetal connect <origin-ip> <target-ip> [--sudo]` | Set up SSH key auth from one VM to another; `--sudo` enables passwordless sudo on the target. |
