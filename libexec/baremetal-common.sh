@@ -182,6 +182,43 @@ baremetal_yaml_set_fixed_ip_public() {
   ' "$MACHINES_YML" "$name" "$ip" 2>/dev/null
 }
 
+# Get the stamina level for a machine (empty if none).
+baremetal_yaml_get_stamina() {
+  local name="$1"
+  if ! baremetal_yaml_exists; then
+    return 0
+  fi
+  ruby -ryaml -e '
+    data = YAML.load_file(ARGV[0])
+    machines = data["machines"] || {}
+    cfg = machines[ARGV[1]]
+    if cfg && cfg["stamina"]
+      puts cfg["stamina"]
+    end
+  ' "$MACHINES_YML" "$name" 2>/dev/null
+}
+
+# Set (or clear) the stamina field for a machine ("high" or "low").
+baremetal_yaml_set_stamina() {
+  local name="$1"
+  local level="$2"
+  if ! baremetal_yaml_exists; then
+    return 1
+  fi
+  ruby -ryaml -e '
+    data = YAML.load_file(ARGV[0])
+    machines = data["machines"] || {}
+    cfg = machines[ARGV[1]]
+    exit 1 if cfg.nil?
+    if ARGV[2].to_s.empty?
+      cfg.delete("stamina")
+    else
+      cfg["stamina"] = ARGV[2]
+    end
+    File.write(ARGV[0], YAML.dump(data))
+  ' "$MACHINES_YML" "$name" "$level" 2>/dev/null
+}
+
 # Validate an IPv4 address (exactly four octets, each 0-255).
 baremetal_validate_ipv4() {
   echo "$1" | awk -F. '
@@ -461,8 +498,9 @@ baremetal_run_up() {
   local use_fixed_ip=false
   local use_fixed_ip_public=""
   local fixed_ip_public_requested=false
+  local use_stamina=""
 
-  # Parse arguments: name and optional --fixed-ip / --fixed-ip-public flags.
+  # Parse arguments: name and optional --fixed-ip / --fixed-ip-public / stamina flags.
   while [ "$#" -gt 0 ]; do
     case "$1" in
       --fixed-ip)
@@ -477,6 +515,14 @@ baremetal_run_up() {
       --fixed-ip-public=*)
         use_fixed_ip_public="${1#*=}"
         fixed_ip_public_requested=true
+        shift
+        ;;
+      --high-stamina)
+        use_stamina="high"
+        shift
+        ;;
+      --low-stamina)
+        use_stamina="low"
         shift
         ;;
       -*)
@@ -496,7 +542,7 @@ baremetal_run_up() {
   done
 
   if [ -z "$name" ]; then
-    baremetal_log "Usage: baremetal up <name> [--fixed-ip] [--fixed-ip-public[=<ip>]]"
+    baremetal_log "Usage: baremetal up <name> [--fixed-ip] [--fixed-ip-public[=<ip>]] [--high-stamina|--low-stamina]"
     baremetal_log "  <name>      Machine name (e.g. 'default', 'dev1', 'staging')"
     baremetal_log "  --fixed-ip  Assign a static private-network IP (192.168.56.0/21)"
     baremetal_log "              for direct VM-to-VM communication."
@@ -506,6 +552,10 @@ baremetal_run_up() {
     baremetal_log "  --fixed-ip-public=<ip>"
     baremetal_log "              Bridge the VM onto your LAN with a static IP"
     baremetal_log "              (e.g. --fixed-ip-public=192.168.129.60)."
+    baremetal_log "  --high-stamina | --low-stamina"
+    baremetal_log "              Resource allocation for THIS machine (saved in the"
+    baremetal_log "              registry; falls back to the global install.sh setting"
+    baremetal_log "              when not set)."
     exit 1
   fi
 
@@ -654,6 +704,29 @@ baremetal_run_up() {
     fi
   fi
 
+  # Per-machine stamina: stored in the registry, falling back to the global
+  # install.sh/.env resource allocation when the machine has none.
+  local stamina_changed=false
+  if [ -n "$use_stamina" ]; then
+    local previous_stamina
+    previous_stamina="$(baremetal_yaml_get_stamina "$name")"
+    if [ "$previous_stamina" != "$use_stamina" ]; then
+      baremetal_yaml_set_stamina "$name" "$use_stamina"
+      stamina_changed=true
+      baremetal_log "  Stamina:        $use_stamina (per-machine, saved to registry)"
+    else
+      baremetal_log "  Stamina:        $use_stamina (already in registry)"
+    fi
+  else
+    local current_stamina
+    current_stamina="$(baremetal_yaml_get_stamina "$name")"
+    if [ -n "$current_stamina" ]; then
+      baremetal_log "  Stamina:        $current_stamina (per-machine, from registry)"
+    else
+      baremetal_log "  Stamina:        global (install.sh / .env resource values)"
+    fi
+  fi
+
   # Check if the machine is already running.
   local state
   state="$(baremetal_vagrant_status "$name")"
@@ -661,6 +734,9 @@ baremetal_run_up() {
     baremetal_log "Machine '$name' is already running."
     if [ "$network_changed" = true ]; then
       baremetal_log "Network settings changed: run 'vagrant reload $name' inside $VAGRANT_DIR to apply them."
+    fi
+    if [ "$stamina_changed" = true ]; then
+      baremetal_log "Stamina changed: run 'vagrant reload $name' inside $VAGRANT_DIR to apply the new resources."
     fi
     baremetal_log "SSH: vagrant ssh $name  (or: baremetal ssh $name)"
     return 0
@@ -887,6 +963,14 @@ baremetal_run_info() {
     echo "  Public IP: $fixed_ip_public (public_network)"
   fi
 
+  local stamina
+  stamina="$(baremetal_yaml_get_stamina "$name")"
+  if [ -n "$stamina" ]; then
+    echo "  Stamina: $stamina (per-machine; set with --high-stamina/--low-stamina)"
+  else
+    echo "  Stamina: global (install.sh / .env resource values)"
+  fi
+
   echo ""
   echo "  Port mappings (host → guest):"
   echo "$cfg" | while IFS=: read -r key val; do
@@ -1065,6 +1149,9 @@ Examples:
                                  Bridge dev1 onto your LAN (DHCP IP).
   baremetal up dev1 --fixed-ip-public=192.168.129.60
                                  Bridge dev1 onto your LAN with a static IP.
+  baremetal up dev1 --low-stamina
+                                 Create dev1 with conservative resources
+                                 (saved per-machine in the registry).
   baremetal up default           Start the default VM (legacy port mappings).
   baremetal ssh dev1             SSH into dev1.
   baremetal down dev1            Halt dev1.
@@ -1109,6 +1196,19 @@ Public IP (LAN networking):
   Ethernet bridge is the most dependable setup.
 
   Machines without --fixed-ip-public default to DHCP on the bridge.
+
+Stamina (per-machine resource allocation):
+  --high-stamina gives the machine 1/3 of host RAM, 1/2 of host CPUs and
+  1/3 of host disk; --low-stamina gives 1/6 RAM, 1/3 CPUs and 1/6 disk
+  (the same ratios install.sh uses).  The level is saved per machine in
+  the registry, so different VMs can have different sizes:
+
+    baremetal up bigvm --high-stamina
+    baremetal up smallvm --low-stamina
+    baremetal up bigvm --low-stamina    # resizes on the next reload
+
+  Machines without a stamina setting use the global VM_MEMORY / VM_CPUS /
+  VM_DISK_SIZE values written to ansible/vagrant/.env by install.sh.
 
 Files:
   Machine registry:  ansible/vagrant/.baremetal-machines.yml

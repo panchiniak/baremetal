@@ -123,6 +123,38 @@ Vagrant.configure("2") do |config|
     cfg[key].to_i
   end
 
+  # Compute VM resources for a stamina level using the same ratios as
+  # install.sh (high: 1/3 RAM, 1/2 CPUs, 1/3 disk; low: 1/6 RAM, 1/3 CPUs,
+  # 1/6 disk). Returns [memory_mb, cpus, disk_size] where disk_size is a
+  # string like "40GB". When the level is missing/invalid, the global .env
+  # values are used as-is.
+  def stamina_resources(level, fallback_mem, fallback_cpus, fallback_disk, nested)
+    level = nil unless %w[high low].include?(level.to_s)
+
+    if level.nil?
+      mem = fallback_mem
+      cpus = fallback_cpus
+      disk = fallback_disk
+    else
+      total_mem_mb = cmd_output("grep MemTotal /proc/meminfo | awk '{print $2}'").to_i / 1024
+      total_cpus = cmd_output("nproc").to_i
+      total_disk_gb = cmd_output("df -k / | awk 'NR==2 {print int($2/1024/1024)}'").to_i
+
+      mem_div  = level == "high" ? 3 : 6
+      cpu_div  = level == "high" ? 2 : 3
+      disk_div = level == "high" ? 3 : 6
+
+      mem  = (total_mem_mb.to_f / mem_div + 0.5).to_i
+      cpus = (total_cpus.to_f / cpu_div + 0.5).to_i
+      disk = ((total_disk_gb.to_f / disk_div + 0.5).to_i).to_s + "GB"
+    end
+
+    mem = 1200 if mem <= 0
+    cpus = 1 if cpus <= 0
+    cpus = 1 if nested
+    [mem, cpus, disk]
+  end
+
   env_file_path = File.expand_path(".env", __dir__)
   env_values = {}
 
@@ -196,6 +228,12 @@ Vagrant.configure("2") do |config|
       p5000  = machine_port(machine_cfg, "host_port_5000", 5000)
       fixed_ip = machine_cfg.is_a?(Hash) ? machine_cfg["fixed_ip"] : nil
       fixed_ip_public = machine_cfg.is_a?(Hash) ? machine_cfg["fixed_ip_public"] : nil
+      machine_stamina = machine_cfg.is_a?(Hash) ? machine_cfg["stamina"] : nil
+      machine_mem, machine_cpus, machine_disk = stamina_resources(
+        machine_stamina, vm_memory, vm_cpus, vm_disk_size, is_nested_virtualbox
+      )
+      stamina_label = %w[high low].include?(machine_stamina.to_s) ? machine_stamina : "global"
+      puts "[Vagrant] #{machine_name}: stamina=#{stamina_label} memory=#{machine_mem}MB cpus=#{machine_cpus} disk=#{machine_disk}"
       ssh_p_s = ssh_p.to_s
 
       config.trigger.after :up do |trigger|
@@ -209,7 +247,7 @@ Vagrant.configure("2") do |config|
         end
 
         vm.vm.box = vm_box
-        vm.disksize.size = vm_disk_size
+        vm.disksize.size = machine_disk
 
         # Give the guest a unique hostname derived from its baremetal
         # identifier. Vagrant hostnames must be a valid DNS label: lowercase
@@ -269,8 +307,8 @@ Vagrant.configure("2") do |config|
 
         vm.vm.provider "virtualbox" do |vb|
           vb.gui = false
-          vb.memory = vm_memory
-          vb.cpus = vm_cpus
+          vb.memory = machine_mem
+          vb.cpus = machine_cpus
           vb.customize ['modifyvm', :id, '--graphicscontroller', 'vmsvga']
 
           if is_nested_virtualbox

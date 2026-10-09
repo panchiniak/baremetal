@@ -57,6 +57,7 @@ ln -s "$(pwd)/baremetal" ~/.local/bin/baremetal
 | `baremetal up <name>` | Create (if new) and start a VM.  New machines get unique host-port allocations. |
 | `baremetal up <name> --fixed-ip` | Same as `up`, but also assigns a static private IP for VM-to-VM networking. |
 | `baremetal up <name> --fixed-ip-public[=<ip>]` | Same as `up`, but also bridges the VM onto your LAN: DHCP (router-assigned IP) by default, or a static LAN IP when given as `=<ip>`. |
+| `baremetal up <name> --high-stamina` / `--low-stamina` | Same as `up`, but with per-machine resource allocation (saved in the registry; falls back to the global install.sh setting when not given). |
 | `baremetal down <name>` | Halt a running VM. |
 | `baremetal ssh <name>` | Open an SSH session to the VM. |
 | `baremetal destroy <name>` | Destroy the VM **and** remove its metadata from the registry. |
@@ -75,6 +76,7 @@ baremetal up dev1 --fixed-ip-public
                                 # also bridge onto the LAN (DHCP IP)
 baremetal up dev1 --fixed-ip-public=192.168.129.60
                                 # also bridge onto the LAN with a static IP
+baremetal up dev1 --low-stamina # create with conservative per-VM resources
 baremetal up default            # start the original default VM (legacy ports)
 baremetal up default --fixed-ip # add a fixed IP to an existing VM
 baremetal ssh dev1              # SSH into dev1
@@ -348,6 +350,24 @@ sudo ./install.sh --high-stamina "$(whoami)"
 # Low stamina (developer laptops):
 sudo ./install.sh --low-stamina "$(whoami)"
 ```
+
+### Selecting stamina per VM
+
+`baremetal up` accepts the same two flags, and the choice is stored per
+machine in the registry (`stamina` key in `.baremetal-machines.yml`), so
+sibling VMs can have different sizes:
+
+```bash
+baremetal up bigvm --high-stamina    # 1/3 RAM, 1/2 CPUs, 1/3 disk
+baremetal up smallvm --low-stamina   # 1/6 RAM, 1/3 CPUs, 1/6 disk
+baremetal up bigvm --low-stamina     # resize: applies on next reload
+```
+
+The resource values are computed with the same ratios as `install.sh`, from
+the host hardware at the time `vagrant` reads the Vagrantfile.  Machines
+without a `stamina` entry fall back to the global `VM_MEMORY` / `VM_CPUS` /
+`VM_DISK_SIZE` values in `ansible/vagrant/.env` (the install-time setting).
+Use `baremetal info <name>` to see the effective stamina of a machine.
 
 ### Explicit overrides always win
 
